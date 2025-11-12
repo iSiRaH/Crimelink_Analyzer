@@ -1,73 +1,92 @@
-# React + TypeScript + Vite
+# 🚨 Integrated Crime Intelligence System (ICIS)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 💡 Project Overview
+The **Integrated Crime Intelligence System (ICIS)** is an advanced, two-part platform developed for the Police Crime Branch. Its primary goal is to transition investigative processes from reactive data handling to **proactive, intelligence-led policing** by fusing disparate data sources and leveraging real-time AI capabilities.
 
-Currently, two official plugins are available:
+The system consists of a powerful **Web Application** for deep analytical insights and a high-speed **Mobile Application** for critical field operations.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🎯 Key Features
 
-## React Compiler
+### 1. Intelligence Automation & Analysis (Web App)
+* **Communication Network Analysis:** Automated ingestion and parsing of Call Data Records (CDRs) to model and visualize complex criminal associations using a **Graph Database (Neo4j)**.
+* **Geospatial Crime Mapping:** Fuses ANPR hit logs and CDR locations onto interactive maps for spatial analysis, hot-spot identification, and movement tracking.
+* **Management Dashboards:** Centralized views for tracking officer schedules, resource allocation, and case file progress.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 2. Real-Time Field Operations (Mobile App)
+* **Mobile Vehicle Recognition (LPR):** Utilizes the mobile device camera to capture license plates and instantly cross-reference them against watch lists via a high-speed AI API.
+* **Live Facial Recognition:** Secure, on-site matching of captured suspect faces against the secure criminal database.
+* **Field Data Viewer:** Provides authorized officers with secure, read-only access to critical case, vehicle, and suspect profiles.
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 🛠️ Technology Stack
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+| Component | Technology | Rationale |
+| :--- | :--- | :--- |
+| **Mobile App** | `React Native` | Cross-platform development (iOS/Android) ensuring fast access to device camera hardware. |
+| **Web App** | `React.js` | Robust framework for complex, data-heavy, and highly interactive analysis dashboards. |
+| **Backend & APIs** | `Python (FastAPI)` | Chosen for performance, speed, and standard use in Machine Learning/AI model deployment. |
+| **Relational DB** | `PostgreSQL` with `PostGIS` | Secure, reliable, and essential for complex structured data and geospatial queries. |
+| **Graph DB** | `Neo4j` | Optimized specifically for rapid link analysis, essential for visualizing communication networks. |
+| **Deployment** | `Docker` | Used for containerization to ensure consistency, isolation, and simplified deployment. |
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## 🚀 Getting Started
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+These instructions will get you a copy of the project up and running on your local machine for development and testing.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Prerequisites
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+* **Node.js (LTS)**
+* **Python 3.9+**
+* **Docker** and **Docker Compose**
+
+### Installation Steps
+
+1.  **Clone the Repository:**
+    ```bash
+    git clone [Your Repository URL]
+    cd ICIS-Project
+    ```
+
+2.  **Start Database Containers:**
+    Navigate to the `deployment/` directory and run the containers for PostgreSQL and Neo4j.
+    ```bash
+    docker-compose up -d
+    ```
+
+3.  **Setup Backend (AI Service):**
+    ```bash
+    cd backend/
+    pip install -r requirements.txt
+    python manage.py runserver 
+    ```
+
+4.  **Setup Web Application:**
+    ```bash
+    cd web-app/
+    npm install
+    npm start
+    ```
+
+5.  **Setup Mobile Application:**
+    See the detailed setup instructions in `mobile-app/README.md`.
+
+---
+
+## 📄 Project Structure & Timeline
+
+The project was executed over a 13-week period (2025/10/22 – 2026/01/20), prioritizing foundational security and development before tackling complex AI integration.
+
+| Phase | Major Focus | WBS Tasks Included |
+| :--- | :--- | :--- |
+| **1.0 - 2.0** | **Planning & Design** | Requirements, Architecture, ERD, API Design |
+| **3.0 - 4.0** | **Core Development** | DB Setup, Auth, CDR Analyzer, ML Model Training |
+| **5.0** | **Integration** | Mobile-to-AI APIs, Maps, Network Visualization |
+| **6.0 - 7.0** | **Testing & Finalization** | Unit/System Testing (UAT), Documentation, Reporting |
+
+---
+
+## 🔒 Security Note
+The system utilizes **OAuth 2.0** for token-based authentication and implements a strict **Role-Based Access Control (RBAC)** model. All data transmission is secured via TLS/SSL.
