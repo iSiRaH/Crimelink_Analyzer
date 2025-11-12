@@ -3,5 +3,5 @@
 @tailwind utilities;
 
 .test {
-    @apply text-red-500;
+    @apply flex flex-col items-center gap-2 inline-flex;
 }
