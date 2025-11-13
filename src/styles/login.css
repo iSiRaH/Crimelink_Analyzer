@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
-.test {
-    @apply flex flex-col items-center gap-2 inline-flex;
+.login-container {
+    @apply flex flex-col items-center gap-2 bg-blue-900 p-7 rounded-3xl shadow-lg shadow-blue-900/50;
+}
+
+.login-title{
+    @apply pb-4 text-blue-500 block;
+}
+
+.login-logo {
+    @apply w-28 h-28 my-4;
 }
