@@ -2,14 +2,63 @@
 @tailwind components;
 @tailwind utilities;
 
+.login-window{
+    @apply relative flex flex-col justify-center items-center w-full min-h-screen bg-repeat bg-current;
+}
+
 .login-container {
-    @apply flex flex-col items-center gap-2 bg-blue-900 p-7 rounded-3xl shadow-lg shadow-blue-900/50;
+    @apply flex flex-col w-fit items-center justify-center gap-2 bg-slate-800 p-7 rounded-3xl shadow-[0_0_40px_4px_rgba(0,0,0,0.15)] shadow-blue-900/50;
 }
 
 .login-title{
-    @apply pb-4 text-blue-500 block;
+    @apply pb-4 text-blue-300 block text-5xl font-semibold;
+}
+
+.login-description{
+    @apply text-xl font-normal text-white block;
+}
+
+.login-text{
+    @apply text-3xl font-medium text-white block;
 }
 
 .login-logo {
     @apply w-28 h-28 my-4;
+}
+
+.input-wrapper{
+    @apply flex gap-2 bg-slate-500 px-4 py-1 rounded-md;
+}
+
+.input-icon{
+    @apply w-5 pointer-events-none;
+}
+
+.input-username,
+.input-password{
+    @apply bg-transparent w-48 border-none focus:border-0 focus:outline-none focus:ring-0;
+}
+
+.remember-me-container{
+    @apply m-2;
+}
+
+.chkbox-rememberMe{
+    @apply pr-3;
+}
+
+.rememberMe-txt{
+    @apply text-white ml-1;
+}
+
+.login-btn{
+    @apply  bg-red-500 hover:bg-slate-100 py-2 px-5 font-semibold text-white hover:text-slate-800 rounded-lg border-2 active:border-2 border-red-500 hover:border-slate-100 active:border-blue-400; 
+}
+
+.forget-password{
+    @apply text-blue-500 text-sm underline;
+}
+
+.bottom-text{
+    @apply text-xs mt-5;
 }
