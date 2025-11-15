@@ -6,7 +6,7 @@ function App() {
   return (
     <>
       <div>
-        <Login/>
+        <Login />
         <Topbar />
         <Sidebar />
       </div>
