@@ -20,12 +20,9 @@ function AppContent() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/test" element={<TestPage />} />
-      <Route path="/" element={
-        <div>
-          <Topbar />
-          <Sidebar />
-        </div>
-      } />
+      <Route path="/" element={<></>} />
+        
+      
     </Routes>
   );
 }
