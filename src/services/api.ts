@@ -11,7 +11,7 @@ const api = axios.create({
 
 // Request interceptor
 api.interceptors.request.use(
-  (config) => {
+  (config: import('axios').InternalAxiosRequestConfig) => {
     // Add auth token if available
     const token = localStorage.getItem('token');
     if (token) {
@@ -19,21 +19,25 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
+  (error: unknown) => {
     return Promise.reject(error);
   }
 );
 
 // Response interceptor
 api.interceptors.response.use(
-  (response) => {
+  (response: import('axios').AxiosResponse) => {
     return response;
   },
-  (error) => {
-    if (error.response?.status === 401) {
-      // Handle unauthorized access
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+  (error: unknown) => {
+    if (error && typeof error === 'object' && 'response' in error) {
+      const axiosError = error as { response?: { status?: number } };
+      if (axiosError.response?.status === 401) {
+        // Handle unauthorized access
+        localStorage.removeItem('token');
+        // Note: Using window.location for simplicity. In a real app, consider using React Router's navigate
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
@@ -54,26 +58,26 @@ export const apiService = {
   },
 
   // Example: Get data
-  getData: async (endpoint: string) => {
-    const response = await api.get(endpoint);
+  getData: async <T = unknown>(endpoint: string) => {
+    const response = await api.get<T>(endpoint);
     return response.data;
   },
 
   // Example: Post data
-  postData: async (endpoint: string, data: any) => {
-    const response = await api.post(endpoint, data);
+  postData: async <T = unknown, D = unknown>(endpoint: string, data: D) => {
+    const response = await api.post<T>(endpoint, data);
     return response.data;
   },
 
   // Example: Update data
-  updateData: async (endpoint: string, data: any) => {
-    const response = await api.put(endpoint, data);
+  updateData: async <T = unknown, D = unknown>(endpoint: string, data: D) => {
+    const response = await api.put<T>(endpoint, data);
     return response.data;
   },
 
   // Example: Delete data
-  deleteData: async (endpoint: string) => {
-    const response = await api.delete(endpoint);
+  deleteData: async <T = unknown>(endpoint: string) => {
+    const response = await api.delete<T>(endpoint);
     return response.data;
   },
 };
