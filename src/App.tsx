@@ -1,10 +1,14 @@
-import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
-import Sidebar from "./components/Sidebar";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useNavigate,
+} from "react-router-dom";
+import { useEffect } from "react";
 import Login from "./pages/Login";
-import Topbar from "./components/Topbar";
 import TestPage from "./pages/TestPage";
 import { setUnauthorizedCallback } from "./services/api";
+import DutyManagement from "./pages/DutyManagement";
 
 function AppContent() {
   const navigate = useNavigate();
@@ -12,7 +16,7 @@ function AppContent() {
   useEffect(() => {
     // Set up the unauthorized callback to use React Router navigation
     setUnauthorizedCallback(() => {
-      navigate('/login', { replace: true });
+      navigate("/login", { replace: true });
     });
   }, [navigate]);
 
@@ -20,12 +24,7 @@ function AppContent() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/test" element={<TestPage />} />
-      <Route path="/" element={
-        <div>
-          <Topbar />
-          <Sidebar />
-        </div>
-      } />
+      <Route path="/" element={<DutyManagement />} />
     </Routes>
   );
 }
