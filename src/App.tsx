@@ -6,16 +6,15 @@ import {
   Navigate,
 } from "react-router-dom";
 import { useEffect } from "react";
-import Sidebar from "./components/Sidebar";
 import Login from "./pages/Login";
 import TestPage from "./pages/TestPage";
-import AdminDashboard from "./pages/AdminDashboard";
-import OICDashboard from "./pages/OICDashboard";
-import InvestigatorDashboard from "./pages/InvestigatorDashboard";
+import AdminDashboard from "./pages/Admin/AdminDashboard";
+import OICDashboard from "./pages/OIC/OICDashboard";
+import InvestigatorDashboard from "./pages/Investigator/InvestigatorDashboard";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { setUnauthorizedCallback } from "./services/api";
-import Topbar from "./components/Topbar";
+import DutyManagement from "./pages/OIC/DutyManagement";
 
 function AppContent() {
   const navigate = useNavigate();
@@ -59,17 +58,16 @@ function AppContent() {
       />
 
       {/* Original protected route */}
-      <Route
+      {/* <Route
         path="/"
         element={
           <ProtectedRoute>
             <div>
-              <Topbar />
-              <Sidebar />
+              <DutyManagement/>
             </div>
           </ProtectedRoute>
         }
-      />
+      /> */}
 
       {/* Catch all - redirect to login */}
       <Route path="*" element={<Navigate to="/login" replace />} />
