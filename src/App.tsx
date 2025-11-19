@@ -58,16 +58,16 @@ function AppContent() {
       />
 
       {/* Original protected route */}
-      {/* <Route
+      <Route
         path="/"
         element={
           <ProtectedRoute>
             <div>
-              <DutyManagement/>
+              <DutyManagement />
             </div>
           </ProtectedRoute>
         }
-      /> */}
+      />
 
       {/* Catch all - redirect to login */}
       <Route path="*" element={<Navigate to="/login" replace />} />
