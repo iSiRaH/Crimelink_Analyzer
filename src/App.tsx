@@ -32,6 +32,8 @@ function AppContent() {
       <Route path="/test" element={<TestPage />} />
 
       {/* Protected dashboard routes */}
+
+      {/* Admin page routing */}
       <Route
         path="/admin/dashboard"
         element={
@@ -40,14 +42,24 @@ function AppContent() {
           </ProtectedRoute>
         }
       />
+
+      {/* OIC page routing */}
       <Route
-        path="/oic/dashboard"
+        path="/oic"
         element={
           <ProtectedRoute allowedRoles={["OIC"]}>
             <OICDashboard />
           </ProtectedRoute>
         }
-      />
+      >
+        <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="dashboard" element={<DutyManagement />} />
+        <Route path="duty-management" element={<DutyManagement />} />
+        <Route path="weapon-handover" element={<DutyManagement />} />
+        <Route path="notes" element={<DutyManagement />} />
+      </Route>
+
+      {/* investigator page routing */}
       <Route
         path="/investigator/dashboard"
         element={
@@ -58,16 +70,16 @@ function AppContent() {
       />
 
       {/* Original protected route */}
-      <Route
+      {/* <Route
         path="/"
         element={
           <ProtectedRoute>
             <div>
-              <DutyManagement />
+              <OICDashboard />
             </div>
           </ProtectedRoute>
         }
-      />
+      /> */}
 
       {/* Catch all - redirect to login */}
       <Route path="*" element={<Navigate to="/login" replace />} />

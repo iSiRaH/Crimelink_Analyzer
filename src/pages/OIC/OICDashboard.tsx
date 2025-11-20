@@ -7,24 +7,41 @@ import {
 import Sidebar from "../../components/Sidebar";
 import Topbar from "../../components/Topbar";
 import { useAuth } from "../../contexts/useAuth";
+import { Outlet } from "react-router-dom";
 
 function OICDashboard() {
   const { user, logout } = useAuth();
 
   const menuItems = [
-    { name: "Dashboard", icon: FaChartBar },
-    { name: "Duty management", icon: FaUserFriends },
-    { name: "Weapon handover", icon: FaUserShield },
-    { name: "Notes", icon: FaStickyNote },
+    { name: "Dashboard", icon: FaChartBar, path: "dashboard" },
+    {
+      name: "Duty management",
+      icon: FaUserFriends,
+      path: "duty-management",
+    },
+    {
+      name: "Weapon handover",
+      icon: FaUserShield,
+      path: "weapon-handover",
+    },
+    { name: "Notes", icon: FaStickyNote, path: "notes" },
   ];
 
   return (
     <>
-      <Topbar
-        name={user?.name ?? "Not Defined"}
-        role={user?.role ?? "Not defined"}
-      />
-      <Sidebar items={menuItems} logoutFunc={logout} />
+      <div className="flex flex-col h-screen">
+        <Topbar
+          name={user?.name ?? "Not Defined"}
+          role={user?.role ?? "Not defined"}
+        />
+
+        <div className="flex flex-1">
+          <Sidebar items={menuItems} logoutFunc={logout} />
+          <div className="flex-1 p-5 overflow-auto">
+            <Outlet />
+          </div>
+        </div>
+      </div>
     </>
   );
 }

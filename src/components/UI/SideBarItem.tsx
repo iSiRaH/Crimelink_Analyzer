@@ -1,17 +1,27 @@
 import type React from "react";
+import { NavLink } from "react-router-dom";
 
-interface SidebarItemProps{
-    name:string;
-    icon:React.ComponentType<{size?:number}>;
+interface SidebarItemProps {
+  name: string;
+  icon: React.ComponentType<{ size?: number }>;
+  path: string;
 }
 
-function SidebarItem({icon:Icon, name}:SidebarItemProps) {
+function SidebarItem({ icon: Icon, name, path }: SidebarItemProps) {
   return (
     <>
-      <div className="flex flex-row py-2 px-1 items-center hover:bg-[#1e2a3d] w-full rounded-md cursor-pointer">
+      <NavLink
+        to={path}
+        end
+        className={({ isActive }) =>
+          `flex flex-row py-2 px-1 items-center w-full rounded-md cursor-pointer ${
+            isActive ? "bg-[#f61010]" : "hover:bg-[#1e2a3d]"
+          }`
+        }
+      >
         <Icon size={20} />
         <span className="text-lg px-4">{name}</span>
-      </div>
+      </NavLink>
     </>
   );
 }
