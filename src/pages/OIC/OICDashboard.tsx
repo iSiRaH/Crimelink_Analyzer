@@ -4,6 +4,7 @@ import {
   FaUserShield,
   FaStickyNote,
 } from "react-icons/fa";
+import { FaUserGear } from "react-icons/fa6";
 import Sidebar from "../../components/Sidebar";
 import Topbar from "../../components/Topbar";
 import { useAuth } from "../../contexts/useAuth";
@@ -24,7 +25,8 @@ function OICDashboard() {
       icon: FaUserShield,
       path: "weapon-handover",
     },
-    { name: "Notes", icon: FaStickyNote, path: "notes" },
+    { name: "Plate Registry", icon: FaStickyNote, path: "plate-registry" },
+    { name: "Manage Profiles", icon: FaUserGear, path: "manage-profiles" },
   ];
 
   return (

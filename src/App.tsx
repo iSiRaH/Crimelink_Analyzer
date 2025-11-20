@@ -15,6 +15,10 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { setUnauthorizedCallback } from "./services/api";
 import DutyManagement from "./pages/OIC/DutyManagement";
+import WeaponHandover from "./pages/OIC/WeaponHandover";
+import PlateRegistry from "./pages/OIC/PlateRegistry";
+import Dashboard from "./pages/OIC/Dashboard";
+import ManageProfiles from "./pages/OIC/ManageProfiles";
 
 function AppContent() {
   const navigate = useNavigate();
@@ -53,10 +57,11 @@ function AppContent() {
         }
       >
         <Route index element={<Navigate to="dashboard" replace />} />
-        <Route path="dashboard" element={<DutyManagement />} />
+        <Route path="dashboard" element={<Dashboard />} />
         <Route path="duty-management" element={<DutyManagement />} />
-        <Route path="weapon-handover" element={<DutyManagement />} />
-        <Route path="notes" element={<DutyManagement />} />
+        <Route path="weapon-handover" element={<WeaponHandover />} />
+        <Route path="plate-registry" element={<PlateRegistry />} />
+        <Route path="manage-profiles" element={<ManageProfiles />} />
       </Route>
 
       {/* investigator page routing */}

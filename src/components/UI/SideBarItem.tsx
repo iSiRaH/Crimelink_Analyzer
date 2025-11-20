@@ -14,7 +14,7 @@ function SidebarItem({ icon: Icon, name, path }: SidebarItemProps) {
         to={path}
         end
         className={({ isActive }) =>
-          `flex flex-row py-2 px-1 items-center w-full rounded-md cursor-pointer ${
+          `flex flex-row py-2 px-2 items-center w-full rounded-md cursor-pointer ${
             isActive ? "bg-[#f61010]" : "hover:bg-[#1e2a3d]"
           }`
         }

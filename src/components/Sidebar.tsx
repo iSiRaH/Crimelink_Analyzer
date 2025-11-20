@@ -5,22 +5,30 @@ import { FaSignOutAlt } from "react-icons/fa";
 type MenuItem = {
   name: string;
   icon: React.ComponentType<{ size?: number }>;
-  path:string;
+  path: string;
 };
 
 interface SideBarProps {
   items: MenuItem[];
-  logoutFunc: ()=>void;
+  logoutFunc: () => void;
 }
 
-const Sidebar: React.FC<SideBarProps> = ({items, logoutFunc}) => {
+const Sidebar: React.FC<SideBarProps> = ({ items, logoutFunc }) => {
   return (
-    <div className="h-full w-64 bg-[#141c2c] text-white flex flex-col gap-3 justify-start items-start p-5">
+    <div className="h-full w-64 bg-[#141c2c] text-white flex flex-col gap-3 justify-start items-start p-4">
       {items.map((item, index) => (
-        <SidebarItem key={index} name={item.name} icon={item.icon} path={item.path} />
+        <SidebarItem
+          key={index}
+          name={item.name}
+          icon={item.icon}
+          path={item.path}
+        />
       ))}
 
-      <button className="bg-[#c13f46] w-full py-2 mt-8 text-lg font-semibold rounded-full flex items-center justify-center gap-2 hover:bg-[#a83238] transition" onClick={logoutFunc}>
+      <button
+        className="bg-[#f61010] w-full py-2 mt-8 text-lg font-semibold rounded-full flex items-center justify-center gap-2 hover:bg-[#a83238] transition"
+        onClick={logoutFunc}
+      >
         <FaSignOutAlt /> Log Out
       </button>
     </div>
