@@ -1,15 +1,20 @@
-import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
-import { useEffect } from 'react';
-import Sidebar from "./components/Sidebar";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useNavigate,
+  Navigate,
+} from "react-router-dom";
+import { useEffect } from "react";
 import Login from "./pages/Login";
-import Topbar from "./components/Topbar";
 import TestPage from "./pages/TestPage";
-import AdminDashboard from "./pages/AdminDashboard";
-import OICDashboard from "./pages/OICDashboard";
-import InvestigatorDashboard from "./pages/InvestigatorDashboard";
+import AdminDashboard from "./pages/Admin/AdminDashboard";
+import OICDashboard from "./pages/OIC/OICDashboard";
+import InvestigatorDashboard from "./pages/Investigator/InvestigatorDashboard";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { setUnauthorizedCallback } from "./services/api";
+import DutyManagement from "./pages/OIC/DutyManagement";
 
 function AppContent() {
   const navigate = useNavigate();
@@ -17,7 +22,7 @@ function AppContent() {
   useEffect(() => {
     // Set up the unauthorized callback to use React Router navigation
     setUnauthorizedCallback(() => {
-      navigate('/login', { replace: true });
+      navigate("/login", { replace: true });
     });
   }, [navigate]);
 
@@ -25,12 +30,12 @@ function AppContent() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/test" element={<TestPage />} />
-      
+
       {/* Protected dashboard routes */}
       <Route
         path="/admin/dashboard"
         element={
-          <ProtectedRoute allowedRoles={['Admin']}>
+          <ProtectedRoute allowedRoles={["Admin"]}>
             <AdminDashboard />
           </ProtectedRoute>
         }
@@ -38,7 +43,7 @@ function AppContent() {
       <Route
         path="/oic/dashboard"
         element={
-          <ProtectedRoute allowedRoles={['OIC']}>
+          <ProtectedRoute allowedRoles={["OIC"]}>
             <OICDashboard />
           </ProtectedRoute>
         }
@@ -46,7 +51,7 @@ function AppContent() {
       <Route
         path="/investigator/dashboard"
         element={
-          <ProtectedRoute allowedRoles={['Investigator']}>
+          <ProtectedRoute allowedRoles={["Investigator"]}>
             <InvestigatorDashboard />
           </ProtectedRoute>
         }
@@ -58,8 +63,7 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <div>
-              <Topbar />
-              <Sidebar />
+              <DutyManagement />
             </div>
           </ProtectedRoute>
         }
