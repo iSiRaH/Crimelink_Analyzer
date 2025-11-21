@@ -28,6 +28,7 @@ function DutyManagement() {
           height="auto"
           plugins={[dayGridPlugin, interactionPlugin]}
           initialView="dayGridMonth"
+          dayCellClassNames={"text-md font-semibold"}
           weekends={true}
           events={events}
           dateClick={handleDateClick}
