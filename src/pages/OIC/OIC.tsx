@@ -1,0 +1,51 @@
+import {
+  FaChartBar,
+  FaUserFriends,
+  FaUserShield,
+  FaStickyNote,
+} from "react-icons/fa";
+import { FaUserGear } from "react-icons/fa6";
+import Sidebar from "../../components/Sidebar";
+import Topbar from "../../components/Topbar";
+import { useAuth } from "../../contexts/useAuth";
+import { Outlet } from "react-router-dom";
+
+function OIC() {
+  const { user, logout } = useAuth();
+
+  const menuItems = [
+    { name: "Dashboard", icon: FaChartBar, path: "dashboard" },
+    {
+      name: "Duty management",
+      icon: FaUserFriends,
+      path: "duty-management",
+    },
+    {
+      name: "Weapon handover",
+      icon: FaUserShield,
+      path: "weapon-handover",
+    },
+    { name: "Plate Registry", icon: FaStickyNote, path: "plate-registry" },
+    { name: "Manage Profiles", icon: FaUserGear, path: "manage-profiles" },
+  ];
+
+  return (
+    <>
+      <div className="flex flex-col h-screen">
+        <Topbar
+          name={user?.name ?? "Not Defined"}
+          role={user?.role ?? "Not defined"}
+        />
+
+        <div className="flex flex-1">
+          <Sidebar items={menuItems} logoutFunc={logout} />
+          <div className="flex-1 p-0 overflow-auto">
+            <Outlet />
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+export default OIC;
