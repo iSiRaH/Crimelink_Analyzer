@@ -39,7 +39,7 @@ function OICDashboard() {
 
         <div className="flex flex-1">
           <Sidebar items={menuItems} logoutFunc={logout} />
-          <div className="flex-1 p-5 overflow-auto">
+          <div className="flex-1 p-0 overflow-auto">
             <Outlet />
           </div>
         </div>
