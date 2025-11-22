@@ -17,13 +17,23 @@ const api = axios.create({
   },
 });
 
+// Public endpoints that don't require authentication
+const publicEndpoints = ['/auth/', '/health', '/test', '/database/'];
+
 // Request interceptor
 api.interceptors.request.use(
   (config: import('axios').InternalAxiosRequestConfig) => {
-    // Add auth token if available
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    // Check if this is a public endpoint
+    const isPublicEndpoint = publicEndpoints.some(endpoint => 
+      config.url?.includes(endpoint)
+    );
+    
+    // Add auth token if available and not a public endpoint
+    if (!isPublicEndpoint) {
+      const token = localStorage.getItem('accessToken');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     return config;
   },
