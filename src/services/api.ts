@@ -163,6 +163,8 @@ export const apiService = {
     const response = await api.delete<T>(endpoint);
     return response.data;
   },
+
+  
 };
 
 export default api;
