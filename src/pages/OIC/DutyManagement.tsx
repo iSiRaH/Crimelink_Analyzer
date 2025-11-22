@@ -1,3 +1,9 @@
+import {
+  FaChartBar,
+  FaUserFriends,
+  FaUserShield,
+  FaStickyNote,
+} from "react-icons/fa";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
@@ -7,13 +13,21 @@ import Topbar from "../../components/Topbar";
 import { useAuth } from "../../contexts/useAuth";
 
 function DutyManagement() {
-  const {user} = useAuth();
+  const {user, logout} = useAuth();
+  // sample event in calender
   const events = [{ title: "new", date: new Date() },{ title: "new new", date: new Date("2025-11-20") }];
 
   const handleDateClick = (info : DateClickArg) => {
     alert(`You clicked on: ${info.dateStr}`);
     console.log("Full info object:", info);
   };
+
+  const menuItems = [
+    { name: "Dashboard", icon: FaChartBar },
+    { name: "Duty management", icon: FaUserFriends },
+    { name: "Weapon handover", icon: FaUserShield },
+    { name: "Notes", icon: FaStickyNote },
+  ];
 
   return (
     <>
@@ -24,7 +38,7 @@ function DutyManagement() {
         />
 
         <div className="flex flex-1">
-          <Sidebar />
+          <Sidebar items={menuItems} logoutFunc={logout}/>
 
           <div className="flex-1 p-5 overflow-y-auto">
             <FullCalendar
