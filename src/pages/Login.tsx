@@ -39,7 +39,7 @@ function Login() {
           <p className="login-description">
             Crime Investigation Data Intelligent System
           </p>
-          <h2 className="login-text">Login to your Acoount</h2>
+          <h2 className="login-text">Login to your Account</h2>
           <img src={Logo} alt="Logo" className="login-logo" />
           
           {error && (
