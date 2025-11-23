@@ -17,7 +17,7 @@ function DutyManagement() {
   const [loading, setLoading] = useState(false);
 
   const locations = ["Colombo", "Kandy", "Galle", "Jaffna"];
-  const times = ["08:00", "12:00", "16:00", "20:00"];
+  const times = ["06:00-21:00", "21:00-06:00"];
 
   const handleDateClick = (info: DateClickArg) => {
     setSelectedDate(info.dateStr);
@@ -56,7 +56,7 @@ function DutyManagement() {
         datetime: r.datetime,
         duration: r.duration ?? 240,
         taskType: r.taskType ?? "General",
-        status: r.status || "OPEN",
+        status: r.status || "Active",
         location: r.location,
         description: r.description || "",
       }));
