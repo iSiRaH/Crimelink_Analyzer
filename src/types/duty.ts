@@ -1,23 +1,27 @@
+// src/types/duty.ts
+
 export type OfficerDutyRow = {
   officerId: number;
   officerName: string;
 
-  scheduleId: number | null;
-  datetime: string | null;
-
-  duration: number | null;
-  taskType: string | null;
-  status: string;
+  // These come from duty_schedule if already assigned
   location: string;
+  datetime: string; // full ISO string "2025-11-25T08:00:00"
+  status: string;
   description: string;
+
+  // optional for save
+  duration?: number;
+  taskType?: string;
 };
 
 export type DutyCreatePayload = {
+  assignedOfficer: number;
   datetime: string;
   duration: number;
   taskType: string;
   status: string;
-  assignedOfficer: number;
   location: string;
   description: string;
 };
+

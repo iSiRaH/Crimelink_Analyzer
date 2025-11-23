@@ -1,19 +1,15 @@
+// src/pages/OIC/DutyManagement.tsx
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import type { DateClickArg } from "@fullcalendar/interaction";
 import { useEffect, useState } from "react";
-import DutyPopupModel from "../../components/UI/DutyPopupModel";
 
+import DutyPopupModel from "../../components/UI/DutyPopupModel";
 import type { OfficerDutyRow, DutyCreatePayload } from "../../types/duty";
 import * as dutyService from "../../api/dutyService";
 
 function DutyManagement() {
-  const events = [
-    { title: "new", date: new Date() },
-    { title: "new new", date: new Date("2025-11-20") },
-  ];
-
   const [open, setOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>("");
 
@@ -28,16 +24,18 @@ function DutyManagement() {
     setOpen(true);
   };
 
-  // Load rows when popup opens / selectedDate changes
-    useEffect(() => {
-      if (!open || !selectedDate) return;
-  
-      setLoading(true);
-      (dutyService as any).getOfficerRowsByDate(selectedDate)
-        .then(setRows)
-        .finally(() => setLoading(false));
-    }, [open, selectedDate]);
+  // Load rows when popup opens for a date
+  useEffect(() => {
+    if (!open || !selectedDate) return;
 
+    setLoading(true);
+    dutyService
+      .getOfficerRowsByDate(selectedDate)
+      .then(setRows)
+      .finally(() => setLoading(false));
+  }, [open, selectedDate]);
+
+  // update row state
   const updateRow = (
     index: number,
     key: keyof OfficerDutyRow,
@@ -51,13 +49,12 @@ function DutyManagement() {
   };
 
   const handleAddDuties = async () => {
-    // Build payload for only rows that user filled (time + location)
     const payload: DutyCreatePayload[] = rows
-      .filter((r) => r.location && r.datetime)  // must have both to save
+      .filter((r) => r.location && r.datetime)
       .map((r) => ({
         assignedOfficer: r.officerId,
-        datetime: r.datetime!, // already full datetime
-        duration: r.duration ?? 240,  // default if empty
+        datetime: r.datetime,
+        duration: r.duration ?? 240,
         taskType: r.taskType ?? "General",
         status: r.status || "OPEN",
         location: r.location,
@@ -71,11 +68,13 @@ function DutyManagement() {
 
     setLoading(true);
     try {
-      await (dutyService as any).bulkSaveDuties(payload);
-      // reload updated duties
-      const updated = await (dutyService as any).getOfficerRowsByDate(selectedDate);
+      await dutyService.saveDutiesBulk(payload);
+
+      // reload updated duties after save
+      const updated = await dutyService.getOfficerRowsByDate(selectedDate);
       setRows(updated);
-      alert("Duties saved!");
+
+      alert("Duties saved successfully!");
     } finally {
       setLoading(false);
     }
@@ -90,19 +89,18 @@ function DutyManagement() {
           initialView="dayGridMonth"
           dayCellClassNames={"text-md font-semibold"}
           weekends={true}
-          events={events}
           dateClick={handleDateClick}
         />
       </div>
 
       <DutyPopupModel open={open} onClose={() => setOpen(false)}>
         <h2 className="text-xl font-semibold mb-4">
-          {`Details for ${selectedDate}`}
+          Details for {selectedDate}
         </h2>
 
-        {loading && <p className="mb-3">Loading...</p>}
+        {loading && <p className="mb-3">Loading officers...</p>}
 
-        <table className="w-full border mb-5">
+        <table className="w-full border mb-5 text-sm">
           <thead>
             <tr className="bg-gray-200">
               <th className="p-2 border">Name</th>
@@ -115,18 +113,16 @@ function DutyManagement() {
 
           <tbody>
             {rows.map((r, i) => (
-              <tr key={r.officerId}>
-                {/* Name auto-load (no dropdown) */}
+              <tr key={`${r.officerId}-${i}`}>
+                {/* Name auto-load */}
                 <td className="p-2 border font-medium">{r.officerName}</td>
 
-                {/* Location dropdown */}
+                {/* Location */}
                 <td className="p-2 border">
                   <select
                     className="w-full border rounded px-2 py-1"
                     value={r.location}
-                    onChange={(e) =>
-                      updateRow(i, "location", e.target.value)
-                    }
+                    onChange={(e) => updateRow(i, "location", e.target.value)}
                   >
                     <option value="">Select Location</option>
                     {locations.map((loc) => (
@@ -137,7 +133,7 @@ function DutyManagement() {
                   </select>
                 </td>
 
-                {/* Time dropdown */}
+                {/* Time */}
                 <td className="p-2 border">
                   <select
                     className="w-full border rounded px-2 py-1"
@@ -159,19 +155,17 @@ function DutyManagement() {
                   </select>
                 </td>
 
-                {/* Status manual */}
+                {/* Status */}
                 <td className="p-2 border">
                   <input
                     className="w-full border rounded px-2 py-1"
-                    placeholder="Status"
+                    placeholder="OPEN / ACTIVE"
                     value={r.status}
-                    onChange={(e) =>
-                      updateRow(i, "status", e.target.value)
-                    }
+                    onChange={(e) => updateRow(i, "status", e.target.value)}
                   />
                 </td>
 
-                {/* Description manual */}
+                {/* Description */}
                 <td className="p-2 border">
                   <input
                     className="w-full border rounded px-2 py-1"
@@ -188,24 +182,24 @@ function DutyManagement() {
             {rows.length === 0 && !loading && (
               <tr>
                 <td colSpan={5} className="p-3 text-center">
-                  No Field Officers found.
+                  No active Field Officers found.
                 </td>
               </tr>
             )}
           </tbody>
         </table>
 
-        <div>
+        <div className="flex gap-3">
           <button
             onClick={handleAddDuties}
             disabled={loading}
-            className="bg-[#f61010] text-lg font-semibold px-5 py-1.5 rounded-full hover:bg-[#fb3636] mr-3 disabled:opacity-60"
+            className="bg-red-600 text-white text-lg font-semibold px-5 py-2 rounded-full hover:bg-red-500 disabled:opacity-60"
           >
             Add Duty
           </button>
 
           <button
-            className="bg-[#f61010] text-lg font-semibold px-5 py-1.5 rounded-full hover:bg-[#fb3636] mr-3"
+            className="bg-gray-300 text-lg font-semibold px-5 py-2 rounded-full hover:bg-gray-400"
             onClick={() => setOpen(false)}
           >
             Cancel
