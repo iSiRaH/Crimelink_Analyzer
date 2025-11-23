@@ -159,7 +159,7 @@ function DutyManagement() {
                 <td className="p-2 border">
                   <input
                     className="w-full border rounded px-2 py-1"
-                    placeholder="OPEN / ACTIVE"
+                    placeholder="Absent / ACTIVE"
                     value={r.status}
                     onChange={(e) => updateRow(i, "status", e.target.value)}
                   />
