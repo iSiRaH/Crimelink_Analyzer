@@ -2,30 +2,61 @@
 import api from "../services/api";
 import type { OfficerDutyRow, DutyCreatePayload } from "../types/duty";
 
-// GET officers rows for date
+// GET officer rows for a date
 export async function getOfficerRowsByDate(dateStr: string) {
-  // dateStr already like "2025-11-25"
-  const res = await api.get<OfficerDutyRow[]>(
-    `/api/duty-schedules/officers?date=${dateStr}`
-  );
+  // baseURL already = "/api" so DO NOT add "/api" here
+  const res = await api.get(`/duty-schedules/officers`, {
+    params: { date: dateStr },
+  });
 
-  // Backend sends: officerId, name, location, time, status, description
-  // We need to normalize to OfficerDutyRow
-  return res.data.map((r: any) => ({
-    officerId: r.officerId,
-    officerName: r.name,
-    location: r.location || "",
-    datetime: r.time
-      ? `${dateStr}T${r.time}:00`
-      : "", // rebuild full ISO if time exists
-    status: r.status || "",
-    description: r.description || "",
-  }));
+  // backend may return: [], {data:[]}, or {rows:[]}
+  const rawList: any[] = Array.isArray(res.data)
+    ? res.data
+    : res.data?.rows || res.data?.data || [];
+
+  return rawList.map((r: any) => {
+    const officerId =
+      r.officerId ??
+      r.assignedOfficer ??
+      r.officer_id ??
+      r.officer?.id;
+
+    const officerName =
+      r.name ??
+      r.officerName ??
+      r.officer_name ??
+      r.officer?.name ??
+      "";
+
+    // datetime handling
+    // case 1: backend sends full datetime → use directly
+    // case 2: backend sends only time → rebuild full datetime
+    const datetime =
+      r.datetime
+        ? r.datetime
+        : r.time
+        ? `${dateStr}T${r.time}:00`
+        : "";
+
+    return {
+      officerId,
+      officerName,
+      location: r.location ?? "",
+      datetime,
+      duration: r.duration ?? 240,
+      taskType: r.taskType ?? "General",
+      status: r.status ?? "OPEN",
+      description: r.description ?? "",
+    } as OfficerDutyRow;
+  });
 }
 
-// POST save duties (multiple single saves)
+// POST save duties (bulk)
 export async function saveDutiesBulk(payloads: DutyCreatePayload[]) {
+  // If your backend supports bulk:
+  // return api.post("/duty-schedules/bulk", payloads);
+
   await Promise.all(
-    payloads.map((p) => api.post("/api/duty-schedules", p))
+    payloads.map((p) => api.post("/duty-schedules", p))
   );
 }
