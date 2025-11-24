@@ -1,24 +1,83 @@
+// src/pages/OIC/DutyManagement.tsx
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import type { DateClickArg } from "@fullcalendar/interaction";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
 import DutyPopupModel from "../../components/UI/DutyPopupModel";
+import type { OfficerDutyRow, DutyCreatePayload } from "../../types/duty";
+import * as dutyService from "../../api/dutyService";
 
 function DutyManagement() {
-  const events = [
-    { title: "new", date: new Date() },
-    { title: "new new", date: new Date("2025-11-20") },
-  ];
-
   const [open, setOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>("");
 
+  const [rows, setRows] = useState<OfficerDutyRow[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const locations = ["Colombo", "Kandy", "Galle", "Jaffna"];
+  const times = ["06:00-21:00", "21:00-06:00"];
+
   const handleDateClick = (info: DateClickArg) => {
-    // alert(`You clicked on: ${info.dateStr}`);
-    // console.log("Full info object:", info);
     setSelectedDate(info.dateStr);
     setOpen(true);
+  };
+
+  // Load rows when popup opens for a date
+  useEffect(() => {
+    if (!open || !selectedDate) return;
+
+    setLoading(true);
+    dutyService
+      .getOfficerRowsByDate(selectedDate)
+      .then(setRows)
+      .finally(() => setLoading(false));
+  }, [open, selectedDate]);
+
+  // update row state
+  const updateRow = (
+    index: number,
+    key: keyof OfficerDutyRow,
+    value: any
+  ) => {
+    setRows((prev) => {
+      const copy = [...prev];
+      copy[index] = { ...copy[index], [key]: value };
+      return copy;
+    });
+  };
+
+  const handleAddDuties = async () => {
+    const payload: DutyCreatePayload[] = rows
+      .filter((r) => r.location && r.datetime)
+      .map((r) => ({
+        assignedOfficer: r.officerId,
+        datetime: r.datetime,
+        duration: r.duration ?? 240,
+        taskType: r.taskType ?? "General",
+        status: r.status || "Active",
+        location: r.location,
+        description: r.description || "",
+      }));
+
+    if (payload.length === 0) {
+      alert("Please select Location and Time for at least one officer.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await dutyService.saveDutiesBulk(payload);
+
+      // reload updated duties after save
+      const updated = await dutyService.getOfficerRowsByDate(selectedDate);
+      setRows(updated);
+
+      alert("Duties saved successfully!");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -30,17 +89,18 @@ function DutyManagement() {
           initialView="dayGridMonth"
           dayCellClassNames={"text-md font-semibold"}
           weekends={true}
-          events={events}
           dateClick={handleDateClick}
         />
       </div>
 
       <DutyPopupModel open={open} onClose={() => setOpen(false)}>
         <h2 className="text-xl font-semibold mb-4">
-          {`Details for ${selectedDate}`}
+          Details for {selectedDate}
         </h2>
 
-        <table className="w-full border mb-5">
+        {loading && <p className="mb-3">Loading officers...</p>}
+
+        <table className="w-full border mb-5 text-sm">
           <thead>
             <tr className="bg-gray-200">
               <th className="p-2 border">Name</th>
@@ -52,21 +112,94 @@ function DutyManagement() {
           </thead>
 
           <tbody>
-            <tr>
-              <td className="p-2 border"></td>
-              <td className="p-2 border"></td>
-              <td className="p-2 border"></td>
-              <td className="p-2 border"></td>
-              <td className="p-2 border"></td>
-            </tr>
+            {rows.map((r, i) => (
+              <tr key={`${r.officerId}-${i}`}>
+                {/* Name auto-load */}
+                <td className="p-2 border font-medium">{r.officerName}</td>
+
+                {/* Location */}
+                <td className="p-2 border">
+                  <select
+                    className="w-full border rounded px-2 py-1"
+                    value={r.location}
+                    onChange={(e) => updateRow(i, "location", e.target.value)}
+                  >
+                    <option value="">Select Location</option>
+                    {locations.map((loc) => (
+                      <option key={loc} value={loc}>
+                        {loc}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+
+                {/* Time */}
+                <td className="p-2 border">
+                  <select
+                    className="w-full border rounded px-2 py-1"
+                    value={r.datetime ? r.datetime.substring(11, 16) : ""}
+                    onChange={(e) =>
+                      updateRow(
+                        i,
+                        "datetime",
+                        `${selectedDate}T${e.target.value}:00`
+                      )
+                    }
+                  >
+                    <option value="">Select Time</option>
+                    {times.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+
+                {/* Status */}
+                <td className="p-2 border">
+                  <input
+                    className="w-full border rounded px-2 py-1"
+                    placeholder="Absent / ACTIVE"
+                    value={r.status}
+                    onChange={(e) => updateRow(i, "status", e.target.value)}
+                  />
+                </td>
+
+                {/* Description */}
+                <td className="p-2 border">
+                  <input
+                    className="w-full border rounded px-2 py-1"
+                    placeholder="Description"
+                    value={r.description}
+                    onChange={(e) =>
+                      updateRow(i, "description", e.target.value)
+                    }
+                  />
+                </td>
+              </tr>
+            ))}
+
+            {rows.length === 0 && !loading && (
+              <tr>
+                <td colSpan={5} className="p-3 text-center">
+                  No active Field Officers found.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
-        <div>
-          <button className="bg-[#f61010] text-lg font-semibold px-5 py-1.5 rounded-full hover:bg-[#fb3636] mr-3">
+
+        <div className="flex gap-3">
+          <button
+            onClick={handleAddDuties}
+            disabled={loading}
+            className="bg-red-600 text-white text-lg font-semibold px-5 py-2 rounded-full hover:bg-red-500 disabled:opacity-60"
+          >
             Add Duty
           </button>
+
           <button
-            className="bg-[#f61010] text-lg font-semibold px-5 py-1.5 rounded-full hover:bg-[#fb3636] mr-3"
+            className="bg-gray-300 text-lg font-semibold px-5 py-2 rounded-full hover:bg-gray-400"
             onClick={() => setOpen(false)}
           >
             Cancel
@@ -78,3 +211,4 @@ function DutyManagement() {
 }
 
 export default DutyManagement;
+
