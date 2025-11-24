@@ -18,8 +18,12 @@ function NotFound() {
             a known section of a site.
           </p>
           <div className="flex gap-4 mt-3">
-            <button className="bg-blue-500 text-white px-4 py-2 rounded-lg border-2 border-blue-500 font-semibold hover:border-2 hover:border-white">Go To Homepage</button>
-            <button className="bg-black text-blue-500 px-4 py-2 rounded-lg border-2 border-black font-semibold hover:border-2 hover:border-blue-500">Go To Login</button>
+            <button className="bg-blue-500 text-white px-4 py-2 rounded-lg border-2 border-blue-500 font-semibold hover:border-2 hover:border-white">
+              Go To Homepage
+            </button>
+            <button className="bg-black text-blue-500 px-4 py-2 rounded-lg border-2 border-black font-semibold hover:border-2 hover:border-blue-500">
+              Go To Login
+            </button>
           </div>
         </div>
       </div>
