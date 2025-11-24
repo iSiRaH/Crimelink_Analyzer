@@ -63,6 +63,7 @@ function DutyManagement() {
         status: r.status?.trim() || "Active",
         location: r.location!,
         description: r.description?.trim() || "",
+        timeRange: r.datetime!.substring(11, 16),
       }));
 
     console.log("Saving payload ->", payload);

@@ -23,5 +23,6 @@ export type DutyCreatePayload = {
   status: string;
   location: string;
   description: string;
+  timeRange: string;
 };
 
