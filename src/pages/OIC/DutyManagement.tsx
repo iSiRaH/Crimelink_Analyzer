@@ -18,7 +18,7 @@ function DutyManagement() {
 
   const locations = ["Colombo", "Kandy", "Galle", "Jaffna"];
   const times = ["06:00", "21:00"];
-  const statuses = ["Active", "Absent", "Completed"];
+  // const statuses = ["Active", "Absent", "Completed"];
 
   // when user clicks calendar date
   const handleDateClick = (info: DateClickArg) => {
@@ -176,19 +176,15 @@ function DutyManagement() {
                 </td>
 
                 {/* Status */}
-                    <td className="p-2 border">
-                  <select
+                <td className="p-2 border">
+                  <input
                     className="w-full border rounded px-2 py-1"
+                    placeholder="Absent / Active / Completed"
                     value={r.status}
-                    onChange={(e) => updateRow(i, "status", e.target.value)}
-                  >
-                    <option value="">Select Status</option>
-                    {statuses.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(e) =>
+                      updateRow(i, "status", e.target.value)
+                    }
+                  />
                 </td>
 
                 {/* Description */}

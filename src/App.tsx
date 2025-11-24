@@ -24,6 +24,7 @@ import CallAnalysis from "./pages/Investigator/CallAnalysis";
 import FacialRecognition from "./pages/Investigator/FacialRecognition";
 import Notes from "./pages/Investigator/Notes";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
+import NotFound from "./pages/NotFound";
 
 function AppContent() {
   const navigate = useNavigate();
@@ -37,6 +38,7 @@ function AppContent() {
 
   return (
     <Routes>
+      <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<Login />} />
       <Route path="/test" element={<TestPage />} />
 
@@ -44,7 +46,7 @@ function AppContent() {
 
       {/* Admin page routing */}
       <Route
-        path="/admin/dashboard"
+        path="/admin"
         element={
           <ProtectedRoute allowedRoles={["Admin"]}>
             <Admin />
@@ -101,7 +103,7 @@ function AppContent() {
       /> */}
 
       {/* Catch all - redirect to login */}
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }

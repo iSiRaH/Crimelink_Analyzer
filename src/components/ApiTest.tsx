@@ -25,8 +25,16 @@ function ApiTest() {
       const data = await apiService.healthCheck();
       setHealthStatus(data);
     } catch (err) {
-      setError('Failed to connect to backend API');
-      console.error(err);
+      const error = err as { response?: { status?: number; data?: { message?: string } }; message?: string; config?: unknown };
+      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to connect to backend API';
+      setError(`Health check failed: ${errorMessage} (Status: ${error?.response?.status || 'N/A'})`);
+      console.error('Health check error:', err);
+      console.error('Error details:', {
+        message: error?.message,
+        status: error?.response?.status,
+        data: error?.response?.data,
+        config: error?.config
+      });
     } finally {
       setLoading(false);
     }
@@ -39,8 +47,16 @@ function ApiTest() {
       const data = await apiService.test();
       setTestData(data);
     } catch (err) {
-      setError('Failed to test endpoint');
-      console.error(err);
+      const error = err as { response?: { status?: number; data?: { message?: string } }; message?: string; config?: unknown };
+      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to call test endpoint';
+      setError(`Test endpoint failed: ${errorMessage} (Status: ${error?.response?.status || 'N/A'})`);
+      console.error('Test endpoint error:', err);
+      console.error('Error details:', {
+        message: error?.message,
+        status: error?.response?.status,
+        data: error?.response?.data,
+        config: error?.config
+      });
     } finally {
       setLoading(false);
     }
