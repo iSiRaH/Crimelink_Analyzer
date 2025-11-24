@@ -1,16 +1,26 @@
-// src/api/dutyService.ts
 
+// src/api/dutyService.ts
 import api from "../services/api";
 import type { OfficerDutyRow, DutyCreatePayload } from "../types/duty";
 
-// GET officer rows for a date
+/**
+ * GET officer rows for a selected date
+ * Backend expected (choose one):
+ * 1) GET /api/duty-schedules/officers?date=YYYY-MM-DD
+ * 2) GET /api/duty-schedule/officers/{YYYY-MM-DD}
+ */
 export async function getOfficerRowsByDate(dateStr: string) {
-  // baseURL already = "/api" so DO NOT add "/api" here
-  const res = await api.get(`/duty-schedules/officers`, {
-    params: { date: dateStr },
-  });
+  // ✅ try query-param endpoint first (your current backend style)
+  let res;
+  try {
+    res = await api.get(`/duty-schedules/officers`, {
+      params: { date: dateStr },
+    });
+  } catch (e) {
+    // ✅ fallback to path-variable endpoint if above fails
+    res = await api.get(`/duty-schedule/officers/${dateStr}`);
+  }
 
-  // backend may return: [], {data:[]}, or {rows:[]}
   const rawList: any[] = Array.isArray(res.data)
     ? res.data
     : res.data?.rows || res.data?.data || [];
@@ -19,25 +29,25 @@ export async function getOfficerRowsByDate(dateStr: string) {
     const officerId =
       r.officerId ??
       r.assignedOfficer ??
+      r.assigned_officer ??
       r.officer_id ??
-      r.officer?.id;
+      r.officer?.userId ??
+      r.officer?.id ??
+      null;
 
     const officerName =
-      r.name ??
       r.officerName ??
+      r.name ??
       r.officer_name ??
       r.officer?.name ??
       "";
 
-    // datetime handling
-    // case 1: backend sends full datetime → use directly
-    // case 2: backend sends only time → rebuild full datetime
-    const datetime =
-      r.datetime
-        ? r.datetime
-        : r.time
-        ? `${dateStr}T${r.time}:00`
-        : "";
+    // ✅ datetime handling
+    const datetime = r.datetime
+      ? r.datetime
+      : r.time
+      ? `${dateStr}T${r.time}:00`
+      : "";
 
     return {
       officerId,
@@ -45,19 +55,31 @@ export async function getOfficerRowsByDate(dateStr: string) {
       location: r.location ?? "",
       datetime,
       duration: r.duration ?? 240,
-      taskType: r.taskType ?? "General",
+      taskType: r.taskType ?? r.task_type ?? "General",
       status: r.status ?? "OPEN",
       description: r.description ?? "",
     } as OfficerDutyRow;
   });
 }
 
-// POST save duties (bulk)
+/**
+ * POST save duties (bulk)
+ * Backend expected (choose one):
+ * 1) POST /api/duty-schedules/bulk   body: DutyCreatePayload[]
+ * 2) POST /api/duty-schedules       body: DutyCreatePayload (single)
+ */
 export async function saveDutiesBulk(payloads: DutyCreatePayload[]) {
-  // If your backend supports bulk:
-  // return api.post("/duty-schedules/bulk", payloads);
+  if (!payloads || payloads.length === 0) return [];
 
-  await Promise.all(
-    payloads.map((p) => api.post("/duty-schedules", p))
-  );
+  // ✅ try bulk endpoint first
+  try {
+    const res = await api.post(`/duty-schedules/bulk`, payloads);
+    return res.data;
+  } catch (bulkErr) {
+    // ✅ fallback: save one-by-one if bulk not supported
+    const results = await Promise.all(
+      payloads.map((p) => api.post(`/duty-schedules`, p))
+    );
+    return results.map((r) => r.data);
+  }
 }

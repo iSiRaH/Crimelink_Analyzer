@@ -17,7 +17,7 @@ export type OfficerDutyRow = {
 
 export type DutyCreatePayload = {
   officerId: number;
-  datetime: string;
+  date: string;
   duration: number;
   taskType: string;
   status: string;

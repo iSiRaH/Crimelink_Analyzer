@@ -18,7 +18,7 @@ function DutyManagement() {
 
   const locations = ["Colombo", "Kandy", "Galle", "Jaffna"];
   const times = ["06:00", "21:00"];
-  // const statuses = ["Active", "Absent", "Completed"];
+  const statuses = ["Active", "Absent", "Completed"];
 
   // when user clicks calendar date
   const handleDateClick = (info: DateClickArg) => {
@@ -57,7 +57,7 @@ function DutyManagement() {
       .filter((r) => r.location && r.datetime) // only filled rows
       .map((r) => ({
         officerId: r.officerId,                 // ✅ FIX: backend expects officerId
-        datetime: r.datetime!,
+        date: r.datetime!,
         duration: r.duration ?? 240,
         taskType: r.taskType ?? "General",
         status: r.status?.trim() || "Active",
@@ -176,16 +176,22 @@ function DutyManagement() {
                 </td>
 
                 {/* Status */}
-                <td className="p-2 border">
-                  <input
-                    className="w-full border rounded px-2 py-1"
-                    placeholder="Absent / Active / Completed"
-                    value={r.status}
-                    onChange={(e) =>
-                      updateRow(i, "status", e.target.value)
-                    }
-                  />
-                </td>
+                 <td className="p-2 border">
+                    <select
+                          className="w-full border rounded px-2 py-1"
+                          value={r.status || ""}
+                          onChange={(e) => updateRow(i, "status", e.target.value)}
+  >
+                  <option value="">Select Status</option>
+                        {statuses.map((st) => (
+                      <option key={st} value={st}>
+                            {st}
+                  </option>
+                
+                ))}
+                  </select>
+              </td>
+
 
                 {/* Description */}
                 <td className="p-2 border">
