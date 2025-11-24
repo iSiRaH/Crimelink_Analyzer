@@ -1,7 +1,9 @@
+// src/services/api.ts (or wherever you keep it)
+
 import axios, {
-  type AxiosError,
-  type AxiosResponse,
-  type InternalAxiosRequestConfig,
+  AxiosError,
+ type  AxiosResponse,
+ type InternalAxiosRequestConfig,
 } from "axios";
 
 // Navigation callback for unauthorized access
@@ -13,7 +15,7 @@ export const setUnauthorizedCallback = (callback: () => void) => {
 
 // Main axios instance
 const api = axios.create({
-  baseURL: "/api", // proxied to http://localhost:8080/api in development
+  baseURL: "/api", // should be proxied to http://localhost:8080/api in dev
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
@@ -30,29 +32,35 @@ const refreshClient = axios.create({
 });
 
 // Public endpoints that don't require authentication
-const publicEndpoints = ['/auth/', '/health', '/test', '/database/'];
+const publicEndpoints = ["/auth/", "/health", "/test", "/database/"];
 
-// Request interceptor: attach access token
+// -------------------- REQUEST INTERCEPTOR --------------------
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Check if this is a public endpoint
-    const isPublicEndpoint = publicEndpoints.some(endpoint => 
-      config.url?.includes(endpoint)
+    config.headers = config.headers ?? {};
+
+    const url = config.url ?? "";
+    const isPublicEndpoint = publicEndpoints.some((endpoint) =>
+      url.includes(endpoint)
     );
-    
-    // Add auth token if available and not a public endpoint
+
     if (!isPublicEndpoint) {
-      const token = localStorage.getItem("accessToken");
+      const token =
+        localStorage.getItem("accessToken") ||
+        localStorage.getItem("token"); // optional fallback
+
       if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+        // Axios v1 uses AxiosHeaders sometimes -> cast
+        (config.headers as any).Authorization = `Bearer ${token}`;
       }
     }
+
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// Refresh queue system
+// -------------------- REFRESH QUEUE SYSTEM --------------------
 let isRefreshing = false;
 
 type QueueItem = {
@@ -63,34 +71,33 @@ type QueueItem = {
 let failedQueue: QueueItem[] = [];
 
 const processQueue = (error: unknown | null, token: string | null = null) => {
-  failedQueue.forEach((prom) => {
-    if (error) prom.reject(error);
-    else if (token) prom.resolve(token);
+  failedQueue.forEach((p) => {
+    if (error) p.reject(error);
+    else if (token) p.resolve(token);
   });
   failedQueue = [];
 };
 
-// Response interceptor
+// -------------------- RESPONSE INTERCEPTOR --------------------
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
   async (error: AxiosError) => {
-    if (!error.response) {
-      return Promise.reject(error);
-    }
+    if (!error.response) return Promise.reject(error);
 
     const originalRequest = error.config as InternalAxiosRequestConfig & {
       _retry?: boolean;
     };
 
-    // Only refresh if 401 AND we haven't retried yet
+    // ✅ refresh ONLY for 401 (Unauthorized)
     if (error.response.status === 401 && !originalRequest._retry) {
+      // If refresh already happening, queue this request
       if (isRefreshing) {
-        // Queue while refresh running
-        return new Promise((resolve, reject) => {
+        return new Promise<string>((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
           .then((newToken) => {
-            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            originalRequest.headers = originalRequest.headers ?? {};
+            (originalRequest.headers as any).Authorization = `Bearer ${newToken}`;
             return api(originalRequest);
           })
           .catch((err) => Promise.reject(err));
@@ -110,11 +117,12 @@ api.interceptors.response.use(
         if (unauthorizedCallback) unauthorizedCallback();
         else window.location.href = "/login";
 
+        isRefreshing = false;
         return Promise.reject(error);
       }
 
       try {
-        // IMPORTANT: use refreshClient (no old auth header)
+        // IMPORTANT: refreshClient has NO interceptors/no old auth header
         const res = await refreshClient.post<{ accessToken: string }>(
           "/auth/refresh",
           { refreshToken }
@@ -125,7 +133,9 @@ api.interceptors.response.use(
 
         processQueue(null, newAccessToken);
 
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        originalRequest.headers = originalRequest.headers ?? {};
+        (originalRequest.headers as any).Authorization = `Bearer ${newAccessToken}`;
+
         return api(originalRequest);
       } catch (refreshErr) {
         processQueue(refreshErr, null);
@@ -143,11 +153,12 @@ api.interceptors.response.use(
       }
     }
 
+    // ✅ for 403 / others just reject (no refresh)
     return Promise.reject(error);
   }
 );
 
-// Optional API helper methods
+// -------------------- OPTIONAL API HELPERS --------------------
 export const apiService = {
   healthCheck: async () => (await api.get("/health")).data,
   test: async () => (await api.get("/test")).data,
@@ -166,4 +177,3 @@ export const apiService = {
 };
 
 export default api;
-

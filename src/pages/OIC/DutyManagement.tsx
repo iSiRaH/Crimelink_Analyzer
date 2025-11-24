@@ -16,14 +16,15 @@ function DutyManagement() {
   const [loading, setLoading] = useState(false);
 
   const locations = ["Colombo", "Kandy", "Galle", "Jaffna"];
-  const times = ["06:00-21:00", "21:00-06:00"];
+  const times = ["06:00", "21:00"];
+  const statuses = ["Active", "Absent", "Completed"];
 
   const handleDateClick = (info: DateClickArg) => {
     setSelectedDate(info.dateStr);
     setOpen(true);
   };
 
-  // Load rows when popup opens for a date
+  // Load officers rows when popup opens for a date
   useEffect(() => {
     if (!open || !selectedDate) return;
 
@@ -65,8 +66,8 @@ function DutyManagement() {
     const payload: DutyCreatePayload[] = rows
       .filter((r) => r.location && r.datetime)
       .map((r) => ({
-        assignedOfficer: r.officerId,
-        datetime: r.datetime,
+        officerId: r.officerId,
+        date: r.datetime,
         duration: r.duration ?? 240,
         taskType: r.taskType ?? "General",
         status: r.status || "Active",
@@ -88,6 +89,16 @@ function DutyManagement() {
       setRows(updated);
 
       alert("Duties saved successfully!");
+    } catch (err: any) {
+      console.error("Save duties failed:", err);
+
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data ||
+        err?.message ||
+        "Unknown error";
+
+      alert("Save failed: " + msg);
     } finally {
       setLoading(false);
     }
@@ -170,12 +181,18 @@ function DutyManagement() {
 
                   {/* Status */}
                   <td className="p-2 border">
-                    <input
+                    <select
                       className="w-full border rounded px-2 py-1"
-                      placeholder="Absent / ACTIVE"
-                      value={r.status}
+                      value={r.status || ""}
                       onChange={(e) => updateRow(i, "status", e.target.value)}
-                    />
+                    >
+                      <option value="">Select Status</option>
+                      {statuses.map((st) => (
+                        <option key={st} value={st}>
+                          {st}
+                        </option>
+                      ))}
+                    </select>
                   </td>
 
                   {/* Description */}
