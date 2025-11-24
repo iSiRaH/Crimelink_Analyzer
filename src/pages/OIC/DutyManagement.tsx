@@ -32,6 +32,10 @@ function DutyManagement() {
     dutyService
       .getOfficerRowsByDate(selectedDate)
       .then(setRows)
+      .catch((error) => {
+        console.error("Failed to load officers:", error);
+        alert("Failed to load officers. Please try again.");
+      })
       .finally(() => setLoading(false));
   }, [open, selectedDate]);
 
