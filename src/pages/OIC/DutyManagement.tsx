@@ -17,14 +17,16 @@ function DutyManagement() {
   const [loading, setLoading] = useState(false);
 
   const locations = ["Colombo", "Kandy", "Galle", "Jaffna"];
-  const times = ["06:00-21:00", "21:00-06:00"];
+  const times = ["06:00", "21:00"];
+  const statuses = ["Active", "Absent", "Completed"];
 
+  // when user clicks calendar date
   const handleDateClick = (info: DateClickArg) => {
     setSelectedDate(info.dateStr);
     setOpen(true);
   };
 
-  // Load rows when popup opens for a date
+  // Load officers rows when popup opens for a date
   useEffect(() => {
     if (!open || !selectedDate) return;
 
@@ -35,7 +37,7 @@ function DutyManagement() {
       .finally(() => setLoading(false));
   }, [open, selectedDate]);
 
-  // update row state
+  // update any row field
   const updateRow = (
     index: number,
     key: keyof OfficerDutyRow,
@@ -48,18 +50,22 @@ function DutyManagement() {
     });
   };
 
+  // save duties
   const handleAddDuties = async () => {
+    // ✅ build payload matching backend DutyScheduleRequest
     const payload: DutyCreatePayload[] = rows
-      .filter((r) => r.location && r.datetime)
+      .filter((r) => r.location && r.datetime) // only filled rows
       .map((r) => ({
-        assignedOfficer: r.officerId,
-        datetime: r.datetime,
+        officerId: r.officerId,                 // ✅ FIX: backend expects officerId
+        datetime: r.datetime!,
         duration: r.duration ?? 240,
         taskType: r.taskType ?? "General",
-        status: r.status || "Active",
-        location: r.location,
-        description: r.description || "",
+        status: r.status?.trim() || "Active",
+        location: r.location!,
+        description: r.description?.trim() || "",
       }));
+
+    console.log("Saving payload ->", payload);
 
     if (payload.length === 0) {
       alert("Please select Location and Time for at least one officer.");
@@ -75,6 +81,16 @@ function DutyManagement() {
       setRows(updated);
 
       alert("Duties saved successfully!");
+    } catch (err: any) {
+      console.error("Save duties failed:", err);
+
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data ||
+        err?.message ||
+        "Unknown error";
+
+      alert("Save failed: " + msg);
     } finally {
       setLoading(false);
     }
@@ -82,6 +98,7 @@ function DutyManagement() {
 
   return (
     <>
+      {/* Calendar */}
       <div className="flex-1 p-5 overflow-y-auto">
         <FullCalendar
           height="auto"
@@ -93,6 +110,7 @@ function DutyManagement() {
         />
       </div>
 
+      {/* Popup */}
       <DutyPopupModel open={open} onClose={() => setOpen(false)}>
         <h2 className="text-xl font-semibold mb-4">
           Details for {selectedDate}
@@ -122,7 +140,9 @@ function DutyManagement() {
                   <select
                     className="w-full border rounded px-2 py-1"
                     value={r.location}
-                    onChange={(e) => updateRow(i, "location", e.target.value)}
+                    onChange={(e) =>
+                      updateRow(i, "location", e.target.value)
+                    }
                   >
                     <option value="">Select Location</option>
                     {locations.map((loc) => (
@@ -156,13 +176,19 @@ function DutyManagement() {
                 </td>
 
                 {/* Status */}
-                <td className="p-2 border">
-                  <input
+                    <td className="p-2 border">
+                  <select
                     className="w-full border rounded px-2 py-1"
-                    placeholder="Absent / ACTIVE"
                     value={r.status}
                     onChange={(e) => updateRow(i, "status", e.target.value)}
-                  />
+                  >
+                    <option value="">Select Status</option>
+                    {statuses.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
                 </td>
 
                 {/* Description */}
@@ -189,6 +215,7 @@ function DutyManagement() {
           </tbody>
         </table>
 
+        {/* Buttons */}
         <div className="flex gap-3">
           <button
             onClick={handleAddDuties}
@@ -211,4 +238,3 @@ function DutyManagement() {
 }
 
 export default DutyManagement;
-
