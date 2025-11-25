@@ -1,4 +1,4 @@
-s// src/services/api.ts (or wherever you keep it)
+// src/services/api.ts (or wherever you keep it)
 
 import axios, {
   AxiosError,
