@@ -1,5 +1,5 @@
-import { MdErrorOutline } from "react-icons/md";
 import bgImage from "../assets/bgImage.png";
+import { BugPlay } from "lucide-react";
 
 function NotFound() {
   return (
@@ -9,7 +9,7 @@ function NotFound() {
         className="flex flex-col items-center justify-center w-full min-h-screen bg-repeat bg-current"
       >
         <div className="flex flex-col gap-3 w-fit items-center bg-slate-800 p-8 rounded-3xl shadow-[0_0_40px_4px_rgba(0,0,0,0.15)] shadow-blue-900/50">
-          <MdErrorOutline size={80} color="red" />
+          <BugPlay size={80} color="red" />
           <p className="text-5xl font-bold text-red-600 text">404</p>
           <p className="text-xl font-medium text-white">Page Not Found</p>
           <p className="text-center text-white max-w-md mt-3">
