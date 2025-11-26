@@ -1,3 +1,4 @@
+// src/pages/OIC/DutyManagement.tsx
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
@@ -17,42 +18,26 @@ function DutyManagement() {
 
   const locations = ["Colombo", "Kandy", "Galle", "Jaffna"];
   const times = ["06:00", "21:00"];
+  const statuses = ["Active", "Absent", "Completed"];
 
+  // when user clicks calendar date
   const handleDateClick = (info: DateClickArg) => {
     setSelectedDate(info.dateStr);
     setOpen(true);
   };
 
-  // Load rows when popup opens for a date
+  // Load officers rows when popup opens for a date
   useEffect(() => {
     if (!open || !selectedDate) return;
-
-    let isActive = true;
 
     setLoading(true);
     dutyService
       .getOfficerRowsByDate(selectedDate)
-      .then((data) => {
-        if (isActive) {
-          setRows(data);
-        }
-      })
-      .catch((error) => {
-        if (isActive) {
-          console.error("Failed to load officers:", error);
-          alert("Failed to load officers. Please try again.");
-        }
-      })
-      .finally(() => {
-        if (isActive) setLoading(false);
-      });
-
-    return () => {
-      isActive = false;
-    };
+      .then(setRows)
+      .finally(() => setLoading(false));
   }, [open, selectedDate]);
 
-  // update row state
+  // update any row field
   const updateRow = (index: number, key: keyof OfficerDutyRow, value: any) => {
     setRows((prev) => {
       const copy = [...prev];
@@ -61,18 +46,23 @@ function DutyManagement() {
     });
   };
 
+  // save duties
   const handleAddDuties = async () => {
+    // ✅ build payload matching backend DutyScheduleRequest
     const payload: DutyCreatePayload[] = rows
-      .filter((r) => r.location && r.datetime)
+      .filter((r) => r.location && r.datetime) // only filled rows
       .map((r) => ({
-        assignedOfficer: r.officerId,
-        datetime: r.datetime,
+        officerId: r.officerId, // ✅ FIX: backend expects officerId
+        date: r.datetime!,
         duration: r.duration ?? 240,
         taskType: r.taskType ?? "General",
-        status: r.status || "Active",
-        location: r.location,
-        description: r.description || "",
+        status: r.status?.trim() || "Active",
+        location: r.location!,
+        description: r.description?.trim() || "",
+        timeRange: r.datetime!.substring(11, 16),
       }));
+
+    console.log("Saving payload ->", payload);
 
     if (payload.length === 0) {
       alert("Please select Location and Time for at least one officer.");
@@ -88,6 +78,16 @@ function DutyManagement() {
       setRows(updated);
 
       alert("Duties saved successfully!");
+    } catch (err: any) {
+      console.error("Save duties failed:", err);
+
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data ||
+        err?.message ||
+        "Unknown error";
+
+      alert("Save failed: " + msg);
     } finally {
       setLoading(false);
     }
@@ -95,6 +95,7 @@ function DutyManagement() {
 
   return (
     <>
+      {/* Calendar */}
       <div className="flex-1 p-5 overflow-y-auto">
         <FullCalendar
           height="auto"
@@ -106,6 +107,7 @@ function DutyManagement() {
         />
       </div>
 
+      {/* Popup */}
       <DutyPopupModel open={open} onClose={() => setOpen(false)}>
         <h2 className="text-xl font-semibold mb-4">
           Details for {selectedDate}
@@ -113,101 +115,103 @@ function DutyManagement() {
 
         {loading && <p className="mb-3">Loading officers...</p>}
 
-        <div className="max-h-96 overflow-y-auto block">
-          <table className="w-full border text-sm">
-            <thead>
-              <tr className="bg-gray-200">
-                <th className="p-2 border">Name</th>
-                <th className="p-2 border">Location</th>
-                <th className="p-2 border">Time</th>
-                <th className="p-2 border">Status</th>
-                <th className="p-2 border">Description</th>
+        <table className="w-full border mb-5 text-sm">
+          <thead>
+            <tr className="bg-gray-200">
+              <th className="p-2 border">Name</th>
+              <th className="p-2 border">Location</th>
+              <th className="p-2 border">Time</th>
+              <th className="p-2 border">Status</th>
+              <th className="p-2 border">Description</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {rows.map((r, i) => (
+              <tr key={`${r.officerId}-${i}`}>
+                {/* Name auto-load */}
+                <td className="p-2 border font-medium">{r.officerName}</td>
+
+                {/* Location */}
+                <td className="p-2 border">
+                  <select
+                    className="w-full border rounded px-2 py-1"
+                    value={r.location}
+                    onChange={(e) => updateRow(i, "location", e.target.value)}
+                  >
+                    <option value="">Select Location</option>
+                    {locations.map((loc) => (
+                      <option key={loc} value={loc}>
+                        {loc}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+
+                {/* Time */}
+                <td className="p-2 border">
+                  <select
+                    className="w-full border rounded px-2 py-1"
+                    value={r.datetime ? r.datetime.substring(11, 16) : ""}
+                    onChange={(e) =>
+                      updateRow(
+                        i,
+                        "datetime",
+                        `${selectedDate}T${e.target.value}:00`
+                      )
+                    }
+                  >
+                    <option value="">Select Time</option>
+                    {times.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+
+                {/* Status */}
+                <td className="p-2 border">
+                  <select
+                    className="w-full border rounded px-2 py-1"
+                    value={r.status || ""}
+                    onChange={(e) => updateRow(i, "status", e.target.value)}
+                  >
+                    <option value="">Select Status</option>
+                    {statuses.map((st) => (
+                      <option key={st} value={st}>
+                        {st}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+
+                {/* Description */}
+                <td className="p-2 border">
+                  <input
+                    className="w-full border rounded px-2 py-1"
+                    placeholder="Description"
+                    value={r.description}
+                    onChange={(e) =>
+                      updateRow(i, "description", e.target.value)
+                    }
+                  />
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {rows.map((r, i) => (
-                <tr key={`${r.officerId}-${i}`}>
-                  {/* Name auto-load */}
-                  <td className="p-2 border font-medium">{r.officerName}</td>
+            ))}
 
-                  {/* Location */}
-                  <td className="p-2 border">
-                    <select
-                      className="w-full border rounded px-2 py-1"
-                      value={r.location}
-                      onChange={(e) => updateRow(i, "location", e.target.value)}
-                    >
-                      <option value="">Select Location</option>
-                      {locations.map((loc) => (
-                        <option key={loc} value={loc}>
-                          {loc}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
+            {rows.length === 0 && !loading && (
+              <tr>
+                <td colSpan={5} className="p-3 text-center">
+                  No active Field Officers found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
 
-                  {/* Time */}
-                  <td className="p-2 border">
-                    <select
-                      className="w-full border rounded px-2 py-1"
-                      value={
-                        r.datetime
-                          ? r.datetime.split("T")[1]?.substring(0, 5)
-                          : ""
-                      }
-                      onChange={(e) =>
-                        updateRow(
-                          i,
-                          "datetime",
-                          `${selectedDate}T${e.target.value}:00`
-                        )
-                      }
-                    >
-                      <option value="">Select Time</option>
-                      {times.map((t) => (
-                        <option key={t} value={t}>
-                          {t}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-
-                  {/* Status */}
-                  <td className="p-2 border">
-                    <input
-                      className="w-full border rounded px-2 py-1"
-                      placeholder="Absent / ACTIVE"
-                      value={r.status}
-                      onChange={(e) => updateRow(i, "status", e.target.value)}
-                    />
-                  </td>
-
-                  {/* Description */}
-                  <td className="p-2 border">
-                    <input
-                      className="w-full border rounded px-2 py-1"
-                      placeholder="Description"
-                      value={r.description}
-                      onChange={(e) =>
-                        updateRow(i, "description", e.target.value)
-                      }
-                    />
-                  </td>
-                </tr>
-              ))}
-
-              {rows.length === 0 && !loading && (
-                <tr>
-                  <td colSpan={5} className="p-3 text-center">
-                    No active Field Officers found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="flex gap-3 mt-5">
+        {/* Buttons */}
+        <div className="flex gap-3">
           <button
             onClick={handleAddDuties}
             disabled={loading}

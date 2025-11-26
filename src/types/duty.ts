@@ -16,12 +16,13 @@ export type OfficerDutyRow = {
 };
 
 export type DutyCreatePayload = {
-  assignedOfficer: number;
-  datetime: string;
+  officerId: number;
+  date: string;
   duration: number;
   taskType: string;
   status: string;
   location: string;
   description: string;
+  timeRange: string;
 };
 
