@@ -14,7 +14,7 @@ function Investigator() {
     {name:"Dashboard", icon: FaChartBar, path:"dashboard"},
     {name:"Call Analysis", icon: MdWifiCalling3, path:"call-analysis"},
     {name:"Facial Recognition", icon: ScanSearch, path:"facial-recognition"},
-    {name:"Notes", icon: FaMapLocationDot, path:"notes"},
+    {name:"Safety Zone", icon: FaMapLocationDot, path:"safety-zone"},
   ];
 
   return (

@@ -22,7 +22,7 @@ import ManageProfiles from "./pages/OIC/ManageProfiles";
 import InvestigatorDashboard from "./pages/Investigator/InvestigatorDashboard";
 import CallAnalysis from "./pages/Investigator/CallAnalysis";
 import FacialRecognition from "./pages/Investigator/FacialRecognition";
-import Notes from "./pages/Investigator/Notes";
+import SafetyZone from "./pages/Investigator/SafetyZone";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
@@ -87,7 +87,7 @@ function AppContent() {
         <Route path="dashboard" element={<InvestigatorDashboard />} />
         <Route path="call-analysis" element={<CallAnalysis />} />
         <Route path="facial-recognition" element={<FacialRecognition />} />
-        <Route path="notes" element={<Notes />} />
+        <Route path="safety-zone" element={<SafetyZone />} />
       </Route>
 
       {/* Original protected route */}

@@ -16,7 +16,7 @@ function DutyManagement() {
   const [loading, setLoading] = useState(false);
 
   const locations = ["Colombo", "Kandy", "Galle", "Jaffna"];
-  const times = ["06:00-21:00", "21:00-06:00"];
+  const times = ["06:00", "21:00"];
 
   const handleDateClick = (info: DateClickArg) => {
     setSelectedDate(info.dateStr);
@@ -150,7 +150,11 @@ function DutyManagement() {
                   <td className="p-2 border">
                     <select
                       className="w-full border rounded px-2 py-1"
-                      value={r.datetime ? r.datetime.substring(11, 16) : ""}
+                      value={
+                        r.datetime
+                          ? r.datetime.split("T")[1]?.substring(0, 5)
+                          : ""
+                      }
                       onChange={(e) =>
                         updateRow(
                           i,
