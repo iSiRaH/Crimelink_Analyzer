@@ -32,7 +32,7 @@ const refreshClient = axios.create({
 });
 
 // Public endpoints that don't require authentication
-const publicEndpoints = ["/auth/", "/health", "/test", "/database/"];
+const publicEndpoints = ["/auth/", "/health", "/test", "/database/", "/admin/health"];
 
 // -------------------- REQUEST INTERCEPTOR --------------------
 api.interceptors.request.use(

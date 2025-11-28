@@ -24,6 +24,12 @@ import CallAnalysis from "./pages/Investigator/CallAnalysis";
 import FacialRecognition from "./pages/Investigator/FacialRecognition";
 import SafetyZone from "./pages/Investigator/SafetyZone";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
+import UserManagement from "./pages/Admin/UserManagement";
+import BackupRestore from "./pages/Admin/BackupRestore";
+import AuditLogs from "./pages/Admin/AuditLogs";
+import SystemSettings from "./pages/Admin/SystemSettings";
+import Reports from "./pages/Admin/Reports";
+import SystemHealth from "./pages/Admin/SystemHealth";
 import NotFound from "./pages/NotFound";
 
 function AppContent() {
@@ -55,6 +61,12 @@ function AppContent() {
       >
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<AdminDashboard />} />
+        <Route path="user-management" element={<UserManagement />} />
+        <Route path="backup-restore" element={<BackupRestore />} />
+        <Route path="audit-logs" element={<AuditLogs />} />
+        <Route path="system-settings" element={<SystemSettings />} />
+        <Route path="reports" element={<Reports />} />
+        <Route path="system-health" element={<SystemHealth />} />
       </Route>
 
       {/* OIC page routing */}
