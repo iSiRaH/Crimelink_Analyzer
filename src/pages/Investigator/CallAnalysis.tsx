@@ -13,11 +13,29 @@ interface AnalysisResult {
   time_pattern: { [key: string]: number };
   common_contacts: Array<{ phone: string; count: number }>;
   network_graph: {
-    nodes: Array<{ id: string; label: string; type: string; size: number; centrality: number }>;
-    edges: Array<{ source: string; target: string; weight: number; label: string }>;
+    nodes: Array<{ 
+      id: string; 
+      label: string; 
+      type: string; 
+      size: number; 
+      centrality: number;
+      color?: string;
+      incoming_count?: number;
+      outgoing_count?: number;
+    }>;
+    edges: Array<{ 
+      source: string; 
+      target: string; 
+      weight: number; 
+      label: string;
+      type?: string;
+      color?: string;
+      arrows?: string;
+    }>;
     total_nodes: number;
     total_edges: number;
     density: number;
+    main_number?: string;
   };
   criminal_matches: Array<{
     phone: string;
@@ -358,6 +376,170 @@ function CallAnalysis() {
                 })}
             </div>
           </div>
+
+          {/* Network Visualization */}
+          {result.network_graph.nodes.length > 0 && (
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-xl font-bold text-gray-800 mb-4">Communication Network Web</h2>
+              <div className="mb-4 flex gap-4 text-sm flex-wrap">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-blue-600 rounded-full"></div>
+                  <span>Main Number (Center): {result.network_graph.main_number}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-green-600 rounded-full"></div>
+                  <span>Incoming Calls</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-red-600 rounded-full"></div>
+                  <span>Outgoing Calls</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-purple-600 rounded-full"></div>
+                  <span>Both Directions</span>
+                </div>
+              </div>
+              
+              {/* SVG Network Visualization */}
+              <div className="border rounded-lg p-4 bg-gray-50 overflow-x-auto">
+                <svg width="800" height="600" viewBox="0 0 800 600" className="mx-auto">
+                  <defs>
+                    <marker id="arrowIncoming" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+                      <path d="M0,0 L0,6 L9,3 z" fill="#10b981" />
+                    </marker>
+                    <marker id="arrowOutgoing" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+                      <path d="M0,0 L0,6 L9,3 z" fill="#ef4444" />
+                    </marker>
+                  </defs>
+                  
+                  {/* Draw edges first (behind nodes) */}
+                  {result.network_graph.edges.map((edge, index) => {
+                    const sourceNode = result.network_graph.nodes.find(n => n.id === edge.source);
+                    const targetNode = result.network_graph.nodes.find(n => n.id === edge.target);
+                    
+                    if (!sourceNode || !targetNode) return null;
+                    
+                    // Calculate positions for circular layout
+                    const mainIndex = result.network_graph.nodes.findIndex(n => n.type === 'main');
+                    const sourceIndex = result.network_graph.nodes.findIndex(n => n.id === edge.source);
+                    const targetIndex = result.network_graph.nodes.findIndex(n => n.id === edge.target);
+                    
+                    let x1, y1, x2, y2;
+                    
+                    if (sourceIndex === mainIndex) {
+                      // Main node at center
+                      x1 = 400;
+                      y1 = 300;
+                      const angle = (2 * Math.PI * (targetIndex - 1)) / (result.network_graph.nodes.length - 1);
+                      const radius = 200;
+                      x2 = 400 + radius * Math.cos(angle);
+                      y2 = 300 + radius * Math.sin(angle);
+                    } else if (targetIndex === mainIndex) {
+                      // Main node at center
+                      x2 = 400;
+                      y2 = 300;
+                      const angle = (2 * Math.PI * (sourceIndex - 1)) / (result.network_graph.nodes.length - 1);
+                      const radius = 200;
+                      x1 = 400 + radius * Math.cos(angle);
+                      y1 = 300 + radius * Math.sin(angle);
+                    } else {
+                      return null;
+                    }
+                    
+                    return (
+                      <line 
+                        key={`edge-${index}`}
+                        x1={x1} y1={y1} 
+                        x2={x2} y2={y2}
+                        stroke={edge.color}
+                        strokeWidth={Math.min(edge.weight / 2, 4)}
+                        opacity="0.6"
+                        markerEnd={edge.type === 'incoming' ? 'url(#arrowIncoming)' : 'url(#arrowOutgoing)'}
+                      />
+                    );
+                  })}
+                  
+                  {/* Draw nodes */}
+                  {result.network_graph.nodes.map((node, index) => {
+                    let x, y;
+                    
+                    if (node.type === 'main') {
+                      // Main node at center
+                      x = 400;
+                      y = 300;
+                    } else {
+                      // Other nodes in circular layout
+                      const total = result.network_graph.nodes.length - 1;
+                      const angle = (2 * Math.PI * (index - 1)) / total;
+                      const radius = 200;
+                      x = 400 + radius * Math.cos(angle);
+                      y = 300 + radius * Math.sin(angle);
+                    }
+                    
+                    return (
+                      <g key={node.id}>
+                        {/* Node circle */}
+                        <circle 
+                          cx={x} cy={y} 
+                          r={node.size / 2} 
+                          fill={node.color}
+                          stroke="white"
+                          strokeWidth={node.type === 'main' ? 3 : 2}
+                        />
+                        
+                        {/* Phone number label */}
+                        <text 
+                          x={x} y={y + (node.size / 2) + 15} 
+                          textAnchor="middle" 
+                          fontSize="11"
+                          fill="#374151"
+                          fontWeight={node.type === 'main' ? 'bold' : 'normal'}
+                        >
+                          {node.label}
+                        </text>
+                        
+                        {/* Call counts for non-main nodes */}
+                        {node.type !== 'main' && (node.incoming_count || node.outgoing_count) && (
+                          <text 
+                            x={x} y={y + (node.size / 2) + 28} 
+                            textAnchor="middle" 
+                            fontSize="9"
+                            fill="#6b7280"
+                          >
+                            {node.incoming_count && node.incoming_count > 0 && `↓${node.incoming_count}`}
+                            {node.incoming_count && node.incoming_count > 0 && node.outgoing_count && node.outgoing_count > 0 && ' '}
+                            {node.outgoing_count && node.outgoing_count > 0 && `↑${node.outgoing_count}`}
+                          </text>
+                        )}
+                        
+                        {/* Main label */}
+                        {node.type === 'main' && (
+                          <text 
+                            x={x} y={y + 5} 
+                            textAnchor="middle" 
+                            fontSize="10"
+                            fill="white"
+                            fontWeight="bold"
+                          >
+                            MAIN
+                          </text>
+                        )}
+                      </g>
+                    );
+                  })}
+                </svg>
+              </div>
+              
+              <div className="mt-4 text-sm text-gray-600 space-y-1">
+                <p><strong>Legend:</strong></p>
+                <p>• The main number (MSISON: {result.network_graph.main_number}) is at the center</p>
+                <p>• Green lines = Incoming calls (from other numbers TO main)</p>
+                <p>• Red lines = Outgoing calls (from main TO other numbers)</p>
+                <p>• Line thickness indicates call frequency</p>
+                <p>• Numbers below contacts show: ↓ incoming count, ↑ outgoing count</p>
+              </div>
+            </div>
+          )}
 
           {/* Success Message */}
           <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-2 text-green-700">

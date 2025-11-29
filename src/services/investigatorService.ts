@@ -10,11 +10,8 @@ export const investigatorService = {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await api.post('/investigator/call-analysis/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    // Don't set Content-Type header - let Axios automatically handle multipart/form-data
+    const response = await api.post('/investigator/call-analysis/upload', formData);
 
     return response.data;
   },
