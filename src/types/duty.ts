@@ -9,6 +9,7 @@ export type OfficerDutyRow = {
   datetime: string; // full ISO string "2025-11-25T08:00:00"
   status: string;
   description: string;
+  timeRange?: string;
 
   // optional for save
   duration?: number;

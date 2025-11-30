@@ -17,7 +17,10 @@ function DutyManagement() {
   const [loading, setLoading] = useState(false);
 
   const locations = ["Colombo", "Kandy", "Galle", "Jaffna"];
-  const times = ["06:00", "21:00"];
+  const timeRanges = [
+  { value: "06:00-21:00", label: "06:00 - 21:00", start: "06:00" },
+  { value: "21:00-06:00", label: "21:00 - 06:00", start: "21:00" },
+];
   const statuses = ["Active", "Absent", "Completed"];
 
   // when user clicks calendar date
@@ -50,17 +53,18 @@ function DutyManagement() {
   const handleAddDuties = async () => {
     // ✅ build payload matching backend DutyScheduleRequest
     const payload: DutyCreatePayload[] = rows
-      .filter((r) => r.location && r.datetime) // only filled rows
-      .map((r) => ({
-        officerId: r.officerId, // ✅ FIX: backend expects officerId
-        date: r.datetime!,
-        duration: r.duration ?? 240,
-        taskType: r.taskType ?? "General",
-        status: r.status?.trim() || "Active",
-        location: r.location!,
-        description: r.description?.trim() || "",
-        timeRange: r.datetime!.substring(11, 16),
-      }));
+  .filter((r) => r.location && r.timeRange) // 👈 require timeRange
+  .map((r) => ({
+    officerId: r.officerId,
+    date: r.datetime || `${selectedDate}T00:00:00`, // or send selectedDate separately if backend uses LocalDate
+    duration: r.duration ?? 240,
+    taskType: r.taskType ?? "General",
+    status: r.status?.trim() || "Active",
+    location: r.location!,
+    description: r.description?.trim() || "",
+    timeRange: r.timeRange!, // 👈 use the selected range string
+  }));
+
 
     console.log("Saving payload ->", payload);
 
@@ -153,23 +157,31 @@ function DutyManagement() {
                   <td className="p-2 border">
                     <select
                       className="w-full border rounded px-2 py-1"
-                      value={r.datetime ? r.datetime.substring(11, 16) : ""}
-                      onChange={(e) =>
-                        updateRow(
-                          i,
-                          "datetime",
-                          `${selectedDate}T${e.target.value}:00`
-                        )
-                      }
-                    >
-                      <option value="">Select Time</option>
-                      {times.map((t) => (
-                        <option key={t} value={t}>
-                          {t}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
+                      value={r.timeRange || ""}
+                      onChange={(e) => {
+                      const selected = timeRanges.find(tr => tr.value === e.target.value);
+
+                  if (!selected) return;
+
+                  // save timeRange string (for DB time_range)
+                  updateRow(i, "timeRange", selected.value);
+
+                  // if you still need datetime, use the *start* time
+                  updateRow(
+                    i,
+                  "datetime",
+        `         ${selectedDate}T${selected.start}:00`
+                  );
+                }}
+            >
+                <option value="">Select Time Range</option>
+                {timeRanges.map((tr) => (
+                    <option key={tr.value} value={tr.value}>
+                    {tr.label}
+                </option>
+              ))}
+            </select>
+            </td>
 
                   {/* Status */}
                   <td className="p-2 border">
