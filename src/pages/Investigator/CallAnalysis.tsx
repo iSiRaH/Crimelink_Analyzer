@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import cytoscape from 'cytoscape';
-import { FaUpload, FaFileAlt, FaNetworkWired, FaExclamationTriangle, FaSpinner, FaCheckCircle } from 'react-icons/fa';
+import { FaUpload, FaFileAlt, FaNetworkWired, FaExclamationTriangle, FaSpinner, FaTrash } from 'react-icons/fa';
 
 interface GraphData {
   nodes: Array<{ 
@@ -43,16 +43,17 @@ interface AnalysisResult {
   risk_score: number;
 }
 
+interface CombinedGraphData {
+  nodes: cytoscape.NodeDefinition[];
+  edges: cytoscape.EdgeDefinition[];
+}
+
 function CallAnalysis() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [results, setResults] = useState<AnalysisResult[]>([]);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const incomingGraphRef = useRef<HTMLDivElement>(null);
-  const outgoingGraphRef = useRef<HTMLDivElement>(null);
-  const cyIncoming = useRef<cytoscape.Core | null>(null);
-  const cyOutgoing = useRef<cytoscape.Core | null>(null);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -63,7 +64,6 @@ function CallAnalysis() {
       }
       setSelectedFile(file);
       setError(null);
-      setResult(null);
     }
   };
 
@@ -73,8 +73,6 @@ function CallAnalysis() {
       return;
     }
 
-    // Clear previous results completely before starting new upload
-    setResult(null);
     setUploading(true);
     setError(null);
 
@@ -94,12 +92,13 @@ function CallAnalysis() {
 
       const data = await response.json();
       
-      console.log('Analysis response:', data); // Debug log
+      console.log('Analysis response:', data);
       
       if (data.analyses && data.analyses.length > 0) {
         const newResult = data.analyses[0];
-        console.log('Setting new result with main number:', newResult.main_number); // Debug log
-        setResult(newResult);
+        console.log('Adding result with main number:', newResult.main_number);
+        setResults(prev => [...prev, newResult]);
+        setSelectedFile(null);
       } else {
         throw new Error('No analysis results returned');
       }
@@ -112,221 +111,189 @@ function CallAnalysis() {
     }
   };
 
-  // Initialize Cytoscape graphs when result is available
-  useEffect(() => {
-    if (!result || !incomingGraphRef.current || !outgoingGraphRef.current) return;
+  const handleClearAll = () => {
+    setResults([]);
+    setSelectedFile(null);
+    setError(null);
+  };
 
-    // Destroy existing instances and clear containers
-    if (cyIncoming.current) {
-      cyIncoming.current.destroy();
-      cyIncoming.current = null;
-    }
-    if (cyOutgoing.current) {
-      cyOutgoing.current.destroy();
-      cyOutgoing.current = null;
-    }
+  // Memoized combined graph data - merges all PDFs into single incoming/outgoing graphs
+  const combinedGraphs = useMemo(() => {
+    if (results.length === 0) return null;
 
-    // Clear the containers
-    if (incomingGraphRef.current) {
-      incomingGraphRef.current.innerHTML = '';
-    }
-    if (outgoingGraphRef.current) {
-      outgoingGraphRef.current.innerHTML = '';
-    }
+    // Track all contacts across PDFs to identify shared contacts
+    const incomingContactCounts = new Map<string, Set<string>>(); // contact -> Set of main_numbers
+    const outgoingContactCounts = new Map<string, Set<string>>();
 
-    // Small delay to ensure DOM is cleared
-    setTimeout(() => {
-      if (!incomingGraphRef.current || !outgoingGraphRef.current || !result) return;
-
-      // Create Incoming Graph
-      cyIncoming.current = cytoscape({
-        container: incomingGraphRef.current,
-        elements: [
-        // Nodes
-        ...result.incoming_graph.nodes.map(node => ({
-          data: {
-            id: node.id,
-            label: node.label,
-            type: node.type,
-            callCount: node.call_count || 0
+    // First pass: Count how many different main numbers each contact appears with
+    results.forEach(result => {
+      result.incoming_graph.edges.forEach(edge => {
+        const contact = edge.source; // Who called the main number
+        if (contact !== result.main_number) {
+          if (!incomingContactCounts.has(contact)) {
+            incomingContactCounts.set(contact, new Set());
           }
-        })),
-        // Edges
-        ...result.incoming_graph.edges.map(edge => ({
-          data: {
-            source: edge.source,
-            target: edge.target,
-            label: `${edge.call_count}`,
-            callCount: edge.call_count
-          }
-        }))
-      ],
-      style: [
-        {
-          selector: 'node',
-          style: {
-            'label': 'data(label)',
-            'text-valign': 'center',
-            'text-halign': 'center',
-            'font-size': '10px',
-            'color': '#fff',
-            'text-outline-color': '#2563eb',
-            'text-outline-width': '2px',
-            'background-color': '#22c55e',
-            'width': '40px',
-            'height': '40px'
-          }
-        },
-        {
-          selector: 'node[type="main"]',
-          style: {
-            'background-color': '#2563eb',
-            'width': '60px',
-            'height': '60px',
-            'font-size': '12px',
-            'font-weight': 'bold',
-            'border-width': '3px',
-            'border-color': '#1e40af'
-          }
-        },
-        {
-          selector: 'edge',
-          style: {
-            'width': 'data(callCount)',
-            'line-color': '#22c55e',
-            'target-arrow-color': '#22c55e',
-            'target-arrow-shape': 'triangle',
-            'curve-style': 'bezier',
-            'label': 'data(label)',
-            'font-size': '9px',
-            'text-background-color': '#fff',
-            'text-background-opacity': 0.8,
-            'text-background-padding': '2px'
-          }
+          incomingContactCounts.get(contact)!.add(result.main_number);
         }
-      ],
-      layout: {
-        name: 'concentric',
-        concentric: (node: cytoscape.NodeSingular) => node.data('type') === 'main' ? 100 : 0,
-        levelWidth: () => 1,
-        minNodeSpacing: 80
-      }
+      });
+
+      result.outgoing_graph.edges.forEach(edge => {
+        const contact = edge.target; // Who was called by main number
+        if (contact !== result.main_number) {
+          if (!outgoingContactCounts.has(contact)) {
+            outgoingContactCounts.set(contact, new Set());
+          }
+          outgoingContactCounts.get(contact)!.add(result.main_number);
+        }
+      });
     });
 
-    // Create Outgoing Graph
-    cyOutgoing.current = cytoscape({
-      container: outgoingGraphRef.current,
-      elements: [
-        // Nodes
-        ...result.outgoing_graph.nodes.map(node => ({
+    // Build combined incoming graph
+    const incomingNodes = new Map<string, cytoscape.NodeDefinition>();
+    const incomingEdges: cytoscape.EdgeDefinition[] = [];
+
+    results.forEach((result, pdfIndex) => {
+      // Add main number node with unique color per PDF
+      const mainNodeId = `main_${result.main_number}`;
+      if (!incomingNodes.has(mainNodeId)) {
+        incomingNodes.set(mainNodeId, {
           data: {
-            id: node.id,
-            label: node.label,
-            type: node.type,
-            callCount: node.call_count || 0
+            id: mainNodeId,
+            label: result.main_number.slice(-4), // Last 4 digits
+            fullNumber: result.main_number,
+            type: 'main',
+            pdfIndex,
+            pdfName: result.pdf_filename
           }
-        })),
-        // Edges
-        ...result.outgoing_graph.edges.map(edge => ({
-          data: {
-            source: edge.source,
-            target: edge.target,
-            label: `${edge.call_count}`,
-            callCount: edge.call_count
-          }
-        }))
-      ],
-      style: [
-        {
-          selector: 'node',
-          style: {
-            'label': 'data(label)',
-            'text-valign': 'center',
-            'text-halign': 'center',
-            'font-size': '10px',
-            'color': '#fff',
-            'text-outline-color': '#dc2626',
-            'text-outline-width': '2px',
-            'background-color': '#ef4444',
-            'width': '40px',
-            'height': '40px'
-          }
-        },
-        {
-          selector: 'node[type="main"]',
-          style: {
-            'background-color': '#2563eb',
-            'width': '60px',
-            'height': '60px',
-            'font-size': '12px',
-            'font-weight': 'bold',
-            'border-width': '3px',
-            'border-color': '#1e40af'
-          }
-        },
-        {
-          selector: 'edge',
-          style: {
-            'width': 'data(callCount)',
-            'line-color': '#ef4444',
-            'target-arrow-color': '#ef4444',
-            'target-arrow-shape': 'triangle',
-            'curve-style': 'bezier',
-            'label': 'data(label)',
-            'font-size': '9px',
-            'text-background-color': '#fff',
-            'text-background-opacity': 0.8,
-            'text-background-padding': '2px'
+        });
+      }
+
+      // Add contact nodes and edges
+      result.incoming_graph.nodes.forEach(node => {
+        if (node.type !== 'main') {
+          const contactId = `contact_${node.id}`;
+          const isShared = incomingContactCounts.get(node.id)!.size > 1;
+          
+          if (!incomingNodes.has(contactId)) {
+            incomingNodes.set(contactId, {
+              data: {
+                id: contactId,
+                label: node.label.slice(-4),
+                fullNumber: node.id,
+                type: isShared ? 'shared_contact' : 'contact',
+                callCount: node.call_count || 0,
+                sharedWith: Array.from(incomingContactCounts.get(node.id)!)
+              }
+            });
           }
         }
-      ],
-      layout: {
-        name: 'concentric',
-        concentric: (node: cytoscape.NodeSingular) => node.data('type') === 'main' ? 100 : 0,
-        levelWidth: () => 1,
-        minNodeSpacing: 80
-      }
-    });
-    }, 50);
+      });
 
-    // Cleanup
-    return () => {
-      if (cyIncoming.current) {
-        cyIncoming.current.destroy();
-        cyIncoming.current = null;
+      result.incoming_graph.edges.forEach(edge => {
+        const isShared = incomingContactCounts.get(edge.source)!.size > 1;
+        incomingEdges.push({
+          data: {
+            id: `edge_in_${edge.source}_${result.main_number}_${pdfIndex}`,
+            source: `contact_${edge.source}`,
+            target: mainNodeId,
+            label: `${edge.call_count}`,
+            callCount: edge.call_count,
+            edgeType: isShared ? 'shared' : 'normal',
+            pdfIndex
+          }
+        });
+      });
+    });
+
+    // Build combined outgoing graph
+    const outgoingNodes = new Map<string, cytoscape.NodeDefinition>();
+    const outgoingEdges: cytoscape.EdgeDefinition[] = [];
+
+    results.forEach((result, pdfIndex) => {
+      const mainNodeId = `main_${result.main_number}`;
+      if (!outgoingNodes.has(mainNodeId)) {
+        outgoingNodes.set(mainNodeId, {
+          data: {
+            id: mainNodeId,
+            label: result.main_number.slice(-4),
+            fullNumber: result.main_number,
+            type: 'main',
+            pdfIndex,
+            pdfName: result.pdf_filename
+          }
+        });
       }
-      if (cyOutgoing.current) {
-        cyOutgoing.current.destroy();
-        cyOutgoing.current = null;
+
+      result.outgoing_graph.nodes.forEach(node => {
+        if (node.type !== 'main') {
+          const contactId = `contact_${node.id}`;
+          const isShared = outgoingContactCounts.get(node.id)!.size > 1;
+          
+          if (!outgoingNodes.has(contactId)) {
+            outgoingNodes.set(contactId, {
+              data: {
+                id: contactId,
+                label: node.label.slice(-4),
+                fullNumber: node.id,
+                type: isShared ? 'shared_contact' : 'contact',
+                callCount: node.call_count || 0,
+                sharedWith: Array.from(outgoingContactCounts.get(node.id)!)
+              }
+            });
+          }
+        }
+      });
+
+      result.outgoing_graph.edges.forEach(edge => {
+        const isShared = outgoingContactCounts.get(edge.target)!.size > 1;
+        outgoingEdges.push({
+          data: {
+            id: `edge_out_${result.main_number}_${edge.target}_${pdfIndex}`,
+            source: mainNodeId,
+            target: `contact_${edge.target}`,
+            label: `${edge.call_count}`,
+            callCount: edge.call_count,
+            edgeType: isShared ? 'shared' : 'normal',
+            pdfIndex
+          }
+        });
+      });
+    });
+
+    return {
+      incoming: {
+        nodes: Array.from(incomingNodes.values()),
+        edges: incomingEdges
+      },
+      outgoing: {
+        nodes: Array.from(outgoingNodes.values()),
+        edges: outgoingEdges
       }
     };
-  }, [result]);
-
-  const getRiskColor = (score: number) => {
-    if (score >= 70) return 'text-red-600 bg-red-50';
-    if (score >= 40) return 'text-yellow-600 bg-yellow-50';
-    return 'text-green-600 bg-green-50';
-  };
-
-  const getRiskLabel = (score: number) => {
-    if (score >= 70) return 'High Risk';
-    if (score >= 40) return 'Medium Risk';
-    return 'Low Risk';
-  };
+  }, [results]);
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
       <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <FaNetworkWired className="text-3xl text-blue-600" />
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800">Call Record Analysis</h1>
-            <p className="text-gray-600">Upload PDF call records to analyze patterns and identify criminal connections</p>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <FaNetworkWired className="text-3xl text-blue-600" />
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">Call Record Analysis</h1>
+              <p className="text-gray-600">Upload PDF call records to analyze patterns</p>
+            </div>
           </div>
+          {results.length > 0 && (
+            <button
+              onClick={handleClearAll}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition flex items-center gap-2"
+            >
+              <FaTrash />
+              Clear All
+            </button>
+          )}
         </div>
 
-        {/* Upload Section */}
         <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
           <input
             type="file"
@@ -371,7 +338,7 @@ function CallAnalysis() {
                   {uploading ? (
                     <span className="flex items-center gap-2">
                       <FaSpinner className="animate-spin" />
-                      Uploading...
+                      Analyzing...
                     </span>
                   ) : (
                     'Analyze'
@@ -382,7 +349,6 @@ function CallAnalysis() {
           )}
         </div>
 
-        {/* Error Message */}
         {error && (
           <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700">
             <FaExclamationTriangle />
@@ -390,7 +356,6 @@ function CallAnalysis() {
           </div>
         )}
 
-        {/* Processing Status */}
         {uploading && (
           <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2 text-blue-700">
             <FaSpinner className="animate-spin" />
@@ -399,181 +364,388 @@ function CallAnalysis() {
         )}
       </div>
 
-      {/* Results Section */}
-      {result && (
-        <>
-          {/* Overview Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div className="bg-white rounded-lg shadow p-4">
-              <div className="text-gray-600 text-sm mb-1">Main Number</div>
-              <div className="text-xl font-bold text-blue-600">{result.main_number}</div>
-            </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <div className="text-gray-600 text-sm mb-1">Total Calls</div>
-              <div className="text-2xl font-bold text-gray-800">{result.total_calls}</div>
-            </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <div className="text-gray-600 text-sm mb-1">Incoming</div>
-              <div className="text-2xl font-bold text-green-600">{result.total_incoming}</div>
-            </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <div className="text-gray-600 text-sm mb-1">Outgoing</div>
-              <div className="text-2xl font-bold text-red-600">{result.total_outgoing}</div>
-            </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <div className="text-gray-600 text-sm mb-1">Risk Score</div>
-              <div className={`text-2xl font-bold ${getRiskColor(result.risk_score).split(' ')[0]}`}>
-                {result.risk_score}/100
+      {results.length > 0 && combinedGraphs && (
+        <div className="space-y-6">
+          {/* Summary Stats */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">Analysis Summary</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center p-4 bg-blue-50 rounded-lg">
+                <div className="text-2xl font-bold text-blue-600">{results.length}</div>
+                <div className="text-sm text-gray-600">PDFs Analyzed</div>
               </div>
-              <div className={`text-xs mt-1 px-2 py-1 rounded inline-block ${getRiskColor(result.risk_score)}`}>
-                {getRiskLabel(result.risk_score)}
+              <div className="text-center p-4 bg-gray-50 rounded-lg">
+                <div className="text-2xl font-bold text-gray-800">
+                  {results.reduce((sum, r) => sum + r.total_calls, 0)}
+                </div>
+                <div className="text-sm text-gray-600">Total Calls</div>
+              </div>
+              <div className="text-center p-4 bg-green-50 rounded-lg">
+                <div className="text-2xl font-bold text-green-600">
+                  {results.reduce((sum, r) => sum + r.total_incoming, 0)}
+                </div>
+                <div className="text-sm text-gray-600">Incoming Calls</div>
+              </div>
+              <div className="text-center p-4 bg-red-50 rounded-lg">
+                <div className="text-2xl font-bold text-red-600">
+                  {results.reduce((sum, r) => sum + r.total_outgoing, 0)}
+                </div>
+                <div className="text-sm text-gray-600">Outgoing Calls</div>
               </div>
             </div>
-          </div>
 
-          {/* Criminal Matches */}
-          {result.criminal_matches.length > 0 && (
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <FaExclamationTriangle className="text-red-600" />
-                Criminal Matches Found
-              </h2>
-              <div className="space-y-4">
-                {result.criminal_matches.map((match, index) => (
-                  <div key={index} className="border border-red-200 rounded-lg p-4 bg-red-50">
-                    <div className="grid grid-cols-2 gap-4 mb-3">
-                      <div>
-                        <span className="text-gray-600 text-sm">Name:</span>
-                        <p className="font-medium">{match.name}</p>
-                      </div>
-                      <div>
-                        <span className="text-gray-600 text-sm">NIC:</span>
-                        <p className="font-medium">{match.nic}</p>
-                      </div>
-                      <div>
-                        <span className="text-gray-600 text-sm">Phone:</span>
-                        <p className="font-medium">{match.phone}</p>
-                      </div>
-                      <div>
-                        <span className="text-gray-600 text-sm">Criminal ID:</span>
-                        <p className="font-medium">{match.criminal_id}</p>
-                      </div>
-                    </div>
-                    {match.crime_history && match.crime_history.length > 0 && (
-                      <div>
-                        <span className="text-gray-600 text-sm">Crime History:</span>
-                        <div className="mt-2 space-y-1">
-                          {match.crime_history.map((crime, idx) => (
-                            <div key={idx} className="text-sm bg-white p-2 rounded">
-                              <span className="font-medium">{crime.crime_type}</span> - {crime.date} ({crime.status})
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+            {/* PDF List */}
+            <div className="mt-4 border-t pt-4">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Analyzed Files:</h3>
+              <div className="flex flex-wrap gap-2">
+                {results.map((result, index) => (
+                  <div 
+                    key={index}
+                    className="px-3 py-1 bg-gray-100 rounded-full text-sm flex items-center gap-2"
+                  >
+                    <div 
+                      className="w-3 h-3 rounded-full" 
+                      style={{ backgroundColor: getPdfColor(index) }}
+                    />
+                    <span className="font-medium">{result.main_number}</span>
+                    <span className="text-gray-500">({result.pdf_filename})</span>
                   </div>
                 ))}
               </div>
             </div>
-          )}
-
-          {/* Dual Network Graphs */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4" key={result.main_number}>
-            {/* Incoming Calls Graph */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-gray-800">Incoming Calls</h2>
-                <div className="flex items-center gap-2 text-sm">
-                  <div className="w-3 h-3 bg-green-600 rounded-full"></div>
-                  <span className="text-gray-600">{result.total_incoming} calls</span>
-                </div>
-              </div>
-              <div 
-                ref={incomingGraphRef}
-                key={`incoming-${result.main_number}`}
-                className="border rounded-lg bg-gray-50"
-                style={{ height: '500px', width: '100%' }}
-              />
-              <div className="mt-4 text-sm text-gray-600">
-                <p className="font-medium mb-2">Legend:</p>
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-4 h-4 bg-blue-600 rounded-full"></div>
-                  <span>Main Number: {result.main_number}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-green-600 rounded-full"></div>
-                  <span>Numbers who called the main number</span>
-                </div>
-                <p className="mt-2 text-xs">Arrow shows direction, label shows call count</p>
-              </div>
-            </div>
-
-            {/* Outgoing Calls Graph */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-gray-800">Outgoing Calls</h2>
-                <div className="flex items-center gap-2 text-sm">
-                  <div className="w-3 h-3 bg-red-600 rounded-full"></div>
-                  <span className="text-gray-600">{result.total_outgoing} calls</span>
-                </div>
-              </div>
-              <div 
-                ref={outgoingGraphRef}
-                key={`outgoing-${result.main_number}`}
-                className="border rounded-lg bg-gray-50"
-                style={{ height: '500px', width: '100%' }}
-              />
-              <div className="mt-4 text-sm text-gray-600">
-                <p className="font-medium mb-2">Legend:</p>
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-4 h-4 bg-blue-600 rounded-full"></div>
-                  <span>Main Number: {result.main_number}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-red-600 rounded-full"></div>
-                  <span>Numbers called by the main number</span>
-                </div>
-                <p className="mt-2 text-xs">Arrow shows direction, label shows call count</p>
-              </div>
-            </div>
           </div>
 
-          {/* Common Contacts */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Most Frequent Contacts</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Rank</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Phone Number</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Call Count</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Percentage</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {result.common_contacts.map((contact, index) => (
-                    <tr key={index} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm">{index + 1}</td>
-                      <td className="px-4 py-3 text-sm font-medium">{contact.phone}</td>
-                      <td className="px-4 py-3 text-sm">{contact.count}</td>
-                      <td className="px-4 py-3 text-sm">
-                        {((contact.count / result.total_calls) * 100).toFixed(1)}%
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Success Message */}
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-2 text-green-700">
-            <FaCheckCircle />
-            <span>Analysis completed successfully for: {result.pdf_filename}</span>
-          </div>
-        </>
+          {/* Combined Network Graphs */}
+          <CombinedNetworkGraphs 
+            incomingData={combinedGraphs.incoming}
+            outgoingData={combinedGraphs.outgoing}
+          />
+        </div>
       )}
+    </div>
+  );
+}
+
+// Color palette for different PDFs (industry standard: ColorBrewer qualitative palette)
+const getPdfColor = (index: number): string => {
+  const colors = [
+    '#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', 
+    '#ffff33', '#a65628', '#f781bf', '#999999'
+  ];
+  return colors[index % colors.length];
+};
+
+// Combined Network Graphs Component - Shows merged incoming/outgoing from all PDFs
+interface CombinedNetworkGraphsProps {
+  incomingData: CombinedGraphData;
+  outgoingData: CombinedGraphData;
+}
+
+function CombinedNetworkGraphs({ incomingData, outgoingData }: CombinedNetworkGraphsProps) {
+  const incomingGraphRef = useRef<HTMLDivElement>(null);
+  const outgoingGraphRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!incomingGraphRef.current || !outgoingGraphRef.current) return;
+
+    let cyIncoming: cytoscape.Core | null = null;
+    let cyOutgoing: cytoscape.Core | null = null;
+
+    setTimeout(() => {
+      if (!incomingGraphRef.current || !outgoingGraphRef.current) return;
+
+      // Incoming Combined Graph
+      cyIncoming = cytoscape({
+        container: incomingGraphRef.current,
+        elements: [...incomingData.nodes, ...incomingData.edges],
+        style: [
+          // Main numbers - each PDF gets unique color
+          {
+            selector: 'node[type="main"]',
+            style: {
+              'label': 'data(fullNumber)',
+              'text-valign': 'center',
+              'text-halign': 'center',
+              'font-size': '12px',
+              'color': '#fff',
+              'text-outline-width': '2px',
+              'text-outline-color': (ele: cytoscape.NodeSingular) => getPdfColor(ele.data('pdfIndex')),
+              'background-color': (ele: cytoscape.NodeSingular) => getPdfColor(ele.data('pdfIndex')),
+              'width': '60px',
+              'height': '60px',
+              'border-width': '3px',
+              'border-color': '#1e40af',
+              'font-weight': 'bold'
+            }
+          },
+          // Regular contacts
+          {
+            selector: 'node[type="contact"]',
+            style: {
+              'label': 'data(fullNumber)',
+              'text-valign': 'center',
+              'text-halign': 'center',
+              'font-size': '10px',
+              'color': '#fff',
+              'text-outline-color': '#2563eb',
+              'text-outline-width': '2px',
+              'background-color': '#22c55e',
+              'width': '40px',
+              'height': '40px'
+            }
+          },
+          // Shared contacts (appear in multiple PDFs) - special styling
+          {
+            selector: 'node[type="shared_contact"]',
+            style: {
+              'label': 'data(fullNumber)',
+              'text-valign': 'center',
+              'text-halign': 'center',
+              'font-size': '10px',
+              'color': '#fff',
+              'text-outline-color': '#f59e0b',
+              'text-outline-width': '3px',
+              'background-color': '#f59e0b',
+              'width': '45px',
+              'height': '45px',
+              'border-width': '3px',
+              'border-color': '#d97706',
+              'border-style': 'double'
+            }
+          },
+          // Normal edges
+          {
+            selector: 'edge[edgeType="normal"]',
+            style: {
+              'width': 'data(callCount)',
+              'line-color': '#22c55e',
+              'target-arrow-color': '#22c55e',
+              'target-arrow-shape': 'triangle',
+              'curve-style': 'bezier',
+              'label': 'data(label)',
+              'font-size': '9px',
+              'text-background-color': '#fff',
+              'text-background-opacity': 0.8,
+              'text-background-padding': '2px'
+            }
+          },
+          // Shared edges (dotted line for cross-PDF connections)
+          {
+            selector: 'edge[edgeType="shared"]',
+            style: {
+              'width': 'data(callCount)',
+              'line-color': '#f59e0b',
+              'target-arrow-color': '#f59e0b',
+              'target-arrow-shape': 'triangle',
+              'curve-style': 'bezier',
+              'line-style': 'dashed',
+              'line-dash-pattern': [6, 3],
+              'label': 'data(label)',
+              'font-size': '9px',
+              'font-weight': 'bold',
+              'text-background-color': '#fef3c7',
+              'text-background-opacity': 0.95,
+              'text-background-padding': '3px'
+            }
+          }
+        ],
+        layout: {
+          name: 'concentric',
+          concentric: (node: cytoscape.NodeSingular) => node.data('type') === 'main' ? 100 : 0,
+          levelWidth: () => 1,
+          minNodeSpacing: 100
+        }
+      });
+
+      // Outgoing Combined Graph
+      cyOutgoing = cytoscape({
+        container: outgoingGraphRef.current,
+        elements: [...outgoingData.nodes, ...outgoingData.edges],
+        style: [
+          {
+            selector: 'node[type="main"]',
+            style: {
+              'label': 'data(fullNumber)',
+              'text-valign': 'center',
+              'text-halign': 'center',
+              'font-size': '12px',
+              'color': '#fff',
+              'text-outline-width': '2px',
+              'text-outline-color': (ele: cytoscape.NodeSingular) => getPdfColor(ele.data('pdfIndex')),
+              'background-color': (ele: cytoscape.NodeSingular) => getPdfColor(ele.data('pdfIndex')),
+              'width': '60px',
+              'height': '60px',
+              'border-width': '3px',
+              'border-color': '#1e40af',
+              'font-weight': 'bold'
+            }
+          },
+          {
+            selector: 'node[type="contact"]',
+            style: {
+              'label': 'data(fullNumber)',
+              'text-valign': 'center',
+              'text-halign': 'center',
+              'font-size': '10px',
+              'color': '#fff',
+              'text-outline-color': '#dc2626',
+              'text-outline-width': '2px',
+              'background-color': '#ef4444',
+              'width': '40px',
+              'height': '40px'
+            }
+          },
+          {
+            selector: 'node[type="shared_contact"]',
+            style: {
+              'label': 'data(fullNumber)',
+              'text-valign': 'center',
+              'text-halign': 'center',
+              'font-size': '10px',
+              'color': '#fff',
+              'text-outline-color': '#f59e0b',
+              'text-outline-width': '3px',
+              'background-color': '#f59e0b',
+              'width': '45px',
+              'height': '45px',
+              'border-width': '3px',
+              'border-color': '#d97706',
+              'border-style': 'double'
+            }
+          },
+          {
+            selector: 'edge[edgeType="normal"]',
+            style: {
+              'width': 'data(callCount)',
+              'line-color': '#ef4444',
+              'target-arrow-color': '#ef4444',
+              'target-arrow-shape': 'triangle',
+              'curve-style': 'bezier',
+              'label': 'data(label)',
+              'font-size': '9px',
+              'text-background-color': '#fff',
+              'text-background-opacity': 0.8,
+              'text-background-padding': '2px'
+            }
+          },
+          {
+            selector: 'edge[edgeType="shared"]',
+            style: {
+              'width': 'data(callCount)',
+              'line-color': '#f59e0b',
+              'target-arrow-color': '#f59e0b',
+              'target-arrow-shape': 'triangle',
+              'curve-style': 'bezier',
+              'line-style': 'dashed',
+              'line-dash-pattern': [6, 3],
+              'label': 'data(label)',
+              'font-size': '9px',
+              'font-weight': 'bold',
+              'text-background-color': '#fef3c7',
+              'text-background-opacity': 0.95,
+              'text-background-padding': '3px'
+            }
+          }
+        ],
+        layout: {
+          name: 'concentric',
+          concentric: (node: cytoscape.NodeSingular) => node.data('type') === 'main' ? 100 : 0,
+          levelWidth: () => 1,
+          minNodeSpacing: 100
+        }
+      });
+
+      // Add tooltips on hover
+      [cyIncoming, cyOutgoing].forEach(cy => {
+        if (cy) {
+          cy.on('mouseover', 'node[type="shared_contact"]', (evt) => {
+            const node = evt.target;
+            const sharedWith = node.data('sharedWith');
+            console.log(`Shared contact: ${node.data('fullNumber')} appears in PDFs with main numbers: ${sharedWith.join(', ')}`);
+          });
+        }
+      });
+    }, 100);
+
+    return () => {
+      if (cyIncoming) cyIncoming.destroy();
+      if (cyOutgoing) cyOutgoing.destroy();
+    };
+  }, [incomingData, outgoingData]);
+
+  return (
+    <div className="bg-white rounded-lg shadow p-6 space-y-6">
+      <div>
+        <h2 className="text-xl font-bold text-gray-800 mb-2">Combined Network Analysis</h2>
+        <p className="text-sm text-gray-600 mb-4">
+          Merged visualization of all analyzed PDFs. 
+          <span className="font-semibold text-orange-600"> Orange nodes with dashed lines</span> indicate contacts shared across multiple PDFs.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Incoming */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-bold text-gray-800">Incoming Calls Network</h3>
+            <div className="text-sm text-gray-600">
+              {incomingData.nodes.length} nodes, {incomingData.edges.length} connections
+            </div>
+          </div>
+          <div 
+            ref={incomingGraphRef}
+            className="border rounded-lg bg-gray-50"
+            style={{ height: '500px', width: '100%' }}
+          />
+          <div className="mt-3 text-sm text-gray-600">
+            <p className="font-medium mb-2">Legend:</p>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-4 h-4 rounded-full" style={{ backgroundColor: getPdfColor(0) }}></div>
+              <span>Main Numbers (each PDF has unique color)</span>
+            </div>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-4 h-4 bg-green-600 rounded-full"></div>
+              <span>Numbers who called the main number</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-orange-500 rounded-full border-2 border-orange-700"></div>
+              <span>Shared contacts (dotted lines) - appears in multiple PDFs</span>
+            </div>
+            <p className="mt-2 text-xs">Arrow shows direction, label shows call count</p>
+          </div>
+        </div>
+
+        {/* Outgoing */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-bold text-gray-800">Outgoing Calls Network</h3>
+            <div className="text-sm text-gray-600">
+              {outgoingData.nodes.length} nodes, {outgoingData.edges.length} connections
+            </div>
+          </div>
+          <div 
+            ref={outgoingGraphRef}
+            className="border rounded-lg bg-gray-50"
+            style={{ height: '500px', width: '100%' }}
+          />
+          <div className="mt-3 text-sm text-gray-600">
+            <p className="font-medium mb-2">Legend:</p>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-4 h-4 rounded-full" style={{ backgroundColor: getPdfColor(0) }}></div>
+              <span>Main Numbers (each PDF has unique color)</span>
+            </div>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-4 h-4 bg-red-600 rounded-full"></div>
+              <span>Numbers called by the main number</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-orange-500 rounded-full border-2 border-orange-700"></div>
+              <span>Shared contacts (dotted lines) - appears in multiple PDFs</span>
+            </div>
+            <p className="mt-2 text-xs">Arrow shows direction, label shows call count</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

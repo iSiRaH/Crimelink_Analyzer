@@ -1,0 +1,708 @@
+import { useState, useEffect, useRef } from 'react';
+import cytoscape from 'cytoscape';
+import { FaUpload, FaFileAlt, FaNetworkWired, FaExclamationTriangle, FaSpinner, FaCheckCircle, FaTrash } from 'react-icons/fa';
+
+interface GraphData {
+  nodes: Array<{ 
+    id: string; 
+    label: string; 
+    type: string; 
+    size?: number;
+    color?: string;
+    call_count?: number;
+  }>;
+  edges: Array<{ 
+    source: string; 
+    target: string; 
+    call_count: number;
+    label?: string;
+    color?: string;
+    width?: number;
+  }>;
+  total_nodes: number;
+  total_edges: number;
+}
+
+interface AnalysisResult {
+  pdf_filename: string;
+  main_number: string;
+  total_calls: number;
+  total_incoming: number;
+  total_outgoing: number;
+  unique_numbers: string[];
+  common_contacts: Array<{ phone: string; count: number }>;
+  incoming_graph: GraphData;
+  outgoing_graph: GraphData;
+  criminal_matches: Array<{
+    phone: string;
+    criminal_id: string;
+    name: string;
+    nic: string;
+    crime_history: Array<{ crime_type: string; date: string; status: string }>;
+  }>;
+  risk_score: number;
+}
+
+function CallAnalysis() {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [results, setResults] = useState<AnalysisResult[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (!file.name.toLowerCase().endsWith('.pdf')) {
+        setError('Only PDF files are supported');
+        return;
+      }
+      setSelectedFile(file);
+      setError(null);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile) {
+      setError('Please select a file first');
+      return;
+    }
+
+    setUploading(true);
+    setError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('files', selectedFile);
+
+      const response = await fetch('http://localhost:5001/analyze/batch', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to analyze PDF');
+      }
+
+      const data = await response.json();
+      
+      console.log('Analysis response:', data);
+      
+      if (data.analyses && data.analyses.length > 0) {
+        const newResult = data.analyses[0];
+        console.log('Adding result with main number:', newResult.main_number);
+        // Add new result to the array (append to right)
+        setResults(prev => [...prev, newResult]);
+        setSelectedFile(null); // Clear selection for next upload
+      } else {
+        throw new Error('No analysis results returned');
+      }
+    } catch (err: unknown) {
+      const error = err as Error;
+      setError(error.message || 'Failed to upload file. Please try again.');
+      console.error('Upload error:', error);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleClearAll = () => {
+    setResults([]);
+    setSelectedFile(null);
+    setError(null);
+  };
+
+  const getRiskColor = (score: number) => {
+    if (score >= 70) return 'text-red-600 bg-red-50';
+    if (score >= 40) return 'text-yellow-600 bg-yellow-50';
+    return 'text-green-600 bg-green-50';
+  };
+
+  const getRiskLabel = (score: number) => {
+    if (score >= 70) return 'High Risk';
+    if (score >= 40) return 'Medium Risk';
+    return 'Low Risk';
+  };
+
+  return (
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <FaNetworkWired className="text-3xl text-blue-600" />
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">Call Record Analysis</h1>
+            <p className="text-gray-600">Upload PDF call records to analyze patterns and identify criminal connections</p>
+          </div>
+        </div>
+
+        {/* Upload Section */}
+        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileSelect}
+            accept=".pdf"
+            className="hidden"
+          />
+          
+          {!selectedFile ? (
+            <div className="space-y-4">
+              <FaUpload className="text-5xl text-gray-400 mx-auto" />
+              <div>
+                <p className="text-gray-600 mb-2">Upload call record PDF file</p>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                >
+                  Select File
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <FaFileAlt className="text-5xl text-blue-600 mx-auto" />
+              <div>
+                <p className="text-gray-800 font-medium">{selectedFile.name}</p>
+                <p className="text-gray-500 text-sm">{(selectedFile.size / 1024).toFixed(2)} KB</p>
+              </div>
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                >
+                  Change File
+                </button>
+                <button
+                  onClick={handleUpload}
+                  disabled={uploading}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400"
+                >
+                  {uploading ? (
+                    <span className="flex items-center gap-2">
+                      <FaSpinner className="animate-spin" />
+                      Analyzing...
+                    </span>
+                  ) : (
+                    'Analyze'
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700">
+            <FaExclamationTriangle />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* Processing Status */}
+        {uploading && (
+          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2 text-blue-700">
+            <FaSpinner className="animate-spin" />
+            <span>Analyzing call records... This may take a few moments.</span>
+          </div>
+        )}
+
+        {/* Clear All Button */}
+        {results.length > 0 && (
+          <div className="mt-4 flex justify-end">
+            <button
+              onClick={handleClearAll}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition flex items-center gap-2"
+            >
+              <FaTrash />
+              Clear All Results
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Results - Horizontal Scrollable */}
+      {results.length > 0 && (
+        <div className="overflow-x-auto">
+          <div className="flex gap-6 pb-4" style={{ minWidth: 'min-content' }}>
+            {results.map((result, index) => (
+              <PDFResultCard 
+                key={`${result.main_number}-${index}`}
+                result={result}
+                index={index}
+                getRiskColor={getRiskColor}
+                getRiskLabel={getRiskLabel}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Separate component for each PDF result
+interface PDFResultCardProps {
+  result: AnalysisResult;
+  index: number;
+  getRiskColor: (score: number) => string;
+  getRiskLabel: (score: number) => string;
+}
+
+function PDFResultCard({ result, index, getRiskColor, getRiskLabel }: PDFResultCardProps) {
+  const incomingGraphRef = useRef<HTMLDivElement>(null);
+  const outgoingGraphRef = useRef<HTMLDivElement>(null);
+  const cyIncoming = useRef<cytoscape.Core | null>(null);
+  const cyOutgoing = useRef<cytoscape.Core | null>(null);
+
+  // Initialize Cytoscape graphs
+  useEffect(() => {
+    if (!incomingGraphRef.current || !outgoingGraphRef.current) return;
+
+    // Small delay to ensure DOM is ready
+    setTimeout(() => {
+      if (!incomingGraphRef.current || !outgoingGraphRef.current) return;
+
+      // Create Incoming Graph
+      cyIncoming.current = cytoscape({
+        container: incomingGraphRef.current,
+        elements: [
+        // Nodes
+        ...result.incoming_graph.nodes.map(node => ({
+          data: {
+            id: node.id,
+            label: node.label,
+            type: node.type,
+            callCount: node.call_count || 0
+          }
+        })),
+        // Edges
+        ...result.incoming_graph.edges.map(edge => ({
+          data: {
+            source: edge.source,
+            target: edge.target,
+            label: `${edge.call_count}`,
+            callCount: edge.call_count
+          }
+        }))
+      ],
+      style: [
+        {
+          selector: 'node',
+          style: {
+            'label': 'data(label)',
+            'text-valign': 'center',
+            'text-halign': 'center',
+            'font-size': '10px',
+            'color': '#fff',
+            'text-outline-color': '#2563eb',
+            'text-outline-width': '2px',
+            'background-color': '#22c55e',
+            'width': '40px',
+            'height': '40px'
+          }
+        },
+        {
+          selector: 'node[type="main"]',
+          style: {
+            'background-color': '#2563eb',
+            'width': '60px',
+            'height': '60px',
+            'font-size': '12px',
+            'font-weight': 'bold',
+            'border-width': '3px',
+            'border-color': '#1e40af'
+          }
+        },
+        {
+          selector: 'edge',
+          style: {
+            'width': 'data(callCount)',
+            'line-color': '#22c55e',
+            'target-arrow-color': '#22c55e',
+            'target-arrow-shape': 'triangle',
+            'curve-style': 'bezier',
+            'label': 'data(label)',
+            'font-size': '9px',
+            'text-background-color': '#fff',
+            'text-background-opacity': 0.8,
+            'text-background-padding': '2px'
+          }
+        }
+      ],
+      layout: {
+        name: 'concentric',
+        concentric: (node: cytoscape.NodeSingular) => node.data('type') === 'main' ? 100 : 0,
+        levelWidth: () => 1,
+        minNodeSpacing: 80
+      }
+    });
+
+    // Create Outgoing Graph
+    cyOutgoing.current = cytoscape({
+      container: outgoingGraphRef.current,
+      elements: [
+        // Nodes
+        ...result.outgoing_graph.nodes.map(node => ({
+          data: {
+            id: node.id,
+            label: node.label,
+            type: node.type,
+            callCount: node.call_count || 0
+          }
+        })),
+        // Edges
+        ...result.outgoing_graph.edges.map(edge => ({
+          data: {
+            source: edge.source,
+            target: edge.target,
+            label: `${edge.call_count}`,
+            callCount: edge.call_count
+          }
+        }))
+      ],
+      style: [
+        {
+          selector: 'node',
+          style: {
+            'label': 'data(label)',
+            'text-valign': 'center',
+            'text-halign': 'center',
+            'font-size': '10px',
+            'color': '#fff',
+            'text-outline-color': '#dc2626',
+            'text-outline-width': '2px',
+            'background-color': '#ef4444',
+            'width': '40px',
+            'height': '40px'
+          }
+        },
+        {
+          selector: 'node[type="main"]',
+          style: {
+            'background-color': '#2563eb',
+            'width': '60px',
+            'height': '60px',
+            'font-size': '12px',
+            'font-weight': 'bold',
+            'border-width': '3px',
+            'border-color': '#1e40af'
+          }
+        },
+        {
+          selector: 'edge',
+          style: {
+            'width': 'data(callCount)',
+            'line-color': '#ef4444',
+            'target-arrow-color': '#ef4444',
+            'target-arrow-shape': 'triangle',
+            'curve-style': 'bezier',
+            'label': 'data(label)',
+            'font-size': '9px',
+            'text-background-color': '#fff',
+            'text-background-opacity': 0.8,
+            'text-background-padding': '2px'
+          }
+        }
+      ],
+      layout: {
+        name: 'concentric',
+        concentric: (node: cytoscape.NodeSingular) => node.data('type') === 'main' ? 100 : 0,
+        levelWidth: () => 1,
+        minNodeSpacing: 80
+      }
+    });
+    }, 50);
+
+    // Cleanup
+    return () => {
+      if (cyIncoming.current) {
+        cyIncoming.current.destroy();
+        cyIncoming.current = null;
+      }
+      if (cyOutgoing.current) {
+        cyOutgoing.current.destroy();
+        cyOutgoing.current = null;
+      }
+    };
+  }, [result]);
+
+  const getRiskColor = (score: number) => {
+    if (score >= 70) return 'text-red-600 bg-red-50';
+    if (score >= 40) return 'text-yellow-600 bg-yellow-50';
+    return 'text-green-600 bg-green-50';
+  };
+
+  const getRiskLabel = (score: number) => {
+    if (score >= 70) return 'High Risk';
+    if (score >= 40) return 'Medium Risk';
+    return 'Low Risk';
+  };
+
+  return (
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <FaNetworkWired className="text-3xl text-blue-600" />
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">Call Record Analysis</h1>
+            <p className="text-gray-600">Upload PDF call records to analyze patterns and identify criminal connections</p>
+          </div>
+        </div>
+
+        {/* Upload Section */}
+        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileSelect}
+            accept=".pdf"
+            className="hidden"
+          />
+          
+          {!selectedFile ? (
+            <div className="space-y-4">
+              <FaUpload className="text-5xl text-gray-400 mx-auto" />
+              <div>
+                <p className="text-gray-600 mb-2">Upload call record PDF file</p>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                >
+                  Select File
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <FaFileAlt className="text-5xl text-blue-600 mx-auto" />
+              <div>
+                <p className="text-gray-800 font-medium">{selectedFile.name}</p>
+                <p className="text-gray-500 text-sm">{(selectedFile.size / 1024).toFixed(2)} KB</p>
+              </div>
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                >
+                  Change File
+                </button>
+                <button
+                  onClick={handleUpload}
+                  disabled={uploading}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400"
+                >
+                  {uploading ? (
+                    <span className="flex items-center gap-2">
+                      <FaSpinner className="animate-spin" />
+                      Uploading...
+                    </span>
+                  ) : (
+                    'Analyze'
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700">
+            <FaExclamationTriangle />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* Processing Status */}
+        {uploading && (
+          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2 text-blue-700">
+            <FaSpinner className="animate-spin" />
+            <span>Analyzing call records... This may take a few moments.</span>
+          </div>
+        )}
+      </div>
+
+      {/* Results Section */}
+      {result && (
+        <>
+          {/* Overview Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className="bg-white rounded-lg shadow p-4">
+              <div className="text-gray-600 text-sm mb-1">Main Number</div>
+              <div className="text-xl font-bold text-blue-600">{result.main_number}</div>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4">
+              <div className="text-gray-600 text-sm mb-1">Total Calls</div>
+              <div className="text-2xl font-bold text-gray-800">{result.total_calls}</div>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4">
+              <div className="text-gray-600 text-sm mb-1">Incoming</div>
+              <div className="text-2xl font-bold text-green-600">{result.total_incoming}</div>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4">
+              <div className="text-gray-600 text-sm mb-1">Outgoing</div>
+              <div className="text-2xl font-bold text-red-600">{result.total_outgoing}</div>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4">
+              <div className="text-gray-600 text-sm mb-1">Risk Score</div>
+              <div className={`text-2xl font-bold ${getRiskColor(result.risk_score).split(' ')[0]}`}>
+                {result.risk_score}/100
+              </div>
+              <div className={`text-xs mt-1 px-2 py-1 rounded inline-block ${getRiskColor(result.risk_score)}`}>
+                {getRiskLabel(result.risk_score)}
+              </div>
+            </div>
+          </div>
+
+          {/* Criminal Matches */}
+          {result.criminal_matches.length > 0 && (
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <FaExclamationTriangle className="text-red-600" />
+                Criminal Matches Found
+              </h2>
+              <div className="space-y-4">
+                {result.criminal_matches.map((match, index) => (
+                  <div key={index} className="border border-red-200 rounded-lg p-4 bg-red-50">
+                    <div className="grid grid-cols-2 gap-4 mb-3">
+                      <div>
+                        <span className="text-gray-600 text-sm">Name:</span>
+                        <p className="font-medium">{match.name}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-600 text-sm">NIC:</span>
+                        <p className="font-medium">{match.nic}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-600 text-sm">Phone:</span>
+                        <p className="font-medium">{match.phone}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-600 text-sm">Criminal ID:</span>
+                        <p className="font-medium">{match.criminal_id}</p>
+                      </div>
+                    </div>
+                    {match.crime_history && match.crime_history.length > 0 && (
+                      <div>
+                        <span className="text-gray-600 text-sm">Crime History:</span>
+                        <div className="mt-2 space-y-1">
+                          {match.crime_history.map((crime, idx) => (
+                            <div key={idx} className="text-sm bg-white p-2 rounded">
+                              <span className="font-medium">{crime.crime_type}</span> - {crime.date} ({crime.status})
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Dual Network Graphs */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4" key={result.main_number}>
+            {/* Incoming Calls Graph */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-800">Incoming Calls</h2>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-3 h-3 bg-green-600 rounded-full"></div>
+                  <span className="text-gray-600">{result.total_incoming} calls</span>
+                </div>
+              </div>
+              <div 
+                ref={incomingGraphRef}
+                key={`incoming-${result.main_number}`}
+                className="border rounded-lg bg-gray-50"
+                style={{ height: '500px', width: '100%' }}
+              />
+              <div className="mt-4 text-sm text-gray-600">
+                <p className="font-medium mb-2">Legend:</p>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-4 h-4 bg-blue-600 rounded-full"></div>
+                  <span>Main Number: {result.main_number}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-green-600 rounded-full"></div>
+                  <span>Numbers who called the main number</span>
+                </div>
+                <p className="mt-2 text-xs">Arrow shows direction, label shows call count</p>
+              </div>
+            </div>
+
+            {/* Outgoing Calls Graph */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-800">Outgoing Calls</h2>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-3 h-3 bg-red-600 rounded-full"></div>
+                  <span className="text-gray-600">{result.total_outgoing} calls</span>
+                </div>
+              </div>
+              <div 
+                ref={outgoingGraphRef}
+                key={`outgoing-${result.main_number}`}
+                className="border rounded-lg bg-gray-50"
+                style={{ height: '500px', width: '100%' }}
+              />
+              <div className="mt-4 text-sm text-gray-600">
+                <p className="font-medium mb-2">Legend:</p>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-4 h-4 bg-blue-600 rounded-full"></div>
+                  <span>Main Number: {result.main_number}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-red-600 rounded-full"></div>
+                  <span>Numbers called by the main number</span>
+                </div>
+                <p className="mt-2 text-xs">Arrow shows direction, label shows call count</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Common Contacts */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">Most Frequent Contacts</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Rank</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Phone Number</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Call Count</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Percentage</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {result.common_contacts.map((contact, index) => (
+                    <tr key={index} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 text-sm">{index + 1}</td>
+                      <td className="px-4 py-3 text-sm font-medium">{contact.phone}</td>
+                      <td className="px-4 py-3 text-sm">{contact.count}</td>
+                      <td className="px-4 py-3 text-sm">
+                        {((contact.count / result.total_calls) * 100).toFixed(1)}%
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Success Message */}
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-2 text-green-700">
+            <FaCheckCircle />
+            <span>Analysis completed successfully for: {result.pdf_filename}</span>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+export default CallAnalysis;
