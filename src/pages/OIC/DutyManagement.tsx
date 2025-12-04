@@ -16,7 +16,7 @@ function DutyManagement() {
   const [rows, setRows] = useState<OfficerDutyRow[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const locations = ["Colombo", "Kandy", "Galle", "Jaffna"];
+  const locations = ["Matara", "Hakmana", "Weligama", "Akuressa"];
   const timeRanges = [
   { value: "06:00-21:00", label: "06:00 - 21:00", start: "06:00" },
   { value: "21:00-06:00", label: "21:00 - 06:00", start: "21:00" },

@@ -7,6 +7,7 @@ function OICReport(){
     const [reportType, setReportType] = useState("duty");
     const [dateFrom, setDateFrom] = useState("");
     const [dateTo, setDateTo] = useState("");
+    const [loading, setLoading] = useState(false);
 
     const handleGenerate = async () => {
         if (!dateFrom || !dateTo) {
@@ -19,18 +20,19 @@ function OICReport(){
             return;
         }
 
-  // For now we only implement Duty Schedule PDF
+       // For now we only implement Duty Schedule PDF
         if (reportType === "duty") {
             try {
-      // 1) Call API to get PDF as Blob
+                setLoading(true);
+                // 1) Call API to get PDF as Blob
                 const pdfBlob = await downloadDutyScheduleReportPdf(dateFrom, dateTo);
 
-      // 2) Create temporary URL
+                // 2) Create temporary URL
                 const url = window.URL.createObjectURL(
                 new Blob([pdfBlob], { type: "application/pdf" })
-              );
+                );
 
-      // 3) Create a hidden <a> and click it to trigger download
+                // 3) Create a hidden <a> and click it to trigger download
                 const link = document.createElement("a");
                 link.href = url;
                 link.download = `duty-schedule-${dateFrom}-to-${dateTo}.pdf`;
@@ -38,15 +40,17 @@ function OICReport(){
                 link.click();
                 alert("Duty Schedule PDF report generated successfully.");
 
-      // 4) Cleanup
+                 // 4) Cleanup
                 link.remove();
                 window.URL.revokeObjectURL(url);
-        } catch (err) {
+                } catch (err) {
                 console.error("Failed to generate duty schedule PDF", err);
                 alert("Failed to generate duty schedule report. Please try again.");
-        }
+                } finally {
+                setLoading(false);
+                }   
         } else {
-    // later you can implement weapon/plate PDFs here
+                // later you can implement weapon/plate PDFs here
             alert(
                 `Report type "${reportType}" PDF download not implemented yet. Currently only Duty Schedule is supported.`
             );
@@ -95,9 +99,12 @@ function OICReport(){
                 </div>
                 <button
                     onClick={handleGenerate}
-                    className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700"
-                >Generate Report
+                    disabled={loading}
+                    className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-60"
+                >
+                    {loading ? "Generating..." : "Generate Report"}
                 </button>
+
             </div>
 
             <div className="mt-6 bg-white border rounded-lg p-6 shadow">
