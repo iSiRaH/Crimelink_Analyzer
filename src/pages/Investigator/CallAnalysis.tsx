@@ -1,6 +1,6 @@
-import { useState, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import cytoscape from 'cytoscape';
 import { FaUpload, FaFileAlt, FaNetworkWired, FaExclamationTriangle, FaSpinner, FaCheckCircle } from 'react-icons/fa';
-import { investigatorService } from '../../services/investigatorService';
 
 interface AnalysisResult {
   analysis_id: string;
@@ -52,7 +52,6 @@ function CallAnalysis() {
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [polling, setPolling] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -78,59 +77,60 @@ function CallAnalysis() {
     setError(null);
 
     try {
-      const response = await investigatorService.uploadCallRecords(selectedFile);
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('files', selectedFile);
+
+      // Upload to new batch endpoint
+      const response = await fetch('http://localhost:5001/analyze/batch', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to analyze PDF');
+      }
+
+      const data = await response.json();
       
-      // Start polling for results
-      setPolling(true);
-      pollForResults(response.analysis_id);
+      // Extract first analysis result from batch response
+      if (data.analyses && data.analyses.length > 0) {
+        const analysis = data.analyses[0];
+        
+        // Convert to legacy format for compatibility
+        setResult({
+          analysis_id: data.session_id,
+          status: 'completed',
+          timestamp: new Date().toISOString(),
+          file_name: analysis.pdf_filename,
+          total_calls: analysis.total_calls,
+          unique_numbers: analysis.unique_numbers,
+          call_frequency: analysis.call_frequency,
+          time_pattern: analysis.time_pattern,
+          common_contacts: analysis.common_contacts,
+          network_graph: {
+            // Use incoming graph for legacy display
+            nodes: analysis.incoming_graph.nodes,
+            edges: analysis.incoming_graph.edges,
+            total_nodes: analysis.incoming_graph.total_nodes,
+            total_edges: analysis.incoming_graph.total_edges,
+            density: 0,
+            main_number: analysis.main_number
+          },
+          criminal_matches: analysis.criminal_matches || [],
+          risk_score: analysis.risk_score
+        });
+      } else {
+        throw new Error('No analysis results returned');
+      }
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { error?: string } } };
-      setError(error.response?.data?.error || 'Failed to upload file. Please try again.');
+      const error = err as Error;
+      setError(error.message || 'Failed to upload file. Please try again.');
+      console.error('Upload error:', error);
     } finally {
       setUploading(false);
     }
-  };
-
-  const pollForResults = async (id: string) => {
-    let attempts = 0;
-    const maxAttempts = 20; // 20 attempts * 2 seconds = 40 seconds timeout
-
-    const poll = async () => {
-      try {
-        const data = await investigatorService.getCallAnalysisResults(id);
-        
-        if (data && data.status === 'completed') {
-          setResult(data);
-          setPolling(false);
-          return;
-        }
-
-        attempts++;
-        if (attempts < maxAttempts) {
-          setTimeout(poll, 2000); // Poll every 2 seconds
-        } else {
-          setError('Analysis is taking longer than expected. Please check back later.');
-          setPolling(false);
-        }
-      } catch (err: unknown) {
-        const error = err as { response?: { status?: number } };
-        if (error.response?.status === 404) {
-          // Not ready yet, continue polling
-          attempts++;
-          if (attempts < maxAttempts) {
-            setTimeout(poll, 2000);
-          } else {
-            setError('Analysis timeout. Please try again.');
-            setPolling(false);
-          }
-        } else {
-          setError('Failed to retrieve results');
-          setPolling(false);
-        }
-      }
-    };
-
-    poll();
   };
 
   const getRiskColor = (score: number) => {
@@ -196,7 +196,7 @@ function CallAnalysis() {
                 </button>
                 <button
                   onClick={handleUpload}
-                  disabled={uploading || polling}
+                  disabled={uploading}
                   className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400"
                 >
                   {uploading ? (
@@ -222,7 +222,7 @@ function CallAnalysis() {
         )}
 
         {/* Processing Status */}
-        {polling && (
+        {uploading && (
           <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2 text-blue-700">
             <FaSpinner className="animate-spin" />
             <span>Analyzing call records... This may take a few moments.</span>
