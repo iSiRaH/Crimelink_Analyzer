@@ -17,6 +17,7 @@ import { setUnauthorizedCallback } from "./services/api";
 import DutyManagement from "./pages/OIC/DutyManagement";
 import WeaponHandover from "./pages/OIC/WeaponHandover";
 import PlateRegistry from "./pages/OIC/PlateRegistry";
+import OICReport from "./pages/OIC/OICReport";
 import OICDashboard from "./pages/OIC/OICDashboard";
 import ManageProfiles from "./pages/OIC/ManageProfiles";
 import InvestigatorDashboard from "./pages/Investigator/InvestigatorDashboard";
@@ -83,6 +84,7 @@ function AppContent() {
         <Route path="duty-management" element={<DutyManagement />} />
         <Route path="weapon-handover" element={<WeaponHandover />} />
         <Route path="plate-registry" element={<PlateRegistry />} />
+        <Route path="report" element={<OICReport />} />
         <Route path="manage-profiles" element={<ManageProfiles />} />
       </Route>
 
