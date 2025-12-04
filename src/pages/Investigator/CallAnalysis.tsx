@@ -2,41 +2,37 @@ import { useState, useEffect, useRef } from 'react';
 import cytoscape from 'cytoscape';
 import { FaUpload, FaFileAlt, FaNetworkWired, FaExclamationTriangle, FaSpinner, FaCheckCircle } from 'react-icons/fa';
 
+interface GraphData {
+  nodes: Array<{ 
+    id: string; 
+    label: string; 
+    type: string; 
+    size?: number;
+    color?: string;
+    call_count?: number;
+  }>;
+  edges: Array<{ 
+    source: string; 
+    target: string; 
+    call_count: number;
+    label?: string;
+    color?: string;
+    width?: number;
+  }>;
+  total_nodes: number;
+  total_edges: number;
+}
+
 interface AnalysisResult {
-  analysis_id: string;
-  status: string;
-  timestamp: string;
-  file_name: string;
+  pdf_filename: string;
+  main_number: string;
   total_calls: number;
+  total_incoming: number;
+  total_outgoing: number;
   unique_numbers: string[];
-  call_frequency: { [key: string]: number };
-  time_pattern: { [key: string]: number };
   common_contacts: Array<{ phone: string; count: number }>;
-  network_graph: {
-    nodes: Array<{ 
-      id: string; 
-      label: string; 
-      type: string; 
-      size: number; 
-      centrality: number;
-      color?: string;
-      incoming_count?: number;
-      outgoing_count?: number;
-    }>;
-    edges: Array<{ 
-      source: string; 
-      target: string; 
-      weight: number; 
-      label: string;
-      type?: string;
-      color?: string;
-      arrows?: string;
-    }>;
-    total_nodes: number;
-    total_edges: number;
-    density: number;
-    main_number?: string;
-  };
+  incoming_graph: GraphData;
+  outgoing_graph: GraphData;
   criminal_matches: Array<{
     phone: string;
     criminal_id: string;
@@ -53,6 +49,10 @@ function CallAnalysis() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const incomingGraphRef = useRef<HTMLDivElement>(null);
+  const outgoingGraphRef = useRef<HTMLDivElement>(null);
+  const cyIncoming = useRef<cytoscape.Core | null>(null);
+  const cyOutgoing = useRef<cytoscape.Core | null>(null);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -73,15 +73,15 @@ function CallAnalysis() {
       return;
     }
 
+    // Clear previous results completely before starting new upload
+    setResult(null);
     setUploading(true);
     setError(null);
 
     try {
-      // Create FormData for file upload
       const formData = new FormData();
       formData.append('files', selectedFile);
 
-      // Upload to new batch endpoint
       const response = await fetch('http://localhost:5001/analyze/batch', {
         method: 'POST',
         body: formData,
@@ -94,33 +94,12 @@ function CallAnalysis() {
 
       const data = await response.json();
       
-      // Extract first analysis result from batch response
+      console.log('Analysis response:', data); // Debug log
+      
       if (data.analyses && data.analyses.length > 0) {
-        const analysis = data.analyses[0];
-        
-        // Convert to legacy format for compatibility
-        setResult({
-          analysis_id: data.session_id,
-          status: 'completed',
-          timestamp: new Date().toISOString(),
-          file_name: analysis.pdf_filename,
-          total_calls: analysis.total_calls,
-          unique_numbers: analysis.unique_numbers,
-          call_frequency: analysis.call_frequency,
-          time_pattern: analysis.time_pattern,
-          common_contacts: analysis.common_contacts,
-          network_graph: {
-            // Use incoming graph for legacy display
-            nodes: analysis.incoming_graph.nodes,
-            edges: analysis.incoming_graph.edges,
-            total_nodes: analysis.incoming_graph.total_nodes,
-            total_edges: analysis.incoming_graph.total_edges,
-            density: 0,
-            main_number: analysis.main_number
-          },
-          criminal_matches: analysis.criminal_matches || [],
-          risk_score: analysis.risk_score
-        });
+        const newResult = data.analyses[0];
+        console.log('Setting new result with main number:', newResult.main_number); // Debug log
+        setResult(newResult);
       } else {
         throw new Error('No analysis results returned');
       }
@@ -132,6 +111,196 @@ function CallAnalysis() {
       setUploading(false);
     }
   };
+
+  // Initialize Cytoscape graphs when result is available
+  useEffect(() => {
+    if (!result || !incomingGraphRef.current || !outgoingGraphRef.current) return;
+
+    // Destroy existing instances and clear containers
+    if (cyIncoming.current) {
+      cyIncoming.current.destroy();
+      cyIncoming.current = null;
+    }
+    if (cyOutgoing.current) {
+      cyOutgoing.current.destroy();
+      cyOutgoing.current = null;
+    }
+
+    // Clear the containers
+    if (incomingGraphRef.current) {
+      incomingGraphRef.current.innerHTML = '';
+    }
+    if (outgoingGraphRef.current) {
+      outgoingGraphRef.current.innerHTML = '';
+    }
+
+    // Small delay to ensure DOM is cleared
+    setTimeout(() => {
+      if (!incomingGraphRef.current || !outgoingGraphRef.current || !result) return;
+
+      // Create Incoming Graph
+      cyIncoming.current = cytoscape({
+        container: incomingGraphRef.current,
+        elements: [
+        // Nodes
+        ...result.incoming_graph.nodes.map(node => ({
+          data: {
+            id: node.id,
+            label: node.label,
+            type: node.type,
+            callCount: node.call_count || 0
+          }
+        })),
+        // Edges
+        ...result.incoming_graph.edges.map(edge => ({
+          data: {
+            source: edge.source,
+            target: edge.target,
+            label: `${edge.call_count}`,
+            callCount: edge.call_count
+          }
+        }))
+      ],
+      style: [
+        {
+          selector: 'node',
+          style: {
+            'label': 'data(label)',
+            'text-valign': 'center',
+            'text-halign': 'center',
+            'font-size': '10px',
+            'color': '#fff',
+            'text-outline-color': '#2563eb',
+            'text-outline-width': '2px',
+            'background-color': '#22c55e',
+            'width': '40px',
+            'height': '40px'
+          }
+        },
+        {
+          selector: 'node[type="main"]',
+          style: {
+            'background-color': '#2563eb',
+            'width': '60px',
+            'height': '60px',
+            'font-size': '12px',
+            'font-weight': 'bold',
+            'border-width': '3px',
+            'border-color': '#1e40af'
+          }
+        },
+        {
+          selector: 'edge',
+          style: {
+            'width': 'data(callCount)',
+            'line-color': '#22c55e',
+            'target-arrow-color': '#22c55e',
+            'target-arrow-shape': 'triangle',
+            'curve-style': 'bezier',
+            'label': 'data(label)',
+            'font-size': '9px',
+            'text-background-color': '#fff',
+            'text-background-opacity': 0.8,
+            'text-background-padding': '2px'
+          }
+        }
+      ],
+      layout: {
+        name: 'concentric',
+        concentric: (node: cytoscape.NodeSingular) => node.data('type') === 'main' ? 100 : 0,
+        levelWidth: () => 1,
+        minNodeSpacing: 80
+      }
+    });
+
+    // Create Outgoing Graph
+    cyOutgoing.current = cytoscape({
+      container: outgoingGraphRef.current,
+      elements: [
+        // Nodes
+        ...result.outgoing_graph.nodes.map(node => ({
+          data: {
+            id: node.id,
+            label: node.label,
+            type: node.type,
+            callCount: node.call_count || 0
+          }
+        })),
+        // Edges
+        ...result.outgoing_graph.edges.map(edge => ({
+          data: {
+            source: edge.source,
+            target: edge.target,
+            label: `${edge.call_count}`,
+            callCount: edge.call_count
+          }
+        }))
+      ],
+      style: [
+        {
+          selector: 'node',
+          style: {
+            'label': 'data(label)',
+            'text-valign': 'center',
+            'text-halign': 'center',
+            'font-size': '10px',
+            'color': '#fff',
+            'text-outline-color': '#dc2626',
+            'text-outline-width': '2px',
+            'background-color': '#ef4444',
+            'width': '40px',
+            'height': '40px'
+          }
+        },
+        {
+          selector: 'node[type="main"]',
+          style: {
+            'background-color': '#2563eb',
+            'width': '60px',
+            'height': '60px',
+            'font-size': '12px',
+            'font-weight': 'bold',
+            'border-width': '3px',
+            'border-color': '#1e40af'
+          }
+        },
+        {
+          selector: 'edge',
+          style: {
+            'width': 'data(callCount)',
+            'line-color': '#ef4444',
+            'target-arrow-color': '#ef4444',
+            'target-arrow-shape': 'triangle',
+            'curve-style': 'bezier',
+            'label': 'data(label)',
+            'font-size': '9px',
+            'text-background-color': '#fff',
+            'text-background-opacity': 0.8,
+            'text-background-padding': '2px'
+          }
+        }
+      ],
+      layout: {
+        name: 'concentric',
+        concentric: (node: cytoscape.NodeSingular) => node.data('type') === 'main' ? 100 : 0,
+        levelWidth: () => 1,
+        minNodeSpacing: 80
+      }
+    });
+    }, 50);
+
+    // Cleanup
+    return () => {
+      if (cyIncoming.current) {
+        cyIncoming.current.destroy();
+        cyIncoming.current = null;
+      }
+      if (cyOutgoing.current) {
+        cyOutgoing.current.destroy();
+        cyOutgoing.current = null;
+      }
+    };
+  }, [result]);
 
   const getRiskColor = (score: number) => {
     if (score >= 70) return 'text-red-600 bg-red-50';
@@ -234,18 +403,22 @@ function CallAnalysis() {
       {result && (
         <>
           {/* Overview Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className="bg-white rounded-lg shadow p-4">
+              <div className="text-gray-600 text-sm mb-1">Main Number</div>
+              <div className="text-xl font-bold text-blue-600">{result.main_number}</div>
+            </div>
             <div className="bg-white rounded-lg shadow p-4">
               <div className="text-gray-600 text-sm mb-1">Total Calls</div>
               <div className="text-2xl font-bold text-gray-800">{result.total_calls}</div>
             </div>
             <div className="bg-white rounded-lg shadow p-4">
-              <div className="text-gray-600 text-sm mb-1">Unique Numbers</div>
-              <div className="text-2xl font-bold text-gray-800">{result.unique_numbers.length}</div>
+              <div className="text-gray-600 text-sm mb-1">Incoming</div>
+              <div className="text-2xl font-bold text-green-600">{result.total_incoming}</div>
             </div>
             <div className="bg-white rounded-lg shadow p-4">
-              <div className="text-gray-600 text-sm mb-1">Criminal Matches</div>
-              <div className="text-2xl font-bold text-red-600">{result.criminal_matches.length}</div>
+              <div className="text-gray-600 text-sm mb-1">Outgoing</div>
+              <div className="text-2xl font-bold text-red-600">{result.total_outgoing}</div>
             </div>
             <div className="bg-white rounded-lg shadow p-4">
               <div className="text-gray-600 text-sm mb-1">Risk Score</div>
@@ -304,6 +477,67 @@ function CallAnalysis() {
             </div>
           )}
 
+          {/* Dual Network Graphs */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4" key={result.main_number}>
+            {/* Incoming Calls Graph */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-800">Incoming Calls</h2>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-3 h-3 bg-green-600 rounded-full"></div>
+                  <span className="text-gray-600">{result.total_incoming} calls</span>
+                </div>
+              </div>
+              <div 
+                ref={incomingGraphRef}
+                key={`incoming-${result.main_number}`}
+                className="border rounded-lg bg-gray-50"
+                style={{ height: '500px', width: '100%' }}
+              />
+              <div className="mt-4 text-sm text-gray-600">
+                <p className="font-medium mb-2">Legend:</p>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-4 h-4 bg-blue-600 rounded-full"></div>
+                  <span>Main Number: {result.main_number}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-green-600 rounded-full"></div>
+                  <span>Numbers who called the main number</span>
+                </div>
+                <p className="mt-2 text-xs">Arrow shows direction, label shows call count</p>
+              </div>
+            </div>
+
+            {/* Outgoing Calls Graph */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-800">Outgoing Calls</h2>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-3 h-3 bg-red-600 rounded-full"></div>
+                  <span className="text-gray-600">{result.total_outgoing} calls</span>
+                </div>
+              </div>
+              <div 
+                ref={outgoingGraphRef}
+                key={`outgoing-${result.main_number}`}
+                className="border rounded-lg bg-gray-50"
+                style={{ height: '500px', width: '100%' }}
+              />
+              <div className="mt-4 text-sm text-gray-600">
+                <p className="font-medium mb-2">Legend:</p>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-4 h-4 bg-blue-600 rounded-full"></div>
+                  <span>Main Number: {result.main_number}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-red-600 rounded-full"></div>
+                  <span>Numbers called by the main number</span>
+                </div>
+                <p className="mt-2 text-xs">Arrow shows direction, label shows call count</p>
+              </div>
+            </div>
+          </div>
+
           {/* Common Contacts */}
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-bold text-gray-800 mb-4">Most Frequent Contacts</h2>
@@ -333,218 +567,10 @@ function CallAnalysis() {
             </div>
           </div>
 
-          {/* Network Statistics */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Network Statistics</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="border rounded-lg p-4">
-                <div className="text-gray-600 text-sm">Total Nodes</div>
-                <div className="text-2xl font-bold text-gray-800">{result.network_graph.total_nodes}</div>
-              </div>
-              <div className="border rounded-lg p-4">
-                <div className="text-gray-600 text-sm">Total Connections</div>
-                <div className="text-2xl font-bold text-gray-800">{result.network_graph.total_edges}</div>
-              </div>
-              <div className="border rounded-lg p-4">
-                <div className="text-gray-600 text-sm">Network Density</div>
-                <div className="text-2xl font-bold text-gray-800">{(result.network_graph.density * 100).toFixed(1)}%</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Time Pattern */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Call Activity by Hour</h2>
-            <div className="grid grid-cols-6 gap-2">
-              {Object.entries(result.time_pattern)
-                .sort((a, b) => parseInt(a[0]) - parseInt(b[0]))
-                .map(([hour, count]) => {
-                  const maxCount = Math.max(...Object.values(result.time_pattern));
-                  const heightPercent = (count / maxCount) * 100;
-                  return (
-                    <div key={hour} className="flex flex-col items-center">
-                      <div className="w-full bg-gray-200 rounded-t" style={{ height: '100px', display: 'flex', alignItems: 'flex-end' }}>
-                        <div
-                          className="w-full bg-blue-600 rounded-t"
-                          style={{ height: `${heightPercent}%` }}
-                        ></div>
-                      </div>
-                      <div className="text-xs text-gray-600 mt-1">{hour}:00</div>
-                      <div className="text-xs text-gray-500">{count}</div>
-                    </div>
-                  );
-                })}
-            </div>
-          </div>
-
-          {/* Network Visualization */}
-          {result.network_graph.nodes.length > 0 && (
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">Communication Network Web</h2>
-              <div className="mb-4 flex gap-4 text-sm flex-wrap">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-blue-600 rounded-full"></div>
-                  <span>Main Number (Center): {result.network_graph.main_number}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-green-600 rounded-full"></div>
-                  <span>Incoming Calls</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-red-600 rounded-full"></div>
-                  <span>Outgoing Calls</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-purple-600 rounded-full"></div>
-                  <span>Both Directions</span>
-                </div>
-              </div>
-              
-              {/* SVG Network Visualization */}
-              <div className="border rounded-lg p-4 bg-gray-50 overflow-x-auto">
-                <svg width="800" height="600" viewBox="0 0 800 600" className="mx-auto">
-                  <defs>
-                    <marker id="arrowIncoming" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
-                      <path d="M0,0 L0,6 L9,3 z" fill="#10b981" />
-                    </marker>
-                    <marker id="arrowOutgoing" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
-                      <path d="M0,0 L0,6 L9,3 z" fill="#ef4444" />
-                    </marker>
-                  </defs>
-                  
-                  {/* Draw edges first (behind nodes) */}
-                  {result.network_graph.edges.map((edge, index) => {
-                    const sourceNode = result.network_graph.nodes.find(n => n.id === edge.source);
-                    const targetNode = result.network_graph.nodes.find(n => n.id === edge.target);
-                    
-                    if (!sourceNode || !targetNode) return null;
-                    
-                    // Calculate positions for circular layout
-                    const mainIndex = result.network_graph.nodes.findIndex(n => n.type === 'main');
-                    const sourceIndex = result.network_graph.nodes.findIndex(n => n.id === edge.source);
-                    const targetIndex = result.network_graph.nodes.findIndex(n => n.id === edge.target);
-                    
-                    let x1, y1, x2, y2;
-                    
-                    if (sourceIndex === mainIndex) {
-                      // Main node at center
-                      x1 = 400;
-                      y1 = 300;
-                      const angle = (2 * Math.PI * (targetIndex - 1)) / (result.network_graph.nodes.length - 1);
-                      const radius = 200;
-                      x2 = 400 + radius * Math.cos(angle);
-                      y2 = 300 + radius * Math.sin(angle);
-                    } else if (targetIndex === mainIndex) {
-                      // Main node at center
-                      x2 = 400;
-                      y2 = 300;
-                      const angle = (2 * Math.PI * (sourceIndex - 1)) / (result.network_graph.nodes.length - 1);
-                      const radius = 200;
-                      x1 = 400 + radius * Math.cos(angle);
-                      y1 = 300 + radius * Math.sin(angle);
-                    } else {
-                      return null;
-                    }
-                    
-                    return (
-                      <line 
-                        key={`edge-${index}`}
-                        x1={x1} y1={y1} 
-                        x2={x2} y2={y2}
-                        stroke={edge.color}
-                        strokeWidth={Math.min(edge.weight / 2, 4)}
-                        opacity="0.6"
-                        markerEnd={edge.type === 'incoming' ? 'url(#arrowIncoming)' : 'url(#arrowOutgoing)'}
-                      />
-                    );
-                  })}
-                  
-                  {/* Draw nodes */}
-                  {result.network_graph.nodes.map((node, index) => {
-                    let x, y;
-                    
-                    if (node.type === 'main') {
-                      // Main node at center
-                      x = 400;
-                      y = 300;
-                    } else {
-                      // Other nodes in circular layout
-                      const total = result.network_graph.nodes.length - 1;
-                      const angle = (2 * Math.PI * (index - 1)) / total;
-                      const radius = 200;
-                      x = 400 + radius * Math.cos(angle);
-                      y = 300 + radius * Math.sin(angle);
-                    }
-                    
-                    return (
-                      <g key={node.id}>
-                        {/* Node circle */}
-                        <circle 
-                          cx={x} cy={y} 
-                          r={node.size / 2} 
-                          fill={node.color}
-                          stroke="white"
-                          strokeWidth={node.type === 'main' ? 3 : 2}
-                        />
-                        
-                        {/* Phone number label */}
-                        <text 
-                          x={x} y={y + (node.size / 2) + 15} 
-                          textAnchor="middle" 
-                          fontSize="11"
-                          fill="#374151"
-                          fontWeight={node.type === 'main' ? 'bold' : 'normal'}
-                        >
-                          {node.label}
-                        </text>
-                        
-                        {/* Call counts for non-main nodes */}
-                        {node.type !== 'main' && (node.incoming_count || node.outgoing_count) && (
-                          <text 
-                            x={x} y={y + (node.size / 2) + 28} 
-                            textAnchor="middle" 
-                            fontSize="9"
-                            fill="#6b7280"
-                          >
-                            {node.incoming_count && node.incoming_count > 0 && `↓${node.incoming_count}`}
-                            {node.incoming_count && node.incoming_count > 0 && node.outgoing_count && node.outgoing_count > 0 && ' '}
-                            {node.outgoing_count && node.outgoing_count > 0 && `↑${node.outgoing_count}`}
-                          </text>
-                        )}
-                        
-                        {/* Main label */}
-                        {node.type === 'main' && (
-                          <text 
-                            x={x} y={y + 5} 
-                            textAnchor="middle" 
-                            fontSize="10"
-                            fill="white"
-                            fontWeight="bold"
-                          >
-                            MAIN
-                          </text>
-                        )}
-                      </g>
-                    );
-                  })}
-                </svg>
-              </div>
-              
-              <div className="mt-4 text-sm text-gray-600 space-y-1">
-                <p><strong>Legend:</strong></p>
-                <p>• The main number (MSISON: {result.network_graph.main_number}) is at the center</p>
-                <p>• Green lines = Incoming calls (from other numbers TO main)</p>
-                <p>• Red lines = Outgoing calls (from main TO other numbers)</p>
-                <p>• Line thickness indicates call frequency</p>
-                <p>• Numbers below contacts show: ↓ incoming count, ↑ outgoing count</p>
-              </div>
-            </div>
-          )}
-
           {/* Success Message */}
           <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-2 text-green-700">
             <FaCheckCircle />
-            <span>Analysis completed successfully. Analysis ID: {result.analysis_id}</span>
+            <span>Analysis completed successfully for: {result.pdf_filename}</span>
           </div>
         </>
       )}
