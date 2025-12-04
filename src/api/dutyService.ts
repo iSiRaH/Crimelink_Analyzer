@@ -83,3 +83,17 @@ export async function saveDutiesBulk(payloads: DutyCreatePayload[]) {
     return results.map((r) => r.data);
   }
 }
+export async function downloadDutyScheduleReportPdf(
+  fromDate: string,
+  toDate: string
+): Promise<Blob> {
+  const response = await api.get<Blob>("/duty-schedules/report/pdf", {
+    params: {
+      start: fromDate, // must match backend param name
+      end: toDate,
+    },
+    responseType: "blob", // 👈 important for pdf
+  });
+
+  return response.data;
+}

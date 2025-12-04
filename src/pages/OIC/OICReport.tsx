@@ -1,4 +1,6 @@
 import {useState} from "react";
+import { downloadDutyScheduleReportPdf } from "../../api/dutyService";
+
 
 function OICReport(){
 
@@ -6,9 +8,52 @@ function OICReport(){
     const [dateFrom, setDateFrom] = useState("");
     const [dateTo, setDateTo] = useState("");
 
-    const handleGenerate = () => {
-        alert(`Generating ${reportType} report from ${dateFrom} to ${dateTo}`);
+    const handleGenerate = async () => {
+        if (!dateFrom || !dateTo) {
+            alert("Please select both From Date and To Date");
+            return;
+        }
+
+        if (dateFrom > dateTo) {
+            alert("From Date cannot be after To Date");
+            return;
+        }
+
+  // For now we only implement Duty Schedule PDF
+        if (reportType === "duty") {
+            try {
+      // 1) Call API to get PDF as Blob
+                const pdfBlob = await downloadDutyScheduleReportPdf(dateFrom, dateTo);
+
+      // 2) Create temporary URL
+                const url = window.URL.createObjectURL(
+                new Blob([pdfBlob], { type: "application/pdf" })
+              );
+
+      // 3) Create a hidden <a> and click it to trigger download
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = `duty-schedule-${dateFrom}-to-${dateTo}.pdf`;
+                document.body.appendChild(link);
+                link.click();
+                alert("Duty Schedule PDF report generated successfully.");
+
+      // 4) Cleanup
+                link.remove();
+                window.URL.revokeObjectURL(url);
+        } catch (err) {
+                console.error("Failed to generate duty schedule PDF", err);
+                alert("Failed to generate duty schedule report. Please try again.");
+        }
+        } else {
+    // later you can implement weapon/plate PDFs here
+            alert(
+                `Report type "${reportType}" PDF download not implemented yet. Currently only Duty Schedule is supported.`
+            );
+        }
     };
+
+
 
     return (
         <div className="p-6">
@@ -50,7 +95,7 @@ function OICReport(){
                 </div>
                 <button
                     onClick={handleGenerate}
-                    className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+                    className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700"
                 >Generate Report
                 </button>
             </div>
