@@ -99,3 +99,28 @@ export async function downloadDutyScheduleReportPdf(
 
   return response.data;
 }
+// types
+export interface DutyRecommendationRequest {
+  date: string;        // "YYYY-MM-DD"
+  location: string;
+  timeRange?: string;
+  requiredOfficers?: number;
+}
+
+export interface OfficerRecommendation {
+  officerId: number;
+  name: string;
+  badgeNo?: string;
+  recommendationScore: number;
+  availabilityStatus: string;
+  lastDutyDate?: string;
+  totalDuties: number;
+  locationMatch: boolean;
+  reason: string;
+}
+
+// service
+export async function getRecommendations(req: DutyRecommendationRequest) {
+  const res = await api.post<OfficerRecommendation[]>("/duty-recommendations", req);
+  return res.data;
+}
