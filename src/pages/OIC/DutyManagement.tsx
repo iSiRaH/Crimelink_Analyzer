@@ -15,8 +15,13 @@ function DutyManagement() {
   const [selectedDate, setSelectedDate] = useState<string>("");
 
   const [rows, setRows] = useState<OfficerDutyRow[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loadingRows, setLoadingRows] = useState(false);   
+  const [saving, setSaving] = useState(false);             
+  const [recommending, setRecommending] = useState(false); 
+
   const [recommendations, setRecommendations] = useState<OfficerRecommendation[]>([]);
+  const [recommendOpen, setRecommendOpen] = useState(false);
+
 
   const locations = ["Matara", "Hakmana", "Weligama", "Akuressa"];
   const timeRanges = [
@@ -37,16 +42,21 @@ function DutyManagement() {
       date: selectedDate,
       location,
       timeRange: undefined,
-      requiredOfficers: 3,
+      requiredOfficers: 5,
     };
 
     try {
+      setRecommending(true);
       const data = await dutyService.getRecommendations(req);
       setRecommendations(data);
+      setRecommendOpen(true);
       
     } catch (e) {
       console.error("Recommendation error", e);
       alert("Failed to load recommendations");
+    }
+    finally {
+      setRecommending(false);
     }
   };
 
@@ -61,11 +71,11 @@ function DutyManagement() {
   useEffect(() => {
     if (!open || !selectedDate) return;
 
-    setLoading(true);
+    setLoadingRows(true);
     dutyService
       .getOfficerRowsByDate(selectedDate)
       .then(setRows)
-      .finally(() => setLoading(false));
+      .finally(() => setLoadingRows(false));
   }, [open, selectedDate]);
 
   // update any row field
@@ -100,7 +110,7 @@ function DutyManagement() {
       return;
     }
 
-    setLoading(true);
+    setSaving(true);
     try {
       await dutyService.saveDutiesBulk(payload);
 
@@ -120,7 +130,7 @@ function DutyManagement() {
 
       alert("Save failed: " + msg);
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
@@ -144,7 +154,7 @@ function DutyManagement() {
           Details for {selectedDate}
         </h2>
 
-        {loading && <p className="mb-3">Loading officers...</p>}
+        {loadingRows && <p className="mb-3">Loading officers...</p>}
 
         <div className="max-h-96 overflow-y-auto block">
           <table className="w-full border mb-5 text-sm">
@@ -244,7 +254,7 @@ function DutyManagement() {
                 </tr>
               ))}
 
-              {rows.length === 0 && !loading && (
+              {rows.length === 0 && !loadingRows && (
                 <tr>
                   <td colSpan={5} className="p-3 text-center">
                     No active Field Officers found.
@@ -255,49 +265,84 @@ function DutyManagement() {
           </table>
         </div>
 
-        {/* AI Recommendations block */}
-        
+        {/* Buttons */}
+        <div className="mt-4 flex justify-between items-center">
+        {/* Left side buttons */}
+        <div className="flex gap-5">
+        <button
+            onClick={handleAddDuties}
+            disabled={saving || loadingRows}
+            className="bg-red-600 text-white text-lg font-semibold px-5 py-2 rounded-full"
+        >
+          {saving ? "Adding..." : "Add Duty"}
+        </button>
+
+        <button
+            onClick={() => setOpen(false)}
+            className="bg-gray-300 text-lg font-semibold px-5 py-2 rounded-full"
+        >
+          Cancel
+        </button>
+        </div>
+
+        {/* Right side button */}
+        <button
+            onClick={handleRecommend}
+            disabled={recommending}
+            className="bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-semibold"
+        >
+          {recommending ? "Recommending..." : "AI Recommend Officers"}
+        </button>
+        </div>
+
+      </DutyPopupModel>
+      
+
+      {/* 🔹 Popup – AI Recommended Officers */}
+      <DutyPopupModel open={recommendOpen} onClose={() => setRecommendOpen(false)}>
+        <h2 className="text-xl font-semibold mb-4">
+          AI Recommended Officers for {selectedDate}
+        </h2>
+
+        {recommending && <p className="mb-3 text-sm">Loading recommendations...</p>}
+
+        {!recommending && recommendations.length === 0 && (
+          <p className="text-sm text-gray-600">No recommendations found.</p>
+        )}
+
         {recommendations.length > 0 && (
-          <div className="mt-4 border rounded-lg p-3 bg-blue-50">
-            <h3 className="font-semibold mb-2 text-sm">
-              Recommended officers for {selectedDate}:
-            </h3>
-            <ul className="space-y-1 text-xs">
-              {recommendations.map((r) => (
-                <li key={r.officerId}>
-                  <span className="font-medium">{r.name}</span>{" "}
-                  (score {r.recommendationScore.toFixed(1)}) – {r.reason}
-                </li>
-              ))}
-            </ul>
+          <div className="max-h-80 overflow-y-auto">
+            <table className="w-full border text-sm">
+              <thead>
+                <tr className="bg-gray-200">
+                  <th className="p-2 border">Name</th>
+                  <th className="p-2 border">Score</th>
+                  <th className="p-2 border">Reason</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recommendations.map((r) => (
+                  <tr key={r.officerId}>
+                    <td className="p-2 border font-medium">{r.name}</td>
+                    <td className="p-2 border">{r.recommendationScore.toFixed(1)}</td>
+                    <td className="p-2 border text-xs">{r.reason}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
-        
-        {/* Buttons */}
-        <div className="mt-4 flex gap-3">
-          <button
-            onClick={handleAddDuties}
-            disabled={loading}
-            className="bg-red-600 text-white text-lg font-semibold px-5 py-2 rounded-full hover:bg-red-500 disabled:opacity-60"
-          >
-            Add Duty
-          </button>
 
+        <div className="mt-4 flex justify-end gap-3">
           <button
-            className="bg-gray-300 text-lg font-semibold px-5 py-2 rounded-full hover:bg-gray-400"
-            onClick={() => setOpen(false)}
+            className="bg-gray-300 text-sm font-semibold px-4 py-2 rounded-full hover:bg-gray-400"
+            onClick={() => setRecommendOpen(false)}
           >
-            Cancel
-          </button>
-
-          <button
-            onClick={handleRecommend}
-            className="bg-red-600 text-white px-4 py-2 rounded-full text-sm font-semibold"
-          >
-            AI Recommend Officers
+            Close
           </button>
         </div>
       </DutyPopupModel>
+
     </>
   );
 }
