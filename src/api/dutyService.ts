@@ -41,6 +41,7 @@ export async function getOfficerRowsByDate(dateStr: string) {
       r.officer_name ??
       r.officer?.name ??
       "";
+    const timeRange = r.timeRange ?? r.time ?? "";
 
     // ✅ datetime handling
     const datetime = r.datetime
@@ -54,6 +55,7 @@ export async function getOfficerRowsByDate(dateStr: string) {
       officerName,
       location: r.location ?? "",
       datetime,
+      timeRange,
       duration: r.duration ?? 240,
       taskType: r.taskType ?? r.task_type ?? "General",
       status: r.status ?? "OPEN",
