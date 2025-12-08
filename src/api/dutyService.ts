@@ -1,6 +1,7 @@
 
 // src/api/dutyService.ts
 import api from "../services/api";
+import type { DutyStatus } from "../types/duty";
 import type { OfficerDutyRow, DutyCreatePayload } from "../types/duty";
 
 /**
@@ -63,6 +64,10 @@ export async function getOfficerRowsByDate(dateStr: string) {
     } as OfficerDutyRow;
   });
 }
+export async function updateDutyStatus(dutyId: number, status: DutyStatus) {
+  const res = await api.patch(`/duty-schedules/${dutyId}/status`, { status });
+  return res.data;
+}
 
 /**
  * POST save duties (bulk)
@@ -105,6 +110,7 @@ export interface DutyRecommendationRequest {
   location: string;
   timeRange?: string;
   requiredOfficers?: number;
+  statusFilter?: "Active" | "Absent" | "Completed" | "All";
 }
 
 export interface OfficerRecommendation {
@@ -117,6 +123,7 @@ export interface OfficerRecommendation {
   totalDuties: number;
   locationMatch: boolean;
   reason: string;
+  status: "Active" | "Absent" | "Completed";
 }
 
 // service

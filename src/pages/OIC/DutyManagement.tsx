@@ -6,7 +6,7 @@ import type { DateClickArg } from "@fullcalendar/interaction";
 import { useEffect, useState } from "react";
 
 import DutyPopupModel from "../../components/UI/DutyPopupModel";
-import type { OfficerDutyRow, DutyCreatePayload } from "../../types/duty";
+import type { OfficerDutyRow, DutyCreatePayload, DutyStatus } from "../../types/duty";
 import * as dutyService from "../../api/dutyService";
 import type { OfficerRecommendation } from "../../api/dutyService";
 
@@ -28,7 +28,11 @@ function DutyManagement() {
     { value: "06:00-21:00", label: "06:00 - 21:00", start: "06:00" },
     { value: "21:00-06:00", label: "21:00 - 06:00", start: "21:00" },
   ];
-  const statuses = ["Active", "Absent", "Completed"];
+  const statusOptions: { value: DutyStatus; label: string }[] = [
+    { value: "Active",    label: "Active" },
+    { value: "Completed", label: "Completed" },
+    { value: "Absent",    label: "Absent" },
+  ];
 
   // AI recommend button
   const handleRecommend = async () => {
@@ -36,7 +40,7 @@ function DutyManagement() {
 
     // simple example: use first row location
     const firstRow = rows[0];
-    const location = firstRow?.location || "Colombo";
+    const location = firstRow?.location || "Matara";
 
     const req = {
       date: selectedDate,
@@ -91,16 +95,25 @@ function DutyManagement() {
   const handleAddDuties = async () => {
     // ✅ build payload matching backend DutyScheduleRequest
     const payload: DutyCreatePayload[] = rows
-      .filter((r) => r.location && r.timeRange) // require timeRange
+      .filter((r) => {
+    // ignore rows with no status at all
+      if (!r.status) return false;
+
+    // allow ABSENT even if other fields are empty
+      if (r.status === "Absent") return true;
+
+    // for ACTIVE / COMPLETED → require location + timeRange
+          return !!r.location && !!r.timeRange;
+    })
       .map((r) => ({
         officerId: r.officerId,
         date: r.datetime || `${selectedDate}T00:00:00`, // or send selectedDate separately if backend uses LocalDate
         duration: r.duration ?? 240,
         taskType: r.taskType ?? "General",
-        status: r.status?.trim() || "Active",
-        location: r.location!,
+        status: r.status ??"" as DutyStatus,
+        location: r.status === "Absent" ? "" : r.location || "",
         description: r.description?.trim() || "",
-        timeRange: r.timeRange!, // use the selected range string
+        timeRange: r.timeRange || "", // use the selected range string
       }));
 
     console.log("Saving payload ->", payload);
@@ -232,9 +245,9 @@ function DutyManagement() {
                       onChange={(e) => updateRow(i, "status", e.target.value)}
                     >
                       <option value="">Select Status</option>
-                      {statuses.map((st) => (
-                        <option key={st} value={st}>
-                          {st}
+                      {statusOptions.map((st) => (
+                        <option key={st.value} value={st.value}>
+                          {st.label}
                         </option>
                       ))}
                     </select>
