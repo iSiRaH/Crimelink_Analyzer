@@ -25,6 +25,7 @@ import FacialRecognition from "./pages/Investigator/FacialRecognition";
 import SafetyZone from "./pages/Investigator/SafetyZone";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import NotFound from "./pages/NotFound";
+import { MapProvider } from "./contexts/MapContext";
 
 function AppContent() {
   const navigate = useNavigate();
@@ -112,7 +113,9 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <AppContent />
+        <MapProvider>
+          <AppContent />
+        </MapProvider>
       </AuthProvider>
     </Router>
   );
