@@ -1,5 +1,3 @@
-// src/services/api.ts (or wherever you keep it)
-
 import axios, {
   AxiosError,
  type  AxiosResponse,
@@ -32,12 +30,17 @@ const refreshClient = axios.create({
 });
 
 // Public endpoints that don't require authentication
-const publicEndpoints = ["/auth/", "/health", "/test", "/database/"];
+const publicEndpoints = ["/auth/", "/health", "/test", "/database/", "/admin/health"];
 
 // -------------------- REQUEST INTERCEPTOR --------------------
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     config.headers = config.headers ?? {};
+
+    // For FormData, delete Content-Type so Axios can set it with boundary
+    if (config.data instanceof FormData) {
+      delete (config.headers as any)['Content-Type'];
+    }
 
     const url = config.url ?? "";
     const isPublicEndpoint = publicEndpoints.some((endpoint) =>

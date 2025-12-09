@@ -3,6 +3,8 @@ import {
   FaUserFriends,
   FaUserShield,
   FaStickyNote,
+  FaFileAlt
+
 } from "react-icons/fa";
 import { FaUserGear } from "react-icons/fa6";
 import Sidebar from "../../components/Sidebar";
@@ -26,6 +28,7 @@ function OIC() {
       path: "weapon-handover",
     },
     { name: "Plate Registry", icon: FaStickyNote, path: "plate-registry" },
+    { name: "Report", icon: FaFileAlt, path: "report" },
     { name: "Manage Profiles", icon: FaUserGear, path: "manage-profiles" },
   ];
 
