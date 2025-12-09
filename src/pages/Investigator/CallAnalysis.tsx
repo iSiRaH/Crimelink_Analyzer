@@ -750,4 +750,328 @@ function CombinedNetworkGraphs({ incomingData, outgoingData }: CombinedNetworkGr
   );
 }
 
+// Color palette for different PDFs (industry standard: ColorBrewer qualitative palette)
+const getPdfColor = (index: number): string => {
+  const colors = [
+    '#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', 
+    '#ffff33', '#a65628', '#f781bf', '#999999'
+  ];
+  return colors[index % colors.length];
+};
+
+// Combined Network Graphs Component - Shows merged incoming/outgoing from all PDFs
+interface CombinedNetworkGraphsProps {
+  incomingData: CombinedGraphData;
+  outgoingData: CombinedGraphData;
+}
+
+function CombinedNetworkGraphs({ incomingData, outgoingData }: CombinedNetworkGraphsProps) {
+  const incomingGraphRef = useRef<HTMLDivElement>(null);
+  const outgoingGraphRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!incomingGraphRef.current || !outgoingGraphRef.current) return;
+
+    let cyIncoming: cytoscape.Core | null = null;
+    let cyOutgoing: cytoscape.Core | null = null;
+
+    setTimeout(() => {
+      if (!incomingGraphRef.current || !outgoingGraphRef.current) return;
+
+      // Incoming Combined Graph
+      cyIncoming = cytoscape({
+        container: incomingGraphRef.current,
+        elements: [...incomingData.nodes, ...incomingData.edges],
+        style: [
+          // Main numbers - each PDF gets unique color
+          {
+            selector: 'node[type="main"]',
+            style: {
+              'label': 'data(fullNumber)',
+              'text-valign': 'center',
+              'text-halign': 'center',
+              'font-size': '12px',
+              'color': '#fff',
+              'text-outline-width': '2px',
+              'text-outline-color': (ele: cytoscape.NodeSingular) => getPdfColor(ele.data('pdfIndex')),
+              'background-color': (ele: cytoscape.NodeSingular) => getPdfColor(ele.data('pdfIndex')),
+              'width': '60px',
+              'height': '60px',
+              'border-width': '3px',
+              'border-color': '#1e40af',
+              'font-weight': 'bold'
+            }
+          },
+          // Regular contacts
+          {
+            selector: 'node[type="contact"]',
+            style: {
+              'label': 'data(fullNumber)',
+              'text-valign': 'center',
+              'text-halign': 'center',
+              'font-size': '10px',
+              'color': '#fff',
+              'text-outline-color': '#2563eb',
+              'text-outline-width': '2px',
+              'background-color': '#22c55e',
+              'width': '40px',
+              'height': '40px'
+            }
+          },
+          // Shared contacts (appear in multiple PDFs) - special styling
+          {
+            selector: 'node[type="shared_contact"]',
+            style: {
+              'label': 'data(fullNumber)',
+              'text-valign': 'center',
+              'text-halign': 'center',
+              'font-size': '10px',
+              'color': '#fff',
+              'text-outline-color': '#f59e0b',
+              'text-outline-width': '3px',
+              'background-color': '#f59e0b',
+              'width': '45px',
+              'height': '45px',
+              'border-width': '3px',
+              'border-color': '#d97706',
+              'border-style': 'double'
+            }
+          },
+          // Normal edges
+          {
+            selector: 'edge[edgeType="normal"]',
+            style: {
+              'width': 'data(callCount)',
+              'line-color': '#22c55e',
+              'target-arrow-color': '#22c55e',
+              'target-arrow-shape': 'triangle',
+              'curve-style': 'bezier',
+              'label': 'data(label)',
+              'font-size': '9px',
+              'text-background-color': '#fff',
+              'text-background-opacity': 0.8,
+              'text-background-padding': '2px'
+            }
+          },
+          // Shared edges (dotted line for cross-PDF connections)
+          {
+            selector: 'edge[edgeType="shared"]',
+            style: {
+              'width': 'data(callCount)',
+              'line-color': '#f59e0b',
+              'target-arrow-color': '#f59e0b',
+              'target-arrow-shape': 'triangle',
+              'curve-style': 'bezier',
+              'line-style': 'dashed',
+              'line-dash-pattern': [6, 3],
+              'label': 'data(label)',
+              'font-size': '9px',
+              'font-weight': 'bold',
+              'text-background-color': '#fef3c7',
+              'text-background-opacity': 0.95,
+              'text-background-padding': '3px'
+            }
+          }
+        ],
+        layout: {
+          name: 'concentric',
+          concentric: (node: cytoscape.NodeSingular) => node.data('type') === 'main' ? 100 : 0,
+          levelWidth: () => 1,
+          minNodeSpacing: 100
+        }
+      });
+
+      // Outgoing Combined Graph
+      cyOutgoing = cytoscape({
+        container: outgoingGraphRef.current,
+        elements: [...outgoingData.nodes, ...outgoingData.edges],
+        style: [
+          {
+            selector: 'node[type="main"]',
+            style: {
+              'label': 'data(fullNumber)',
+              'text-valign': 'center',
+              'text-halign': 'center',
+              'font-size': '12px',
+              'color': '#fff',
+              'text-outline-width': '2px',
+              'text-outline-color': (ele: cytoscape.NodeSingular) => getPdfColor(ele.data('pdfIndex')),
+              'background-color': (ele: cytoscape.NodeSingular) => getPdfColor(ele.data('pdfIndex')),
+              'width': '60px',
+              'height': '60px',
+              'border-width': '3px',
+              'border-color': '#1e40af',
+              'font-weight': 'bold'
+            }
+          },
+          {
+            selector: 'node[type="contact"]',
+            style: {
+              'label': 'data(fullNumber)',
+              'text-valign': 'center',
+              'text-halign': 'center',
+              'font-size': '10px',
+              'color': '#fff',
+              'text-outline-color': '#dc2626',
+              'text-outline-width': '2px',
+              'background-color': '#ef4444',
+              'width': '40px',
+              'height': '40px'
+            }
+          },
+          {
+            selector: 'node[type="shared_contact"]',
+            style: {
+              'label': 'data(fullNumber)',
+              'text-valign': 'center',
+              'text-halign': 'center',
+              'font-size': '10px',
+              'color': '#fff',
+              'text-outline-color': '#f59e0b',
+              'text-outline-width': '3px',
+              'background-color': '#f59e0b',
+              'width': '45px',
+              'height': '45px',
+              'border-width': '3px',
+              'border-color': '#d97706',
+              'border-style': 'double'
+            }
+          },
+          {
+            selector: 'edge[edgeType="normal"]',
+            style: {
+              'width': 'data(callCount)',
+              'line-color': '#ef4444',
+              'target-arrow-color': '#ef4444',
+              'target-arrow-shape': 'triangle',
+              'curve-style': 'bezier',
+              'label': 'data(label)',
+              'font-size': '9px',
+              'text-background-color': '#fff',
+              'text-background-opacity': 0.8,
+              'text-background-padding': '2px'
+            }
+          },
+          {
+            selector: 'edge[edgeType="shared"]',
+            style: {
+              'width': 'data(callCount)',
+              'line-color': '#f59e0b',
+              'target-arrow-color': '#f59e0b',
+              'target-arrow-shape': 'triangle',
+              'curve-style': 'bezier',
+              'line-style': 'dashed',
+              'line-dash-pattern': [6, 3],
+              'label': 'data(label)',
+              'font-size': '9px',
+              'font-weight': 'bold',
+              'text-background-color': '#fef3c7',
+              'text-background-opacity': 0.95,
+              'text-background-padding': '3px'
+            }
+          }
+        ],
+        layout: {
+          name: 'concentric',
+          concentric: (node: cytoscape.NodeSingular) => node.data('type') === 'main' ? 100 : 0,
+          levelWidth: () => 1,
+          minNodeSpacing: 100
+        }
+      });
+
+      // Add tooltips on hover
+      [cyIncoming, cyOutgoing].forEach(cy => {
+        if (cy) {
+          cy.on('mouseover', 'node[type="shared_contact"]', (evt) => {
+            const node = evt.target;
+            const sharedWith = node.data('sharedWith');
+            console.log(`Shared contact: ${node.data('fullNumber')} appears in PDFs with main numbers: ${sharedWith.join(', ')}`);
+          });
+        }
+      });
+    }, 100);
+
+    return () => {
+      if (cyIncoming) cyIncoming.destroy();
+      if (cyOutgoing) cyOutgoing.destroy();
+    };
+  }, [incomingData, outgoingData]);
+
+  return (
+    <div className="bg-white rounded-lg shadow p-6 space-y-6">
+      <div>
+        <h2 className="text-xl font-bold text-gray-800 mb-2">Combined Network Analysis</h2>
+        <p className="text-sm text-gray-600 mb-4">
+          Merged visualization of all analyzed PDFs. 
+          <span className="font-semibold text-orange-600"> Orange nodes with dashed lines</span> indicate contacts shared across multiple PDFs.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Incoming */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-bold text-gray-800">Incoming Calls Network</h3>
+            <div className="text-sm text-gray-600">
+              {incomingData.nodes.length} nodes, {incomingData.edges.length} connections
+            </div>
+          </div>
+          <div 
+            ref={incomingGraphRef}
+            className="border rounded-lg bg-gray-50"
+            style={{ height: '500px', width: '100%' }}
+          />
+          <div className="mt-3 text-sm text-gray-600">
+            <p className="font-medium mb-2">Legend:</p>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-4 h-4 rounded-full" style={{ backgroundColor: getPdfColor(0) }}></div>
+              <span>Main Numbers (each PDF has unique color)</span>
+            </div>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-4 h-4 bg-green-600 rounded-full"></div>
+              <span>Numbers who called the main number</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-orange-500 rounded-full border-2 border-orange-700"></div>
+              <span>Shared contacts (dotted lines) - appears in multiple PDFs</span>
+            </div>
+            <p className="mt-2 text-xs">Arrow shows direction, label shows call count</p>
+          </div>
+        </div>
+
+        {/* Outgoing */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-bold text-gray-800">Outgoing Calls Network</h3>
+            <div className="text-sm text-gray-600">
+              {outgoingData.nodes.length} nodes, {outgoingData.edges.length} connections
+            </div>
+          </div>
+          <div 
+            ref={outgoingGraphRef}
+            className="border rounded-lg bg-gray-50"
+            style={{ height: '500px', width: '100%' }}
+          />
+          <div className="mt-3 text-sm text-gray-600">
+            <p className="font-medium mb-2">Legend:</p>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-4 h-4 rounded-full" style={{ backgroundColor: getPdfColor(0) }}></div>
+              <span>Main Numbers (each PDF has unique color)</span>
+            </div>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-4 h-4 bg-red-600 rounded-full"></div>
+              <span>Numbers called by the main number</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-orange-500 rounded-full border-2 border-orange-700"></div>
+              <span>Shared contacts (dotted lines) - appears in multiple PDFs</span>
+            </div>
+            <p className="mt-2 text-xs">Arrow shows direction, label shows call count</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default CallAnalysis;
