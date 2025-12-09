@@ -1,4 +1,3 @@
-// src/pages/OIC/DutyManagement.tsx
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
@@ -8,7 +7,7 @@ import { useEffect, useState } from "react";
 import DutyPopupModel from "../../components/UI/DutyPopupModel";
 import type { OfficerDutyRow, DutyCreatePayload, DutyStatus } from "../../types/duty";
 import * as dutyService from "../../api/dutyService";
-import type { OfficerRecommendation } from "../../api/dutyService";
+import type { OfficerRecommendation } from "../../types/duty";
 
 function DutyManagement() {
   const [open, setOpen] = useState(false);
@@ -113,7 +112,7 @@ function DutyManagement() {
         status: r.status ??"" as DutyStatus,
         location: r.status === "Absent" ? "" : r.location || "",
         description: r.description?.trim() || "",
-        timeRange: r.timeRange || "", // use the selected range string
+        timeRange: r.timeRange || "",
       }));
 
     console.log("Saving payload ->", payload);

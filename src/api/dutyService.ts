@@ -1,8 +1,6 @@
-
-// src/api/dutyService.ts
 import api from "../services/api";
 import type { DutyStatus } from "../types/duty";
-import type { OfficerDutyRow, DutyCreatePayload } from "../types/duty";
+import type { OfficerDutyRow, DutyCreatePayload, OfficerRecommendation, DutyRecommendationRequest } from "../types/duty";
 
 /**
  * GET officer rows for a selected date
@@ -11,14 +9,14 @@ import type { OfficerDutyRow, DutyCreatePayload } from "../types/duty";
  * 2) GET /api/duty-schedule/officers/{YYYY-MM-DD}
  */
 export async function getOfficerRowsByDate(dateStr: string) {
-  // ✅ try query-param endpoint first (your current backend style)
+  //  try query-param endpoint first (your current backend style)
   let res;
   try {
     res = await api.get(`/duty-schedules/officers`, {
       params: { date: dateStr },
     });
   } catch (e) {
-    // ✅ fallback to path-variable endpoint if above fails
+    //  fallback to path-variable endpoint if above fails
     res = await api.get(`/duty-schedule/officers/${dateStr}`);
   }
 
@@ -44,7 +42,7 @@ export async function getOfficerRowsByDate(dateStr: string) {
       "";
     const timeRange = r.timeRange ?? r.time ?? "";
 
-    // ✅ datetime handling
+    //  datetime handling
     const datetime = r.datetime
       ? r.datetime
       : r.time
@@ -78,12 +76,12 @@ export async function updateDutyStatus(dutyId: number, status: DutyStatus) {
 export async function saveDutiesBulk(payloads: DutyCreatePayload[]) {
   if (!payloads || payloads.length === 0) return [];
 
-  // ✅ try bulk endpoint first
+  //  try bulk endpoint first
   try {
     const res = await api.post(`/duty-schedules/bulk`, payloads);
     return res.data;
   } catch (bulkErr) {
-    // ✅ fallback: save one-by-one if bulk not supported
+    //  fallback: save one-by-one if bulk not supported
     const results = await Promise.all(
       payloads.map((p) => api.post(`/duty-schedules`, p))
     );
@@ -99,33 +97,11 @@ export async function downloadDutyScheduleReportPdf(
       start: fromDate, // must match backend param name
       end: toDate,
     },
-    responseType: "blob", // 👈 important for pdf
+    responseType: "blob", //  important for pdf
   });
 
   return response.data;
 }
-// types
-export interface DutyRecommendationRequest {
-  date: string;        // "YYYY-MM-DD"
-  location: string;
-  timeRange?: string;
-  requiredOfficers?: number;
-  statusFilter?: "Active" | "Absent" | "Completed" | "All";
-}
-
-export interface OfficerRecommendation {
-  officerId: number;
-  name: string;
-  badgeNo?: string;
-  recommendationScore: number;
-  availabilityStatus: string;
-  lastDutyDate?: string;
-  totalDuties: number;
-  locationMatch: boolean;
-  reason: string;
-  status: "Active" | "Absent" | "Completed";
-}
-
 // service
 export async function getRecommendations(req: DutyRecommendationRequest) {
   const res = await api.post<OfficerRecommendation[]>("/duty-recommendations", req);

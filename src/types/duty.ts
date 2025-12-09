@@ -1,4 +1,3 @@
-// src/types/duty.ts
 export type DutyStatus = "Active" | "Completed" | "Absent";
 
 export type OfficerDutyRow = {
@@ -28,3 +27,23 @@ export type DutyCreatePayload = {
   timeRange: string;
 };
 
+export interface DutyRecommendationRequest {
+  date: string;        // "YYYY-MM-DD"
+  location: string;
+  timeRange?: string;
+  requiredOfficers?: number;
+  statusFilter?: "Active" | "Absent" | "Completed" | "All";
+}
+
+export interface OfficerRecommendation {
+  officerId: number;
+  name: string;
+  badgeNo?: string;
+  recommendationScore: number;
+  availabilityStatus: string;
+  lastDutyDate?: string;
+  totalDuties: number;
+  locationMatch: boolean;
+  reason: string;
+  status: "Active" | "Absent" | "Completed";
+}
