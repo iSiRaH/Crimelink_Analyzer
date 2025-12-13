@@ -430,7 +430,14 @@ function CallAnalysis() {
 const getPdfColor = (index: number): string => {
   const colors = [
     '#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', 
-    '#ffff33', '#a65628', '#f781bf', '#999999'
+    '#ffff33', '#a65628', '#f781bf', '#999999','#2563eb', // blue
+    '#16a34a', // green
+    '#dc2626', // red
+    '#7c3aed', // purple
+    '#ea580c', // orange
+    '#0891b2', // cyan
+    '#0f172a', // slate
+    '#be185d',
   ];
   return colors[index % colors.length];
 };
@@ -474,7 +481,7 @@ function CombinedNetworkGraphs({ incomingData, outgoingData }: CombinedNetworkGr
               'width': '60px',
               'height': '60px',
               'border-width': '3px',
-              'border-color': '#1e40af',
+              'border-color': '#03091bcb',
               'font-weight': 'bold'
             }
           },
@@ -523,7 +530,7 @@ function CombinedNetworkGraphs({ incomingData, outgoingData }: CombinedNetworkGr
               'target-arrow-shape': 'triangle',
               'curve-style': 'bezier',
               'label': 'data(label)',
-              'font-size': '9px',
+              'font-size': '15px',
               'text-background-color': '#fff',
               'text-background-opacity': 0.8,
               'text-background-padding': '2px'
@@ -576,7 +583,7 @@ function CombinedNetworkGraphs({ incomingData, outgoingData }: CombinedNetworkGr
               'width': '60px',
               'height': '60px',
               'border-width': '3px',
-              'border-color': '#1e40af',
+              'border-color': '#020613ca',
               'font-weight': 'bold'
             }
           },
@@ -590,7 +597,7 @@ function CombinedNetworkGraphs({ incomingData, outgoingData }: CombinedNetworkGr
               'color': '#fff',
               'text-outline-color': '#dc2626',
               'text-outline-width': '2px',
-              'background-color': '#ef4444',
+              'background-color': '#2563eb',
               'width': '40px',
               'height': '40px'
             }
@@ -617,12 +624,12 @@ function CombinedNetworkGraphs({ incomingData, outgoingData }: CombinedNetworkGr
             selector: 'edge[edgeType="normal"]',
             style: {
               'width': 'data(callCount)',
-              'line-color': '#ef4444',
-              'target-arrow-color': '#ef4444',
+              'line-color': '#7c3aed',
+              'target-arrow-color': '#7c3aed',
               'target-arrow-shape': 'triangle',
               'curve-style': 'bezier',
               'label': 'data(label)',
-              'font-size': '9px',
+              'font-size': '15px',
               'text-background-color': '#fff',
               'text-background-opacity': 0.8,
               'text-background-padding': '2px'
