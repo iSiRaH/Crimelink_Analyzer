@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import cytoscape from 'cytoscape';
 import { FaUpload, FaFileAlt, FaNetworkWired, FaExclamationTriangle, FaSpinner, FaTrash } from 'react-icons/fa';
 
+
 interface GraphData {
   nodes: Array<{ 
     id: string; 
@@ -41,6 +42,16 @@ interface AnalysisResult {
     crime_history: Array<{ crime_type: string; date: string; status: string }>;
   }>;
   risk_score: number;
+  location_analysis?: {
+    gap_minutes?: number;
+    locations?: Array<{
+      location: string;
+      start: string;
+      end: string;
+      count: number;
+    }>;
+  };
+
 }
 
 interface CombinedGraphData {
@@ -363,9 +374,12 @@ function CallAnalysis() {
           </div>
         )}
       </div>
+      
 
       {results.length > 0 && combinedGraphs && (
+        
         <div className="space-y-6">
+          
           {/* Summary Stats */}
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-bold text-gray-800 mb-4">Analysis Summary</h2>
@@ -393,7 +407,6 @@ function CallAnalysis() {
                 <div className="text-sm text-gray-600">Outgoing Calls</div>
               </div>
             </div>
-
             {/* PDF List */}
             <div className="mt-4 border-t pt-4">
               <h3 className="text-sm font-medium text-gray-700 mb-2">Analyzed Files:</h3>
@@ -414,15 +427,72 @@ function CallAnalysis() {
               </div>
             </div>
           </div>
+          
+            {/* Location Time Periods */}
+<div className="bg-white rounded-lg shadow p-6">
+  <h2 className="text-xl font-bold text-gray-800 mb-2">Location Time Periods</h2>
+  <p className="text-sm text-gray-600 mb-4">
+    Sessions are split when there is a gap greater than{" "}
+    <span className="font-semibold">
+      {results[0]?.location_analysis?.gap_minutes ?? 30} minutes
+    </span>.
+  </p>
+
+  <div className="overflow-x-auto">
+    <table className="min-w-full border border-gray-200 rounded-lg">
+      <thead className="bg-gray-50">
+        <tr>
+          <th className="text-left text-sm font-semibold text-gray-700 p-3 border-b">Main Number</th>
+          <th className="text-left text-sm font-semibold text-gray-700 p-3 border-b">Location</th>
+          <th className="text-left text-sm font-semibold text-gray-700 p-3 border-b">Time Period</th>
+        </tr>
+      </thead>
+      <tbody>
+        {results.flatMap((r, idx) => {
+          const locs = r.location_analysis?.locations ?? [];
+          if (!locs.length) {
+            return [
+              <tr key={`empty-${idx}`} className="border-b">
+                <td className="p-3 text-sm text-gray-800 font-medium">
+                  {r.main_number} <span className="text-gray-500">({r.pdf_filename})</span>
+                </td>
+                <td className="p-3 text-sm text-gray-500" colSpan={2}>
+                  No location data found in this PDF
+                </td>
+              </tr>
+            ];
+          }
+
+          return locs.map((l, j) => (
+            <tr key={`${idx}-${j}`} className="border-b hover:bg-gray-50">
+              <td className="p-3 text-sm text-gray-800 font-medium">
+                {r.main_number} <span className="text-gray-500">({r.pdf_filename})</span>
+              </td>
+              <td className="p-3 text-sm text-gray-700">{l.location}</td>
+              <td className="p-3 text-sm text-gray-700">
+                {l.start} - {l.end}
+                <span className="text-gray-500"> ({l.count} records)</span>
+              </td>
+            </tr>
+          ));
+        })}
+      </tbody>
+    </table>
+  </div>
+</div>
 
           {/* Combined Network Graphs */}
           <CombinedNetworkGraphs 
             incomingData={combinedGraphs.incoming}
             outgoingData={combinedGraphs.outgoing}
           />
+          
         </div>
+        
       )}
+      
     </div>
+    
   );
 }
 
@@ -754,7 +824,7 @@ function CombinedNetworkGraphs({ incomingData, outgoingData }: CombinedNetworkGr
         </div>
       </div>
     </div>
-  );
+  );  
 }
 
 export default CallAnalysis;
