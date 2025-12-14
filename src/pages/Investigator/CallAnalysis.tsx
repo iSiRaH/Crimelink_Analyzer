@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import cytoscape from 'cytoscape';
 import { FaUpload, FaFileAlt, FaNetworkWired, FaExclamationTriangle, FaSpinner, FaTrash } from 'react-icons/fa';
 
@@ -23,11 +23,10 @@ interface GraphData {
   total_nodes: number;
   total_edges: number;
 }
-
 interface AnalysisResult {
   pdf_filename: string;
   main_number: string;
-  total_calls: number;
+  total_calls: number
   total_incoming: number;
   total_outgoing: number;
   unique_numbers: string[];
@@ -53,7 +52,6 @@ interface AnalysisResult {
   };
 
 }
-
 interface CombinedGraphData {
   nodes: cytoscape.NodeDefinition[];
   edges: cytoscape.EdgeDefinition[];
@@ -427,68 +425,19 @@ function CallAnalysis() {
               </div>
             </div>
           </div>
-          
-            {/* Location Time Periods */}
-<div className="bg-white rounded-lg shadow p-6">
-  <h2 className="text-xl font-bold text-gray-800 mb-2">Location Time Periods</h2>
-  <p className="text-sm text-gray-600 mb-4">
-    Sessions are split when there is a gap greater than{" "}
-    <span className="font-semibold">
-      {results[0]?.location_analysis?.gap_minutes ?? 30} minutes
-    </span>.
-  </p>
-
-  <div className="overflow-x-auto">
-    <table className="min-w-full border border-gray-200 rounded-lg">
-      <thead className="bg-gray-50">
-        <tr>
-          <th className="text-left text-sm font-semibold text-gray-700 p-3 border-b">Main Number</th>
-          <th className="text-left text-sm font-semibold text-gray-700 p-3 border-b">Location</th>
-          <th className="text-left text-sm font-semibold text-gray-700 p-3 border-b">Time Period</th>
-        </tr>
-      </thead>
-      <tbody>
-        {results.flatMap((r, idx) => {
-          const locs = r.location_analysis?.locations ?? [];
-          if (!locs.length) {
-            return [
-              <tr key={`empty-${idx}`} className="border-b">
-                <td className="p-3 text-sm text-gray-800 font-medium">
-                  {r.main_number} <span className="text-gray-500">({r.pdf_filename})</span>
-                </td>
-                <td className="p-3 text-sm text-gray-500" colSpan={2}>
-                  No location data found in this PDF
-                </td>
-              </tr>
-            ];
-          }
-
-          return locs.map((l, j) => (
-            <tr key={`${idx}-${j}`} className="border-b hover:bg-gray-50">
-              <td className="p-3 text-sm text-gray-800 font-medium">
-                {r.main_number} <span className="text-gray-500">({r.pdf_filename})</span>
-              </td>
-              <td className="p-3 text-sm text-gray-700">{l.location}</td>
-              <td className="p-3 text-sm text-gray-700">
-                {l.start} - {l.end}
-                <span className="text-gray-500"> ({l.count} records)</span>
-              </td>
-            </tr>
-          ));
-        })}
-      </tbody>
-    </table>
-  </div>
-</div>
+        
 
           {/* Combined Network Graphs */}
           <CombinedNetworkGraphs 
             incomingData={combinedGraphs.incoming}
             outgoingData={combinedGraphs.outgoing}
           />
+
+          
+          {/* Location Time Periods as LAST SECTION */}
+          <LocationTimePeriods results={results} />
           
         </div>
-        
       )}
       
     </div>
@@ -825,6 +774,98 @@ function CombinedNetworkGraphs({ incomingData, outgoingData }: CombinedNetworkGr
       </div>
     </div>
   );  
+}
+
+function LocationTimePeriods({ results }: { results: AnalysisResult[] }) {
+  return (
+  
+
+    <div className="bg-white rounded-lg shadow p-6">
+      <h2 className="text-xl font-bold text-gray-800 mb-2">Location Time Periods</h2>
+
+      <p className="text-sm text-gray-600 mb-4">
+        Sessions are split when there is a gap greater than{" "}
+      <span className="font-semibold">
+        {results[0]?.location_analysis?.gap_minutes ?? 30} minutes
+      </span>.
+      </p>
+
+      <div className="overflow-x-auto">
+        <table className="min-w-full border border-gray-200 rounded-lg">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="text-left text-sm font-semibold text-gray-700 p-3 border-b">
+                Main Number
+              </th>
+              <th className="text-left text-sm font-semibold text-gray-700 p-3 border-b">
+                
+              </th>
+              <th className="text-left text-sm font-semibold text-gray-700 p-3 border-b">
+                Location
+              </th>
+              <th className="text-left text-sm font-semibold text-gray-700 p-3 border-b">
+                Time Period
+              </th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {results.map((r, idx) => {
+              const locs = r.location_analysis?.locations ?? [];
+
+              return (
+                <React.Fragment key={`pdf-${idx}`}>
+                  {/*  PDF/Main Number Header Row */}
+                  <tr className="bg-gray-100 border-b">
+                    <td className="p-3 text-sm font-bold text-gray-800" colSpan={4}>
+                      {r.main_number}{" "}
+                      <span className="text-gray-500 font-normal">
+                        ({r.pdf_filename})
+                      </span>
+                    </td>
+                  </tr>
+
+                  {/* If no location data */}
+                {locs.length === 0 ? (
+                    <tr className="border-b">
+                      <td className="p-3 text-sm text-gray-500" colSpan={4}>
+                        No location data found in this PDF
+                      </td>
+                    </tr>
+              ) : (
+                /* Location session rows */
+                locs.map((l, j) => (
+                    <tr key={`row-${idx}-${j}`} className="border-b hover:bg-gray-50">
+                        {/* ↳ indent column under main number */}
+                        <td className="p-3 text-sm text-gray-400 font-mono"></td>
+
+                        {/* Session number per PDF */}
+                        <td className="p-3 text-sm text-gray-700 font-semibold">
+                          {j + 1}
+                        </td>
+
+                        <td className="p-3 text-sm text-gray-700">{l.location}</td>
+
+                        <td className="p-3 text-sm text-gray-700">
+                          {l.start} - {l.end}
+                          <span className="text-gray-500"> ({l.count} records)</span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+
+                  {/* Optional spacer between PDFs */}
+                  <tr>
+                    <td colSpan={4} className="h-2 bg-white"></td>
+                  </tr>
+                </React.Fragment>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+   );
 }
 
 export default CallAnalysis;

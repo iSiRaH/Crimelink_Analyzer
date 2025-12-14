@@ -92,7 +92,7 @@ function DutyManagement() {
 
   // save duties
   const handleAddDuties = async () => {
-    // ✅ build payload matching backend DutyScheduleRequest
+    //  build payload matching backend DutyScheduleRequest
     const payload: DutyCreatePayload[] = rows
       .filter((r) => {
     // ignore rows with no status at all
