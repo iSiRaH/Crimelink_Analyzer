@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import cytoscape from 'cytoscape';
 import { FaUpload, FaFileAlt, FaNetworkWired, FaExclamationTriangle, FaSpinner, FaTrash } from 'react-icons/fa';
-
+import { CallAnalysisPDFButton } from './CallAnalysisPDF';
 
 interface GraphData {
   nodes: Array<{ 
@@ -31,6 +31,7 @@ interface AnalysisResult {
   total_outgoing: number;
   unique_numbers: string[];
   common_contacts: Array<{ phone: string; count: number }>;
+  call_frequency: Record<string, number>;
   incoming_graph: GraphData;
   outgoing_graph: GraphData;
   criminal_matches: Array<{
@@ -423,17 +424,28 @@ function CallAnalysis() {
                   </div>
                 ))}
               </div>
-            </div>
+              <div className="flex items-center justify-between mb-8 mt-6">
+                <div className="flex items-center gap-3">
+                  <FaNetworkWired className="text-3xl text-blue-600" />
+                  <div>
+                    <h1 className="text-2xl font-bold text-gray-800">Call Record Analysis</h1>
+                    <p className="text-gray-600">Download PDF call records to analyze patterns</p>
+                  </div>
+                </div>
+              </div>
+
+            {/* Add PDF Download Button */}
+              <div className="mb-4">
+                <CallAnalysisPDFButton results={results} />
+              </div>
           </div>
-        
+        </div>
 
           {/* Combined Network Graphs */}
           <CombinedNetworkGraphs 
             incomingData={combinedGraphs.incoming}
             outgoingData={combinedGraphs.outgoing}
-          />
-
-          
+          /> 
           {/* Location Time Periods as LAST SECTION */}
           <LocationTimePeriods results={results} />
           
@@ -786,7 +798,7 @@ function LocationTimePeriods({ results }: { results: AnalysisResult[] }) {
       <p className="text-sm text-gray-600 mb-4">
         Sessions are split when there is a gap greater than{" "}
       <span className="font-semibold">
-        {results[0]?.location_analysis?.gap_minutes ?? 30} minutes
+        {results[0]?.location_analysis?.gap_minutes ?? 180} minutes
       </span>.
       </p>
 
