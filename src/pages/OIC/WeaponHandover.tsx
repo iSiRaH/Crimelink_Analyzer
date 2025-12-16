@@ -33,13 +33,14 @@ export default function WeaponHandover() {
   ];
 
   return (
+    <>
     <div className="flex min-h-screen bg-[#3b4a5f] text-white">
   
-
+ 
       {/* Main Content */}
       <main className="flex-1 p-8">
         {/* Header */}
-        <div className="bg-blue-200 pt-3 pb-3 pl-10 pr-10">
+        <div className="bg-[#111827] pt-3 pb-8 pl-11 pr-11">
              <div className="flex justify-between items-center">
           <h1 className="text-2xl font-semibold">Weapon management</h1>
           <button className="bg-red-600 px-6 py-2 rounded-full font-semibold hover:bg-red-700">
@@ -48,7 +49,7 @@ export default function WeaponHandover() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-4 gap-6 mt-6 ">
+        <div className="grid grid-cols-4 gap-10 mt-6 ">
           {[
             { label: "Total Weapon", value: 130 },
             { label: "Available", value: 83 },
@@ -59,7 +60,7 @@ export default function WeaponHandover() {
               key={card.label}
               className="bg-[#3b4a5f] rounded-xl p-6 text-center"
             >
-              <p className="text-gray-300 text-sm">{card.label}</p>
+              <p className="text-white text-lg">{card.label}</p>
               <p className="text-3xl font-bold mt-2">{card.value}</p>
             </div>
           ))}
@@ -79,7 +80,7 @@ export default function WeaponHandover() {
             </div>
           </div>
 
-          <table className="w-full text-sm">
+          <table className="w-full text-sm ">
             <thead className="text-gray-400 border-b bg-[#3b4a5f] border-gray-700">
               <tr>
                 <th className="py-3 text-left">Weapon Type</th>
@@ -118,5 +119,6 @@ export default function WeaponHandover() {
         </div>
       </main>
     </div>
+    </>
   );
 }
