@@ -37,15 +37,14 @@ const CallAnalysisPDF = ({ results }: { results: CallAnalysisResult[] }) => {
   // Sort results by total_calls in descending order
   const sortedResults = [...results].sort((a, b) => b.total_calls - a.total_calls);
 
-  // Generate a list of unique phone numbers
-  const allPhoneNumbers = new Set();
-  sortedResults.forEach(result => {
-    result.common_contacts.forEach(contact => {
-      allPhoneNumbers.add(contact.phone);
-    });
-  });
-
-  const phoneNumbers = Array.from(allPhoneNumbers) as string[];
+  // Group results by main_number
+  const groupedByMainNumber = sortedResults.reduce((acc, result) => {
+    if (!acc[result.main_number]) {
+      acc[result.main_number] = [];
+    }
+    acc[result.main_number].push(result);
+    return acc;
+  }, {} as Record<string, CallAnalysisResult[]>);
 
   return (
     <Document>
@@ -53,45 +52,58 @@ const CallAnalysisPDF = ({ results }: { results: CallAnalysisResult[] }) => {
         <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 20 }}>Call Analysis Report</Text>
         <Text>Date: {new Date().toLocaleDateString()}</Text>
         
-        {/* Table Section */}
-        <View style={styles.section}>
-          <View style={styles.table}>
-            <View style={styles.tableHeader}>
-              <Text style={styles.tableCell}>Phone Number</Text>
-              <Text style={styles.tableCell}>Total Calls</Text>
-              <Text style={styles.tableCell}>Incoming Calls</Text>
-              <Text style={styles.tableCell}>Outgoing Calls</Text>
-            </View>
-            {phoneNumbers.map((phone, idx) => {
-              const totalCalls = sortedResults.reduce((sum, result) => {
-                return sum + (result.call_frequency[phone] || 0);
-              }, 0);
+        {/* Loop through each main number and create a separate section */}
+        {Object.keys(groupedByMainNumber).map((mainNumber) => {
+          const mainNumberResults = groupedByMainNumber[mainNumber];
 
-              const incomingCalls = sortedResults.reduce((sum, result) => {
-                return sum + (result.incoming_graph.edges.filter(edge => edge.source === phone).reduce((s, e) => s + e.call_count, 0) || 0);
-              }, 0);
+          return (
+            <View style={styles.section} key={mainNumber}>
+              <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 10 }}>
+                Main Number: {mainNumber}
+              </Text>
 
-              const outgoingCalls = sortedResults.reduce((sum, result) => {
-                return sum + (result.outgoing_graph.edges.filter(edge => edge.target === phone).reduce((s, e) => s + e.call_count, 0) || 0);
-              }, 0);
-
-              return (
-                <View style={styles.tableRow} key={idx}>
-                  <Text style={styles.tableCell}>{phone}</Text>
-                  <Text style={styles.tableCell}>{totalCalls}</Text>
-                  <Text style={styles.tableCell}>{incomingCalls}</Text>
-                  <Text style={styles.tableCell}>{outgoingCalls}</Text>
+              {/* Table Section for the Main Number */}
+              <View style={styles.table}>
+                <View style={styles.tableHeader}>
+                  <Text style={styles.tableCell}>Phone Number</Text>
+                  <Text style={styles.tableCell}>Total Calls</Text>
+                  <Text style={styles.tableCell}>Incoming Calls</Text>
+                  <Text style={styles.tableCell}>Outgoing Calls</Text>
                 </View>
-              );
-            })}
-          </View>
-        </View>
+
+                {/* Generate table rows for contacts associated with the main number */}
+                {mainNumberResults.map((result) => {
+                  return result.common_contacts.map((contact, idx) => {
+                    const totalCalls = result.call_frequency[contact.phone] || 0;
+                    const incomingCalls = result.incoming_graph.edges.filter(
+                      edge => edge.source === contact.phone
+                    ).reduce((sum, edge) => sum + edge.call_count, 0);
+                    const outgoingCalls = result.outgoing_graph.edges.filter(
+                      edge => edge.target === contact.phone
+                    ).reduce((sum, edge) => sum + edge.call_count, 0);
+
+                    return (
+                      <View style={styles.tableRow} key={idx}>
+                        <Text style={styles.tableCell}>{contact.phone}</Text>
+                        <Text style={styles.tableCell}>{totalCalls}</Text>
+                        <Text style={styles.tableCell}>{incomingCalls}</Text>
+                        <Text style={styles.tableCell}>{outgoingCalls}</Text>
+                      </View>
+                    );
+                  });
+                })}
+              </View>
+            </View>
+          );
+        })}
       </Page>
     </Document>
   );
 };
 
+
 interface CallAnalysisResult {
+  main_number: string;
   total_calls: number;
   common_contacts: Array<{ phone: string }>;
   call_frequency: Record<string, number>;
