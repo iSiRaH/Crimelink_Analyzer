@@ -109,8 +109,8 @@ function PlateRegistry(){
         <div className="bg-slate-800 p-5 rounded-lg">
             <h1 className="font-semibold text-3xl text-white">Plate Registry</h1>
 
-            <div className="flex flex-row gap-3 mt-5 items-center">
-                <div className="relative w-2/5">
+            <div className="flex flex-row gap-3 mt-5 items-center justify-start flex-wrap">
+                <div className="relative w-2/5 min-w-[250px]">
                     <IoSearch className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 size={18}"/>
                     <input
                         type="text"
@@ -118,19 +118,21 @@ function PlateRegistry(){
                         className="w-full py-2 pl-9 pr-4 rounded-md"
                     />
                 </div>
+                <div>
                 <DropDownMenu
                     dropdownLabelName="Filter by Status"
                     items={[{itemTitle:"Active"}, {itemTitle:"Inactive"}]}
                 />
+                </div>
                 <button
-                    className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+                    className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 disabled:bg-gray-400 transition-colors"
                     onClick={() => setShowModal(true)}
                     disabled={loading}
                 >
                     + Add Vehicle
                 </button>
                 <button
-                    className="bg-green-500 text-white px-4 py-2 rounded-md"
+                    className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors"
                     onClick={fetchVehicles}
                     disabled={loading}
                 >
@@ -138,17 +140,23 @@ function PlateRegistry(){
                 </button>
             </div>
         {error && (
-            <div className="mt-4 p-3 bg-red-500 text-white rounded-md">
-                {error}
-                <button onClick={() => setError(null)} className="ml-4 font-bold">✕</button>
+            <div className="mt-4 p-3 bg-red-500 text-white rounded-md flex items-center justify-between">
+                <span>{error}</span>
+                <button onClick={() => setError(null)} className="ml-4 font-bold text-white hover:text-gray-200">✕</button>
             </div>
         )}
         </div>
         <div className="w-full flex justify-center mt-5">
             {loading ?(
-                <div className="text-white text-xl">Loading vehicles...</div>
+                <div className="text-white text-xl bg-slate-800 p-8 rounded-lg">
+                    <div className="flex items-center gap-3">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                        <span>Loading vehicles...</span>
+                    </div>
+                </div>
             ) : (
-                <table className="w-full bg-white border rounded-lg">
+                <div className="w-full overflow-x-auto">
+                <table className="w-full bg-white border rounded-lg shadow-lg">
                     <thead>
                         <tr className="bg-slate-700 text-white">
                             <th className="p-3 border">Plate Number</th>
@@ -169,7 +177,7 @@ function PlateRegistry(){
                         ) : (
 
                             vehicles.map((vehicle) => (
-                            <tr key={vehicle.id} className="hover:bg-gray-50">
+                            <tr key={vehicle.id} className="hover:bg-gray-50 transition-colors">
                                 <td className="p-3 border font-semibold text-blue-600">{vehicle.numberPlate}</td>
                                 <td className="p-3 border">{vehicle.ownerName}</td>
                                 <td className="p-3 border">{vehicle.vehicleType}</td>
@@ -186,7 +194,7 @@ function PlateRegistry(){
                                 <td className="p-3 border text-center">
                                     <button
                                         onClick={() => vehicle.id && handleDeleteVehicle(vehicle.id)}
-                                        className="bg-red-500 text-white px-3 py-1 rounded"
+                                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm transition-colors"
                                     >
                                         Delete
                                     </button>
@@ -196,18 +204,24 @@ function PlateRegistry(){
                     )}
                 </tbody>
             </table>
-            )}
         </div>
+        )}
+    </div>
 
         {showModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-                <div className="bg-white p-6 rounded-lg w-96">
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
+                <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
                     <h2 className="text-2xl font-bold mb-4">Add New Vehicle</h2>
+                         {error && (
+                            <div className="mb-4 p-2 bg-red-100 text-red-700 rounded-md text-sm">
+                                {error}
+                            </div>
+                        )}
 
                     <div className="space-y-4">
 
                         <div>
-                            <label className="block text-sm font-medium mb-1">
+                            <label className="block text-sm font-medium mb-1 text-gray-700">
                                 Number Plate <span className="text-red-500">*</span>
                             </label>
                             <input
@@ -215,13 +229,14 @@ function PlateRegistry(){
                                 value={vehicleData.numberPlate}
                                 onChange={(e) => setVehicleData({...vehicleData, numberPlate: e.target.value})}
                                 placeholder="e.g., ABC-1234"
-                                className="w-full p-2 border rounded-md"
+                                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 disabled={loading}
+                                required
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-1">
+                            <label className="block text-sm font-medium mb-1 text-gray-700">
                                 Owner Name <span className="text-red-500">*</span>
                             </label>
                             <input
@@ -229,20 +244,21 @@ function PlateRegistry(){
                                 value={vehicleData.ownerName}
                                 onChange={(e) => setVehicleData({...vehicleData, ownerName: e.target.value})}
                                 placeholder="e.g., John Doe"
-                                className="w-full p-2 border rounded-md"
+                                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                required
                             />
                         </div>
 
 
                         <div>
-                            <label className="block text-sm font-medium mb-1">
+                            <label className="block text-sm font-medium mb-1 text-gray-700">
                                 Vehicle type <span className="text-red-500">*</span>
                             </label>
                             <select
                                 value={vehicleData.vehicleType}
                                 onChange={(e) => setVehicleData({...vehicleData, vehicleType: e.target.value})}
-                                className="w-full p-2 border rounded-md"
-                                
+                                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                required
                             >
                                 <option value="">Select Vehicle Type</option>
                                 <option value="Car">Car</option>
@@ -253,14 +269,14 @@ function PlateRegistry(){
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-1">
+                            <label className="block text-sm font-medium mb-1 text-gray-700">
                                 Status
                             </label>
                             <select
                                 value={vehicleData.status}
                                 onChange={(e) => setVehicleData({...vehicleData, status: e.target.value})}
-                                className="w-full p-2 border rounded-md"
-                                
+                                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                disabled={loading}
                             >
                                 <option value="">Select Status</option>
                                 <option value="Active">Active</option>
@@ -269,20 +285,20 @@ function PlateRegistry(){
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-1">
+                            <label className="block text-sm font-medium mb-1 text-gray-700">
                                 Last Update
                             </label>
                             <input
                                 type="date"
                                 value={vehicleData.lastUpdate}
                                 onChange={(e) => setVehicleData({...vehicleData, lastUpdate: e.target.value})}
-                                className="w-full p-2 border rounded-md"
+                                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             />  
                         </div>
                     </div>
                         <div className="flex gap-3 mt-6">
                             <button
-                                className="bg-blue-500 text-white px-4 py-2 rounded-md flex-1"
+                                className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 flex-1 disabled:bg-gray-400 transition-colors font-medium"
                                 onClick={handleAddVehicle}
                                 disabled={loading}
                             >
@@ -290,7 +306,7 @@ function PlateRegistry(){
                             </button>
 
                             <button
-                                className="bg-gray-500 text-white px-4 py-2 rounded-md flex-1"
+                                className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 flex-1 transition-colors font-medium"
                                 onClick={() => {
                                     setShowModal(false);
                                     setError(null);
@@ -302,10 +318,10 @@ function PlateRegistry(){
                                         lastUpdate: ""
                                     });
                                 }}
-                                
+                                disabled={loading}
                             >
-                                Cancel
-                            </button>
+                            Cancel
+                        </button>
                     </div>
                 </div>
             </div>   
