@@ -26,6 +26,7 @@ import SafetyZone from "./pages/Investigator/SafetyZone";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import NotFound from "./pages/NotFound";
 import { MapProvider } from "./contexts/MapContext";
+import ReportCrimes from "./pages/OIC/ReportCrimes";
 
 function AppContent() {
   const navigate = useNavigate();
@@ -72,6 +73,7 @@ function AppContent() {
         <Route path="duty-management" element={<DutyManagement />} />
         <Route path="weapon-handover" element={<WeaponHandover />} />
         <Route path="plate-registry" element={<PlateRegistry />} />
+        <Route path="report-crimes" element={<ReportCrimes />} />
         <Route path="manage-profiles" element={<ManageProfiles />} />
       </Route>
 
