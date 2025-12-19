@@ -11,6 +11,8 @@ function PlateRegistry(){
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
     const [showModal, setShowModal] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
+    const [showEditModal, setShowEditModal] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [vehicleData, setVehicleData] = useState({
         numberPlate: "",
@@ -84,6 +86,42 @@ function PlateRegistry(){
             setError(error.response?.data?.message || "Failed to add vehicle");
             setLoading(false);
         });
+    };
+
+    const handleUpdateVehicle = () =>{
+        if(!editingVehicle || !editingVehicle.id){
+            setError("No vehicle selected for update.");
+            return;
+        }
+        setLoading(true);
+        setError(null);
+
+        axios
+            .put(`${API_BASE_URL}/api/vehicles/${editingVehicle.id}`, editingVehicle,{
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            })
+            .then((response) => {
+                console.log("Vehicle updated:", response.data);
+                setVehicles(vehicles.map((v) =>
+                     v.id === editingVehicle.id ? response.data : v
+            ));
+                setShowEditModal(false);
+                setEditingVehicle(null);
+                setLoading(false);
+                alert("Vehicle updated successfully!");
+            })
+            .catch((error) => {
+                console.error("Error updating vehicle:", error);
+                setError(error.response?.data?.message || "Failed to update vehicle");
+                setLoading(false);
+            });
+    };
+
+    const handleEditClick = (vehicle: Vehicle) => {
+        setEditingVehicle({ ...vehicle });  // Create a copy
+        setShowEditModal(true);
     };
 
     const handleDeleteVehicle = (id: number) => {
@@ -192,12 +230,20 @@ function PlateRegistry(){
                                 </td>
                                 <td className="p-3 border">{vehicle.lastUpdate}</td>
                                 <td className="p-3 border text-center">
-                                    <button
-                                        onClick={() => vehicle.id && handleDeleteVehicle(vehicle.id)}
-                                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm transition-colors"
-                                    >
-                                        Delete
-                                    </button>
+                                    <div className="flex gap-2 justify-center">
+                                        <button
+                                            onClick={() => handleEditClick(vehicle)}
+                                            className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm"
+                                        >
+                                            Edit
+                                        </button>
+                                        <button
+                                            onClick={() => vehicle.id && handleDeleteVehicle(vehicle.id)}
+                                            className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm"
+                                        >
+                                            Delete
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         ))
@@ -325,6 +371,134 @@ function PlateRegistry(){
                     </div>
                 </div>
             </div>   
+        )}
+        {/* Edit Vehicle Modal */}
+        {showEditModal && editingVehicle && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
+            <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+            <h2 className="text-2xl font-bold mb-4 text-slate-800">Edit Vehicle</h2>
+      
+            {error && (
+                <div className="mb-4 p-2 bg-red-100 text-red-700 rounded-md text-sm">
+                    {error}
+                </div>
+            )}
+      
+            <div className="space-y-4">
+            {/* Number Plate */}
+                <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Number Plate <span className="text-red-500">*</span>
+                </label>
+                <input
+                    type="text"
+                    value={editingVehicle.numberPlate}
+                    onChange={(e) =>
+                    setEditingVehicle({ ...editingVehicle, numberPlate: e.target.value })
+                    }
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                    disabled={loading}
+                />
+                </div>
+        
+                {/* Owner Name */}
+                <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Owner Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                    type="text"
+                    value={editingVehicle.ownerName}
+                    onChange={(e) =>
+                    setEditingVehicle({ ...editingVehicle, ownerName: e.target.value })
+                    }
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                    disabled={loading}
+                />
+                </div>
+        
+                {/* Vehicle Type */}
+                <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Vehicle Type <span className="text-red-500">*</span>
+                </label>
+                <select
+                    value={editingVehicle.vehicleType}
+                    onChange={(e) =>
+                    setEditingVehicle({ ...editingVehicle, vehicleType: e.target.value })
+                    }
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                    disabled={loading}
+                >
+                    <option value="">Select Type</option>
+                    <option value="Car">Car</option>
+                    <option value="Motorcycle">Motorcycle</option>
+                    <option value="Van">Van</option>
+                    <option value="Truck">Truck</option>
+                    <option value="Bus">Bus</option>
+                </select>
+                </div>
+        
+                {/* Status */}
+                <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Status
+                </label>
+                <select
+                    value={editingVehicle.status}
+                    onChange={(e) =>
+                    setEditingVehicle({ ...editingVehicle, status: e.target.value })
+                    }
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                    disabled={loading}
+                >
+                    <option value="">Select Status</option>
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                    <option value="Suspended">Suspended</option>
+                </select>
+                </div>
+        
+                {/* Last Update */}
+                <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Last Update
+                </label>
+                <input
+                    type="date"
+                    value={editingVehicle.lastUpdate}
+                    onChange={(e) =>
+                    setEditingVehicle({ ...editingVehicle, lastUpdate: e.target.value })
+                    }
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                    disabled={loading}
+                />
+                </div>
+            </div>
+      
+            {/* Buttons */}
+            <div className="flex gap-3 mt-6">
+                <button
+                className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 flex-1 disabled:bg-gray-400"
+                onClick={handleUpdateVehicle}
+                disabled={loading}
+                >
+                {loading ? "Updating..." : "Update Vehicle"}
+                </button>
+                <button
+                className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 flex-1"
+                onClick={() => {
+                    setShowEditModal(false);
+                    setEditingVehicle(null);
+                    setError(null);
+                }}
+                disabled={loading}
+                >
+                Cancel
+                </button>
+            </div>
+            </div>
+        </div>
         )}
     </div>
   );  
