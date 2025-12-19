@@ -30,6 +30,13 @@ export default function WeaponHandover() {
       assignedTo: "--",
       dueBack: "--",
     },
+        {
+      type: "Glock 17",
+      serial: "K-6438",
+      status: "Available",
+      assignedTo: "--",
+      dueBack: "--",
+    },
   ];
 
   return (
@@ -49,12 +56,12 @@ export default function WeaponHandover() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-4 gap-10 mt-6 ">
+        <div className="grid grid-cols-3 gap-40 mt-6 ">
           {[
             { label: "Total Weapon", value: 130 },
             { label: "Available", value: 83 },
             { label: "Issued", value: 37 },
-            { label: "Pending Returns", value: 10 },
+           
           ].map((card) => (
             <div
               key={card.label}
@@ -70,21 +77,25 @@ export default function WeaponHandover() {
        
         {/* Table Section */}
         <div className="bg-[#111827] rounded-xl mt-8 p-6">
-          <div className="flex justify-end mb-4 ">
-            <div className="relative bg-white rounded-md">
-              <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+          <div className="flex flex-row justify-between">
+            <div className="text-lg">Data Table</div>
+            <div className="flex justify-end mb-4 ">
+            <div className="relative bg-white rounded-md ">
+              <Search className="absolute left-28 top-2.5 text-gray-400" size={20} />
               <input
-                placeholder="Search..."
-                className="pl-10 pr-4 py-2 rounded-lg bg-white text-sm outline-none"
+                placeholder="Search........"
+                className="pl-40 pr-4 py-2 rounded-lg text-black    text-lg outline-none"
               />
             </div>
           </div>
+          </div>
+       
 
-          <table className="w-full text-sm ">
+          <table className="w-full text-lg">
             <thead className="text-gray-400 border-b bg-[#3b4a5f] border-gray-700">
-              <tr>
-                <th className="py-3 text-left">Weapon Type</th>
-                <th className="text-left">Serial No</th>
+              <tr className="">
+                <th className="py-3 text-left ">Weapon Type</th>
+                <th className="text-left ml-10">Serial No</th>
                 <th className="text-left">Status</th>
                 <th className="text-left">Assigned to</th>
                 <th className="text-left">Due Back</th>
@@ -108,9 +119,18 @@ export default function WeaponHandover() {
                   <td>{w.assignedTo}</td>
                   <td>{w.dueBack}</td>
                   <td>
-                    <button className="border px-4 py-1 rounded-full text-xs hover:bg-gray-700">
+                    <button
+                      className={`border px-8 py-1 rounded-full text-lg transition
+                        ${
+                          w.status === "Available"
+                            ? "border-green-500 text-green-500 hover:bg-green-500 hover:text-white"
+                            : "border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                        }
+                      `}
+                    >
                       {w.status === "Available" ? "Issued" : "Return"}
                     </button>
+
                   </td>
                 </tr>
               ))}

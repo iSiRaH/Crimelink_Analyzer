@@ -127,6 +127,7 @@ function App() {
     <Router>
       <AuthProvider>
         <AppContent />
+        {/* <WeaponHandover/> */}
       </AuthProvider>
     </Router>
   );
