@@ -11,6 +11,7 @@ function PlateRegistry(){
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
     const [showModal, setShowModal] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
     const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
     const [showEditModal, setShowEditModal] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -19,7 +20,7 @@ function PlateRegistry(){
         ownerName: "",
         vehicleType: "",
         status: "",
-        lastUpdate: ""
+        lostDate: ""
     });
 
     useEffect(() =>{
@@ -48,6 +49,17 @@ function PlateRegistry(){
             setLoading(false);
         });
 };
+     // Filter and Sort vehicles based on search input and lostDate
+    const filteredAndSortedVehicles = vehicles
+        .filter((vehicle) => 
+            vehicle.numberPlate.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            vehicle.ownerName.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+        .sort((a, b) => {
+            const dateA = new Date(a.lostDate).getTime();
+            const dateB = new Date(b.lostDate).getTime();
+            return dateB - dateA; // Sort descending (newer dates first)
+        });
 
     const handleAddVehicle = () =>{
 
@@ -75,7 +87,7 @@ function PlateRegistry(){
                 ownerName: "",
                 vehicleType: "",
                 status: "",
-                lastUpdate: ""
+                lostDate: ""
             });
             setLoading(false);
 
@@ -154,12 +166,14 @@ function PlateRegistry(){
                         type="text"
                         placeholder="Search by plate or owner name"
                         className="w-full py-2 pl-9 pr-4 rounded-md"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
                 <div>
                 <DropDownMenu
                     dropdownLabelName="Filter by Status"
-                    items={[{itemTitle:"Active"}, {itemTitle:"Inactive"}]}
+                    items={[{itemTitle:"Stolen"}, {itemTitle:"Found"}]}
                 />
                 </div>
                 <button
@@ -201,12 +215,12 @@ function PlateRegistry(){
                             <th className="p-3 border">Owner Name</th>
                             <th className="p-3 border">Vehicle Type</th>
                             <th className="p-3 border">Status</th>
-                            <th className="p-3 border">Last Update</th>
+                            <th className="p-3 border">Lost Date</th>
                             <th className="p-3 border">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {vehicles.length === 0 ?(
+                        {filteredAndSortedVehicles.length === 0 ?(
                             <tr>
                                 <td colSpan={6} className="p-8 text-center text-gray-500">
                                     No vehicles found. Click "Add Vehicle" to get started.
@@ -214,21 +228,21 @@ function PlateRegistry(){
                             </tr>
                         ) : (
 
-                            vehicles.map((vehicle) => (
+                            filteredAndSortedVehicles.map((vehicle) => (
                             <tr key={vehicle.id} className="hover:bg-gray-50 transition-colors">
                                 <td className="p-3 border font-semibold text-blue-600">{vehicle.numberPlate}</td>
                                 <td className="p-3 border">{vehicle.ownerName}</td>
                                 <td className="p-3 border">{vehicle.vehicleType}</td>
                                 <td className="p-3 border">
                                     <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                                        vehicle.status === 'Active' 
+                                        vehicle.status === 'Found' 
                                             ? 'bg-green-100 text-green-800' 
-                                            : 'bg-gray-100 text-gray-800'
+                                            : 'bg-red-100 text-gray-800'
                                          }`}>
                                             {vehicle.status}
                                     </span>
                                 </td>
-                                <td className="p-3 border">{vehicle.lastUpdate}</td>
+                                <td className="p-3 border">{vehicle.lostDate}</td>
                                 <td className="p-3 border text-center">
                                     <div className="flex gap-2 justify-center">
                                         <button
@@ -309,8 +323,9 @@ function PlateRegistry(){
                                 <option value="">Select Vehicle Type</option>
                                 <option value="Car">Car</option>
                                 <option value="Van">Van</option>
-                                <option value="Truck">Truck</option>
+                                <option value="Lorry">Lorry</option>
                                 <option value="Motorcycle">Motorcycle</option>
+                                <option value="Other">Other</option>
                             </select>
                         </div>
 
@@ -325,19 +340,19 @@ function PlateRegistry(){
                                 disabled={loading}
                             >
                                 <option value="">Select Status</option>
-                                <option value="Active">Active</option>
-                                <option value="Inactive">Inactive</option>
+                                <option value="Stolen">Stolen</option>
+                                <option value="Found">Found</option>
                             </select>
                         </div>
 
                         <div>
                             <label className="block text-sm font-medium mb-1 text-gray-700">
-                                Last Update
+                                Lost Date
                             </label>
                             <input
                                 type="date"
-                                value={vehicleData.lastUpdate}
-                                onChange={(e) => setVehicleData({...vehicleData, lastUpdate: e.target.value})}
+                                value={vehicleData.lostDate}
+                                onChange={(e) => setVehicleData({...vehicleData, lostDate: e.target.value})}
                                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             />  
                         </div>
@@ -361,7 +376,7 @@ function PlateRegistry(){
                                         ownerName: "",
                                         vehicleType: "",
                                         status: "",
-                                        lastUpdate: ""
+                                        lostDate: ""
                                     });
                                 }}
                                 disabled={loading}
@@ -434,8 +449,8 @@ function PlateRegistry(){
                     <option value="Car">Car</option>
                     <option value="Motorcycle">Motorcycle</option>
                     <option value="Van">Van</option>
-                    <option value="Truck">Truck</option>
-                    <option value="Bus">Bus</option>
+                    <option value="Lorry">Lorry</option>
+                    <option value="Other">Other</option>
                 </select>
                 </div>
         
@@ -453,22 +468,21 @@ function PlateRegistry(){
                     disabled={loading}
                 >
                     <option value="">Select Status</option>
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                    <option value="Suspended">Suspended</option>
+                    <option value="Stolen">Stolen</option>
+                    <option value="Found">Found</option>
                 </select>
                 </div>
         
                 {/* Last Update */}
                 <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Last Update
+                    Lost Date
                 </label>
                 <input
                     type="date"
-                    value={editingVehicle.lastUpdate}
+                    value={editingVehicle.lostDate}
                     onChange={(e) =>
-                    setEditingVehicle({ ...editingVehicle, lastUpdate: e.target.value })
+                    setEditingVehicle({ ...editingVehicle, lostDate: e.target.value })
                     }
                     className="w-full p-2 border border-gray-300 rounded-md"
                     disabled={loading}

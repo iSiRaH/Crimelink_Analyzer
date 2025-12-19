@@ -4,5 +4,5 @@ export interface Vehicle{
     ownerName: string
     vehicleType: string
     status: string
-    lastUpdate: string
+    lostDate: string
 }
