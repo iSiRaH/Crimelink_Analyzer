@@ -48,7 +48,7 @@ function PlateRegistry() {
             });
     };
 
-    // Filter and Sort vehicles based on search input, status, vehicleType, and lostDate
+    
     const filteredAndSortedVehicles = vehicles
         .filter((vehicle) => {
             const matchesSearch =
@@ -163,7 +163,7 @@ function PlateRegistry() {
             <div className="bg-slate-800 p-5 rounded-lg">
                 <h1 className="font-semibold text-3xl text-white">Plate Registry</h1>
 
-                {/* First Row: Search Bar, Status Filter, Vehicle Type Filter, Lost Date Filter */}
+            
                 <div className="flex flex-row gap-3 mt-5 items-center justify-start mb-5">
                     <div className="relative w-2/5 min-w-[250px]">
                         <IoSearch className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 size={18}" />
@@ -210,7 +210,7 @@ function PlateRegistry() {
                     </div>
                 </div>
 
-                {/* Second Row: Clear Filters, Add Vehicle, Refresh Buttons */}
+            
                 <div className="flex flex-row gap-3 items-center justify-between mb-5">
                     <div className="flex gap-3 items-center">
                         <button
@@ -253,7 +253,7 @@ function PlateRegistry() {
                 )}
             </div>
 
-            {/* Vehicle Table */}
+            
             <div className="w-full flex justify-center mt-5">
                 {loading ? (
                     <div className="text-white text-xl bg-slate-800 p-8 rounded-lg">
@@ -325,7 +325,7 @@ function PlateRegistry() {
                 )}
             </div>
 
-            {/* Add/Edit Vehicle Modals */}
+            
             {showModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
                     <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
@@ -443,7 +443,7 @@ function PlateRegistry() {
                 </div>
             )}
 
-            {/* Edit Vehicle Modal */}
+            
             {showEditModal && editingVehicle && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
                     <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
@@ -453,7 +453,7 @@ function PlateRegistry() {
                         )}
 
                         <div className="space-y-4">
-                            {/* Number Plate */}
+                            
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Number Plate <span className="text-red-500">*</span>
@@ -469,7 +469,7 @@ function PlateRegistry() {
                                 />
                             </div>
 
-                            {/* Owner Name */}
+                            
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Owner Name <span className="text-red-500">*</span>
@@ -485,7 +485,7 @@ function PlateRegistry() {
                                 />
                             </div>
 
-                            {/* Vehicle Type */}
+                        
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Vehicle Type <span className="text-red-500">*</span>
@@ -507,7 +507,7 @@ function PlateRegistry() {
                                 </select>
                             </div>
 
-                            {/* Status */}
+                            
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Status
@@ -526,7 +526,7 @@ function PlateRegistry() {
                                 </select>
                             </div>
 
-                            {/* Lost Date */}
+                        
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Lost Date

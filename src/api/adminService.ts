@@ -1,4 +1,3 @@
-// src/api/adminService.ts
 import api from "../services/api";
 
 export interface User {

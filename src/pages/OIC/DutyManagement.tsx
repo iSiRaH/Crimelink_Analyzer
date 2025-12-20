@@ -33,7 +33,6 @@ function DutyManagement() {
     { value: "Absent",    label: "Absent" },
   ];
 
-  // AI recommend button
   const handleRecommend = async () => {
     if (!selectedDate) return;
 
@@ -63,7 +62,7 @@ function DutyManagement() {
     }
   };
 
-  // when user clicks calendar date
+  
   const handleDateClick = (info: DateClickArg) => {
     setSelectedDate(info.dateStr);
     setOpen(true);
@@ -148,7 +147,7 @@ function DutyManagement() {
 
   return (
     <>
-      {/* Calendar */}
+      
       <div className="flex-1 p-5 overflow-y-auto">
         <FullCalendar
           height="auto"
@@ -186,7 +185,7 @@ function DutyManagement() {
                   {/* Name auto-load */}
                   <td className="p-2 border font-medium">{r.officerName}</td>
 
-                  {/* Location */}
+                  
                   <td className="p-2 border">
                     <select
                       className="w-full border rounded px-2 py-1"
@@ -204,7 +203,7 @@ function DutyManagement() {
                     </select>
                   </td>
 
-                  {/* Time */}
+                
                   <td className="p-2 border">
                     <select
                       className="w-full border rounded px-2 py-1"
@@ -236,7 +235,7 @@ function DutyManagement() {
                     </select>
                   </td>
 
-                  {/* Status */}
+                  
                   <td className="p-2 border">
                     <select
                       className="w-full border rounded px-2 py-1"
@@ -252,7 +251,7 @@ function DutyManagement() {
                     </select>
                   </td>
 
-                  {/* Description */}
+                  
                   <td className="p-2 border">
                     <input
                       className="w-full border rounded px-2 py-1"
