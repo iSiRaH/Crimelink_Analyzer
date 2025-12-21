@@ -5,25 +5,60 @@ import { AiTwotoneAlert } from "react-icons/ai";
 import { FaPersonShelter } from "react-icons/fa6";
 import { CiBank } from "react-icons/ci";
 import { IoLibraryOutline } from "react-icons/io5";
-import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
+import { GoogleMap, Marker, useLoadScript } from "@react-google-maps/api";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMapContext } from "../../contexts/useMapContext";
+import CircularProgress from "@mui/material/CircularProgress";
+import Box from "@mui/material/Box";
+import searchPlacesInViewport from "../../services/searchPlacesInViewport";
 
 const LIBRARIES: "places"[] = ["places"];
 
 function SafetyZone() {
-  const dropdownItems = [
-    { itemTitle: "Police Station", itemIcon: <RiPoliceBadgeLine /> },
-    { itemTitle: "Hospital", itemIcon: <FaRegHospital /> },
-    { itemTitle: "Fire Station", itemIcon: <AiTwotoneAlert /> },
-    { itemTitle: "Shelter", itemIcon: <FaPersonShelter /> },
-    { itemTitle: "Safe Heven", itemIcon: <FaHeart /> },
-    { itemTitle: "Commiunity Center", itemIcon: <CiBank /> },
-    { itemTitle: "Security Post", itemIcon: <FaShieldAlt /> },
-    { itemTitle: "Public Library", itemIcon: <IoLibraryOutline /> },
-  ];
-
   const GOOGLE_MAP_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+
+  const dropdownItems = [
+    {
+      itemTitle: "Police Station",
+      itemIcon: <RiPoliceBadgeLine />,
+      action: () => onDropdownItemClicked("POLICE"),
+    },
+    {
+      itemTitle: "Hospital",
+      itemIcon: <FaRegHospital />,
+      action: () => onDropdownItemClicked("HOSPITAL"),
+    },
+    {
+      itemTitle: "Fire Station",
+      itemIcon: <AiTwotoneAlert />,
+      action: () => onDropdownItemClicked("FIRE_STATION"),
+    },
+    {
+      itemTitle: "Shelter",
+      itemIcon: <FaPersonShelter />,
+      action: () => onDropdownItemClicked("SHELTER"),
+    },
+    {
+      itemTitle: "Safe Heven",
+      itemIcon: <FaHeart />,
+      action: () => onDropdownItemClicked("SAFE_HEAVEN"),
+    },
+    {
+      itemTitle: "Commiunity Center",
+      itemIcon: <CiBank />,
+      action: () => onDropdownItemClicked("COMMIUNITY_CENTER"),
+    },
+    {
+      itemTitle: "Security Post",
+      itemIcon: <FaShieldAlt />,
+      action: () => onDropdownItemClicked("SECURITY_POST"),
+    },
+    {
+      itemTitle: "Public Library",
+      itemIcon: <IoLibraryOutline />,
+      action: () => onDropdownItemClicked("PUBLIC_LIBRARY"),
+    },
+  ];
 
   const center = useMemo(
     () => ({
@@ -35,12 +70,18 @@ function SafetyZone() {
 
   const { map, setMap, markers, setMarkers } = useMapContext();
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterType, setFilterType] = useState<string>("");
   const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
 
-  const { isLoaded } = useJsApiLoader({
+  const { isLoaded } = useLoadScript({
     googleMapsApiKey: GOOGLE_MAP_API_KEY,
     libraries: LIBRARIES,
   });
+
+  const currentDropdownLabel = filterType
+    ? filterType.replace("_", " ")
+    : "Safety Type";
 
   useEffect(() => {
     if (isLoaded && searchInputRef.current && map) {
@@ -70,8 +111,8 @@ function SafetyZone() {
 
         setMarkers([
           {
-            lat: newCenter.lat,
-            lng: newCenter.lng,
+            latitude: newCenter.lat,
+            longitude: newCenter.lng,
             name: place.name,
           },
         ]);
@@ -81,7 +122,21 @@ function SafetyZone() {
     }
   }, [isLoaded, map, setMarkers]);
 
+  const onDropdownItemClicked = (type: string) => {
+    console.log(`Dropdown item clicked: ${type}`); //testing purposes
+    setFilterType(type);
+
+    if (mapRef.current && searchQuery) {
+      searchPlacesInViewport(
+        mapRef.current,
+        `${searchQuery} ${type.replace("_", " ")}`,
+        setMarkers
+      );
+    }
+  };
+
   const handleLoad = (mapInstance: google.maps.Map) => {
+    mapRef.current = mapInstance;
     setMap(mapInstance);
   };
 
@@ -114,11 +169,23 @@ function SafetyZone() {
           lng: place.geometry.location.lng(),
         };
 
-        setMarkers([{ lat: newCenter.lat, lng: newCenter.lng }]);
+        setMarkers([{ latitude: newCenter.lat, longitude: newCenter.lng }]);
         map.panTo(newCenter);
       }
     });
   };
+
+  // if map still loading
+  if (!isLoaded) {
+    return (
+      <div className="flex justify-center items-center gap-3 font-semibold text-lg h-full">
+        <Box>
+          <CircularProgress />
+        </Box>
+        Loading Map....
+      </div>
+    );
+  }
 
   return (
     <>
@@ -149,7 +216,7 @@ function SafetyZone() {
             </div>
             <div>
               <DropDownMenu
-                dropdownLabelName="Safety Type"
+                dropdownLabelName={currentDropdownLabel}
                 items={dropdownItems}
               />
             </div>
@@ -165,7 +232,7 @@ function SafetyZone() {
                 {markers.map((marker, index) => (
                   <Marker
                     key={index}
-                    position={{ lat: marker.lat, lng: marker.lng }}
+                    position={{ lat: marker.latitude, lng: marker.longitude }}
                   />
                 ))}
               </GoogleMap>
