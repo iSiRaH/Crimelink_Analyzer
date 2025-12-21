@@ -169,7 +169,7 @@ const IssueWeaponModal: React.FC = () => {
                 <div>
                     <h3 className="text-sm text-gray-400">Officer Name</h3>
                     <input
-                        value={issuedTime}
+                        value="officer Name"
                         readOnly
                         className="bg-gray-900 border border-gray-700 px-3 py-2 text-xs rounded text-gray-400"
                     />
@@ -177,7 +177,7 @@ const IssueWeaponModal: React.FC = () => {
                 <div>
                        <h3 className="text-sm text-gray-400">Officer ID</h3>
                     <input
-                        value={issuedTime}
+                        value="officer id"
                         readOnly
                         className="bg-gray-900 border border-gray-700 px-3 py-2 text-xs rounded text-gray-400"
                     />
@@ -200,7 +200,7 @@ const IssueWeaponModal: React.FC = () => {
           {/* Action */}
           <div className="w-full flex flex-row gap-5">
             <button
-                onClick={"RestForm"}
+                // onClick={"RestForm"}
                 className="w-1/2 border border-bg-blue-700 py-2 rounded-md text-sm font-semibold hover:bg-blue-500"
             >
                 Reset
