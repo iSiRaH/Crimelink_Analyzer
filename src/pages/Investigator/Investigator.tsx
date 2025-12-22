@@ -25,9 +25,9 @@ function Investigator() {
           role={user?.role ?? "Not defined"}
         />
 
-        <div className="flex flex-1">
+        <div className="flex flex-1 overflow-hidden">
           <Sidebar items={menuItems} logoutFunc={logout} />
-          <div className="flex-1 p-0 overflow-auto">
+          <div className="flex-1 overflow-y-auto">
             <Outlet />
           </div>
         </div>

@@ -1,3 +1,5 @@
+import type { DutyStatus } from "./duty";
+
 export interface User {
   userId: number;
   name: string;
@@ -7,7 +9,7 @@ export interface User {
   role: 'Admin' | 'OIC' | 'Investigator';
   badgeNo: string;
   email: string;
-  status: 'Active' | 'Inactive';
+  status: DutyStatus;
 }
 
 export interface LoginRequest {
