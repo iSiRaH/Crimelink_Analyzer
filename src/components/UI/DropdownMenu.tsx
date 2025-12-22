@@ -79,11 +79,7 @@ const DropDownMenu: React.FC<DropdownMenuProps> = ({
                 <div className="flex items-center">
                   {Icon && (
                     <span className="mr-3">
-                      {typeof Icon === "function" ? (
-                        <Icon size={18} />
-                      ) : (
-                        Icon
-                      )}
+                      {typeof Icon === "function" ? <Icon size={18} /> : Icon}
                     </span>
                   )}
                   <span>{item.itemTitle}</span>
