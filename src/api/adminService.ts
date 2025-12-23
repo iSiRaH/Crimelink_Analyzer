@@ -14,6 +14,7 @@ export interface User {
 }
 
 export interface AuditLog {
+  email: string;
   id: number;
   userId?: number;
   userName?: string;
