@@ -32,7 +32,13 @@ const weapons = [
   },
 ];
 
-const IssueWeaponModal: React.FC = () => {
+interface Props {
+  weapon: any;
+  onClose: () => void;
+}
+
+const IssueWeaponModal: React.FC<Props> = ({ weapon, onClose })=> {
+    
   const [selectedOfficerId, setSelectedOfficerId] = useState("");
   const [selectedWeaponSerial, setSelectedWeaponSerial] = useState("");
 
@@ -48,7 +54,7 @@ const IssueWeaponModal: React.FC = () => {
       alert("Please select officer and weapon");
       return;
     }
-
+    
     console.log("Weapon Issued:", {
       officer: selectedOfficer,
       weapon: selectedWeapon,
@@ -57,18 +63,19 @@ const IssueWeaponModal: React.FC = () => {
     });
 
     alert("Weapon issued successfully!");
+    onClose();
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-      <div className="w-[400px] max-h-[90vh] overflow-y-auto no-scrollbar rounded-xl bg-[#0f172a] text-gray-200 shadow-xl">
+      <div className="w-[450px] max-h-[90vh] overflow-y-auto no-scrollbar rounded-xl bg-[#0f172a] text-gray-200 shadow-xl">
 
 
 
         {/* Header */}
         <div className="flex justify-between px-4 py-3 border-b border-gray-600 ">
           <h2 className="text-xl text-white font-semibold ">Issue Weapon</h2>
-          <button className="text-gray-400 hover:text-white">✕</button>
+          <button   onClick={onClose} className="text-gray-400 hover:text-white">✕</button>
         </div>
 
         <div className="p-4 space-y-4">

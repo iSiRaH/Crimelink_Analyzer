@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import IssueWeaponModal from "./IssueWeaponModal";
 import ReturnWeaponModal from "./ReturnWeaponModal";  
+
 export default function WeaponHandover() {
   const weapons = [
     { type: "AK 47", serial: "G-1359", status: "Available", assignedTo: "--", dueBack: "--" },
@@ -12,7 +13,7 @@ export default function WeaponHandover() {
     { type: "Minimi", serial: "T-4579", status: "Issued", assignedTo: "J.B.Millawithanachchi", dueBack: "27/11/2025" },
     { type: "Space 12", serial: "G-0851", status: "Available", assignedTo: "--", dueBack: "--" },
     { type: "Glock 17", serial: "K-6438", status: "Issued", assignedTo: "A.B.C.Bandara", dueBack: "03/12/2025" },
-     { type: "AK 47", serial: "G-1359", status: "Available", assignedTo: "--", dueBack: "--" },
+    { type: "AK 47", serial: "G-1359", status: "Available", assignedTo: "--", dueBack: "--" },
     { type: "Minimi", serial: "T-4579", status: "Issued", assignedTo: "J.B.Millawithanachchi", dueBack: "27/11/2025" },
     { type: "Space 12", serial: "G-0851", status: "Available", assignedTo: "--", dueBack: "--" },
     { type: "Glock 17", serial: "K-6438", status: "Issued", assignedTo: "A.B.C.Bandara", dueBack: "03/12/2025" },
@@ -28,8 +29,21 @@ export default function WeaponHandover() {
   /* ================= MODAL STATES ================= */
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedWeapon, setSelectedWeapon] = useState<any>(null);
+  const [isReturnOpen, setIsReturnOpen] = useState(false);
 
-  const [isReturnOpen,setIsReturnOpen]=useState(false);
+  /* ================= DISABLE BODY SCROLL WHEN MODAL IS OPEN ================= */
+  useEffect(() => {
+    if (isModalOpen || isReturnOpen) {
+      document.body.style.overflow = "hidden"; // Disable scrolling
+    } else {
+      document.body.style.overflow = "auto"; // Enable scrolling
+    }
+
+    // Clean up on unmount
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [isModalOpen, isReturnOpen]);
 
   const filteredWeapons = weapons.filter((w) => {
     const matchesSearch =
@@ -49,20 +63,16 @@ export default function WeaponHandover() {
     setIsModalOpen(true);
   };
 
-  const onReturnClick=()=>{
+  const onReturnClick = (weapon: any) => {
+    setSelectedWeapon(weapon);
     setIsReturnOpen(true);
-  }
+  };
 
   return (
-    
     <div className="relative flex min-h-screen bg-[#3b4a5f] text-white">
-
-     
       <main
         className={`flex-1 p-3 transition-all duration-300 ${
-          isModalOpen ? "opacity-20 pointer-events-none" : "opacity-100"
-        }  ${
-          isReturnOpen ? "opacity-20 pointer-events-none" : "opacity-100"
+          isModalOpen || isReturnOpen ? "opacity-20 pointer-events-none" : "opacity-100"
         }`}
       >
         {/* HEADER */}
@@ -75,14 +85,16 @@ export default function WeaponHandover() {
           </div>
 
           <div className="grid grid-cols-3 gap-40 mt-5">
-            {[{ label: "Total Weapon", value: 130 }, { label: "Available", value: 83 }, { label: "Issued", value: 37 }].map(
-              (card) => (
-                <div key={card.label} className="bg-[#3b4a5f] rounded-xl p-1 text-center">
-                  <p className="text-white text-lg">{card.label}</p>
-                  <p className="text-3xl font-bold mt-1">{card.value}</p>
-                </div>
-              )
-            )}
+            {[
+              { label: "Total Weapon", value: 130 },
+              { label: "Available", value: 83 },
+              { label: "Issued", value: 37 },
+            ].map((card) => (
+              <div key={card.label} className="bg-[#3b4a5f] rounded-xl p-1 text-center">
+                <p className="text-white text-lg">{card.label}</p>
+                <p className="text-3xl font-bold mt-1">{card.value}</p>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -118,7 +130,7 @@ export default function WeaponHandover() {
           </div>
 
           {/* TABLE */}
-          <table className="w-full text-md  ">
+          <table className="w-full text-md">
             <thead className="text-gray-400 border-b-2 bg-[#3b4a5f] border-gray-700">
               <tr>
                 <th className="py-1 text-left pl-5">Weapon Type</th>
@@ -129,10 +141,10 @@ export default function WeaponHandover() {
                 <th className="text-left">Action</th>
               </tr>
             </thead>
-            
+
             <tbody>
               {filteredWeapons.map((w, index) => (
-                <tr key={index} className="border-b border-gray-800 max-h-[50vh] overflow-y-auto no-scrollbar ">
+                <tr key={index} className="border-b border-gray-800 max-h-[50vh] overflow-y-auto no-scrollbar">
                   <td className="py-2 pl-5">{w.type}</td>
                   <td>{w.serial}</td>
                   <td className={`font-semibold ${w.status === "Available" ? "text-green-500" : "text-red-500"}`}>
@@ -150,8 +162,9 @@ export default function WeaponHandover() {
                       </button>
                     ) : (
                       <button
-                      onClick={() => onReturnClick()}
-                      className="border border-red-500 text-red-500 px-5 rounded-full text-md hover:bg-red-500 hover:text-white w-24">
+                        onClick={() => onReturnClick(w)}
+                        className="border border-red-500 text-red-500 px-5 rounded-full text-md hover:bg-red-500 hover:text-white w-24"
+                      >
                         Return
                       </button>
                     )}
@@ -163,7 +176,6 @@ export default function WeaponHandover() {
         </div>
       </main>
 
-    
       {isModalOpen && (
         <IssueWeaponModal
           weapon={selectedWeapon}
@@ -171,7 +183,7 @@ export default function WeaponHandover() {
         />
       )}
 
-         {isReturnOpen && (
+      {isReturnOpen && (
         <ReturnWeaponModal
           weapon={selectedWeapon}
           onClose={() => setIsReturnOpen(false)}

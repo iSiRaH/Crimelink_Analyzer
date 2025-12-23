@@ -33,6 +33,7 @@ import Reports from "./pages/Admin/Reports";
 import SystemHealth from "./pages/Admin/SystemHealth";
 import NotFound from "./pages/NotFound";
 
+
 function AppContent() {
   const navigate = useNavigate();
 
@@ -83,6 +84,7 @@ function AppContent() {
         <Route path="dashboard" element={<OICDashboard />} />
         <Route path="duty-management" element={<DutyManagement />} />
         <Route path="weapon-handover" element={<WeaponHandover />} />
+
         <Route path="plate-registry" element={<PlateRegistry />} />
         <Route path="report" element={<OICReport />} />
         <Route path="manage-profiles" element={<ManageProfiles />} />
@@ -127,7 +129,7 @@ function App() {
     <Router>
       <AuthProvider>
         <AppContent />
-        {/* <WeaponHandover/> */}
+        {/* <IssueWeaponModal/> */}
       </AuthProvider>
     </Router>
   );
