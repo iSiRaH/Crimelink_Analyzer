@@ -26,7 +26,6 @@ export default function WeaponHandover() {
   const [isReturnOpen, setIsReturnOpen] = useState(false);
   const [selectedWeapon, setSelectedWeapon] = useState<any>(null);
 
-  // 🔴 ONLY NEW STATE
   const [showManageWeapon, setShowManageWeapon] = useState(false);
 
   useEffect(() => {
@@ -53,22 +52,39 @@ export default function WeaponHandover() {
   return (
     <div className="min-h-screen bg-[#3b4a5f] text-white p-3">
       {/* HEADER */}
-      <div className="bg-[#111827] rounded-xl p-4">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-semibold">Weapon Management</h1>
-          <button
-            onClick={() => setShowManageWeapon(true)}
-            className="bg-red-700 px-6 py-2 rounded-lg hover:bg-red-500"
-          >
-            Weapon Operation
-          </button>
-        </div>
-        <div className="grid grid-cols-3 gap-40 mt-5"> {[ { label: "Total Weapon", value: 130 }, { label: "Available", value: 83 }, { label: "Issued", value: 37 }, ].map((card) => ( <div key={card.label} className="bg-[#3b4a5f] rounded-xl p-1 text-center">
-           <p className="text-white text-lg">{card.label}</p> 
-           <p className="text-3xl font-bold mt-1">{card.value}</p> </div> ))}
-         </div>
-      </div>
+{!showManageWeapon && (
+<div className="bg-[#111827] rounded-xl p-4">
+  <div className="flex justify-between items-center">
+    <h1 className="text-2xl font-semibold">Weapon Management</h1>
+    <button
+      onClick={() => setShowManageWeapon(true)}
+      className="bg-red-700 px-6 py-2 rounded-lg hover:bg-red-500"
+    >
+      Weapon Operator
+    </button>
+  </div>
 
+  {/* ✅ SHOW ONLY IN WEAPON HANDOVER PAGE */}
+  
+    <div className="grid grid-cols-3 gap-40 mt-5">
+      {[
+        { label: "Total Weapon", value: 130 },
+        { label: "Available", value: 83 },
+        { label: "Issued", value: 37 },
+      ].map((card) => (
+        <div
+          key={card.label}
+          className="bg-[#3b4a5f] rounded-xl p-1 text-center"
+        >
+          <p className="text-white text-lg">{card.label}</p>
+          <p className="text-3xl font-bold mt-1">{card.value}</p>
+        </div>
+      ))}
+    </div>
+  
+</div>
+
+)}
       {/* MANAGE WEAPON INLINE */}
       {showManageWeapon && (
         <ManageWeaponSimple onBack={() => setShowManageWeapon(false)} />
@@ -84,10 +100,10 @@ export default function WeaponHandover() {
                 <button
                   key={s}
                   onClick={() => setStatusFilter(s as any)}
-                  className={`px-4 py-1 rounded-full border ${
+                  className={`px-2 py-1 rounded-full border w-24 ${
                     statusFilter === s
                       ? "bg-white text-black"
-                      : "border-gray-600"
+                      : "border-blue-900"
                   }`}
                 >
                   {s}
@@ -101,7 +117,7 @@ export default function WeaponHandover() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search weapon or serial"
-                className="pl-10 py-2 w-full bg-transparent border border-gray-600 rounded"
+                className="pl-10 py-2 w-full bg-transparent border border-blue-900 rounded-lg"
               />
             </div>
           </div>
@@ -136,7 +152,7 @@ export default function WeaponHandover() {
                           setSelectedWeapon(w);
                           setIsModalOpen(true);
                         }}
-                        className="border border-green-500 text-green-500 px-4 rounded-full"
+                        className="border border-green-500 text-green-500 px-4 rounded-full w-20"
                       >
                         Issue
                       </button>
@@ -146,7 +162,7 @@ export default function WeaponHandover() {
                           setSelectedWeapon(w);
                           setIsReturnOpen(true);
                         }}
-                        className="border border-red-500 text-red-500 px-4 rounded-full"
+                        className="border border-red-500 text-red-500 px-4 rounded-full w-20"
                       >
                         Return
                       </button>
@@ -168,7 +184,7 @@ export default function WeaponHandover() {
 
       {isReturnOpen && (
         <ReturnWeaponModal
-          weapon={selectedWeapon}
+   
           onClose={() => setIsReturnOpen(false)}
         />
       )}

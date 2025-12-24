@@ -1,149 +1,130 @@
-import React, { useState } from "react";
+import React from "react";
 
-interface Props {
-  weapon: any;
+type Officer = {
+  name: string;
+  serviceNo: string;
+  rank: string;
+};
+
+type Props = {
   onClose: () => void;
-}
+};
 
-const ReturnWeaponModal: React.FC<Props> = ({ weapon, onClose }) => {
+export default function ReturnWeaponModal({ onClose }: Props) {
+  // ----- MOCK DATA -----
+  const weapon = {
+    name: "Minimi",
+    serial: "T-4579",
+    status: "Issued",
+    issuedDate: "2025-11-01",
+    dueDate: "2025-11-27",
+  };
+
+  const issuedTo: Officer = {
+    name: "J.B. Millawithanachchi",
+    serviceNo: "P-3841",
+    rank: "Sergeant",
+  };
+
+  const returnedBy: Officer = {
+    name: "Samantha Perera",
+    serviceNo: "P-7932",
+    rank: "Sergeant",
+  };
+
+  // ----- AUTO DATE & TIME -----
   const now = new Date();
   const returnDate = now.toISOString().split("T")[0];
   const returnTime = now.toTimeString().slice(0, 5);
 
-  const [condition, setCondition] = useState("");
-  const [confirmed, setConfirmed] = useState(false);
-
-  const handleReturn = () => {
-    if (!condition || !confirmed) {
-      alert("Please enter weapon condition and confirm return.");
-      return;
-    }
-
-    console.log("Weapon Returned:", {
-      weapon,
-      returnDate,
-      returnTime,
-      condition,
-    });
-
-    alert("Weapon returned successfully!");
-    onClose();
-  };
+  // ----- OVERDUE CALCULATION -----
+  const overdueDays =
+    Math.floor(
+      (new Date(returnDate).getTime() -
+        new Date(weapon.dueDate).getTime()) /
+        (1000 * 60 * 60 * 24)
+    ) || 0;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="w-[450px] max-h-[90vh] overflow-y-auto no-scrollbar rounded-xl bg-[#0f172a] text-gray-200 shadow-xl">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+      {/* MODAL */}
+      <div className="w-[450px] bg-[#0B1220] text-white rounded-xl border border-gray-700 shadow-xl p-5">
 
-        {/* Header */}
-        <div className="flex justify-between px-4 py-3 border-b border-gray-600">
-          <h2 className="text-xl text-white font-semibold">Return Weapon</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
+        {/* HEADER */}
+        <div className="flex justify-between items-center mb-3">
+          <h2 className="text-xl font-semibold">Return Weapon</h2>
+
+          {/* X BUTTON */}
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white text-xl"
+          >
             ✕
           </button>
         </div>
 
-        <div className="p-4 space-y-4">
+        {/* OVERDUE WARNING */}
+        {overdueDays > 0 && (
+          <div className="mb-3 bg-yellow-900/40 border border-yellow-500 text-yellow-300 px-3 py-2 rounded-md text-sm">
+            ⚠ Overdue by <span className="font-semibold">{overdueDays}</span> days
+          </div>
+        )}
 
-          {/* Return Info */}
-          <section className="border border-gray-700 bg-gray-800 rounded-md p-3">
-            <h3 className="text-md text-center text-gray-200 mb-3">
-              Return Information
-            </h3>
+        {/* WEAPON INFO */}
+        <div className="bg-[#111A2E] rounded-lg p-3 mb-3 text-sm">
+          <p>Weapon: <span className="text-white">{weapon.name}</span></p>
+          <p>Serial No: <span className="text-white">{weapon.serial}</span></p>
+          <p>Status: <span className="text-red-400">{weapon.status}</span></p>
+          <p>Issued Date: {weapon.issuedDate}</p>
+          <p>Due Back Date: {weapon.dueDate}</p>
+        </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <span className="text-sm text-gray-400">Return Date</span>
-                <input
-                  value={returnDate}
-                  readOnly
-                  className="w-full bg-gray-900 border border-gray-700 px-3 py-2 text-xs rounded text-gray-400"
-                />
-              </div>
-              <div>
-                <span className="text-sm text-gray-400">Return Time</span>
-                <input
-                  value={returnTime}
-                  readOnly
-                  className="w-full bg-gray-900 border border-gray-700 px-3 py-2 text-xs rounded text-gray-400"
-                />
-              </div>
-            </div>
-          </section>
+        {/* ISSUED TO */}
+        <div className="mb-3 text-sm">
+          <h3 className="font-semibold mb-1">Issued To</h3>
+          <p>{issuedTo.name}</p>
+          <p>{issuedTo.serviceNo}</p>
+          <p>{issuedTo.rank}</p>
+        </div>
 
-          {/* Weapon Info */}
-          <section>
-            <h3 className="text-md text-gray-400 mb-1">Weapon Details</h3>
-            <div className="text-xs text-gray-400 space-y-1">
-              <p>Weapon: {weapon?.type}</p>
-              <p>Serial: {weapon?.serial}</p>
-              <p
-                className={`font-semibold ${
-                  weapon?.status === "Issued"
-                    ? "text-red-400"
-                    : "text-green-400"
-                }`}
-              >
-                Status: {weapon?.status}
-              </p>
-            </div>
-          </section>
+        {/* RETURNED BY */}
+        <div className="mb-3 text-sm">
+          <h3 className="font-semibold mb-1">Returned By</h3>
+          <p>{returnedBy.name}</p>
+          <p>{returnedBy.serviceNo}</p>
+          <p>{returnedBy.rank}</p>
+          <p>Handover Date: {returnDate}</p>
+          <p>Handover Time: {returnTime}</p>
+        </div>
 
-          {/* Officer Info */}
-          <section>
-            <h3 className="text-md text-gray-400 mb-1">Issued To</h3>
-            <div className="text-xs text-gray-400 space-y-1">
-              <p>Officer: {weapon?.assignedTo}</p>
-              <p>Due Back: {weapon?.dueBack}</p>
-            </div>
-          </section>
+        {/* REMARK */}
+        <div className="mb-4">
+          <textarea
+            placeholder="Enter remark..."
+            className="w-full h-20 bg-[#0B1220] border border-gray-600 rounded-md p-2 text-sm focus:outline-none focus:border-blue-500"
+          />
+        </div>
 
-          {/* Condition */}
-          <section>
-            <h3 className="text-md text-gray-400 mb-1">
-              Weapon Condition <span className="text-red-400">*</span>
-            </h3>
-            <textarea
-              value={condition}
-              onChange={(e) => setCondition(e.target.value)}
-              placeholder="Enter condition of the weapon upon return..."
-              rows={3}
-              className="w-full rounded-md bg-[#020617] border border-gray-700 px-3 py-2 text-xs"
-            />
-          </section>
-
-          {/* Confirmation */}
-          <div className="flex gap-2 text-xs text-gray-400 items-start">
-            <input
-              type="checkbox"
-              checked={confirmed}
-              onChange={(e) => setConfirmed(e.target.checked)}
-            />
-            <p>
-              I confirm the weapon has been inspected and returned in proper
-              condition.
-            </p>
+           {/* Confirmation */}
+          <div className="flex gap-2 text-xs text-gray-400">
+            <input type="checkbox" />
+            <p>I confirm all Return details are correct.</p>
           </div>
 
-          {/* Actions */}
-          <div className="w-full flex gap-5 pt-2">
-            <button
-              onClick={onClose}
-              className="w-1/2 border border-gray-600 py-2 rounded-md text-sm font-semibold hover:bg-gray-700"
-            >
-              Cancel
-            </button>
+        {/* ACTIONS */}
+        <div className="flex justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 border border-gray-600 rounded-md text-gray-300 hover:bg-gray-800"
+          >
+            Cancel
+          </button>
 
-            <button
-              onClick={handleReturn}
-              className="w-1/2 bg-blue-700 py-2 rounded-md text-sm font-semibold hover:bg-blue-500"
-            >
-              Confirm Return
-            </button>
-          </div>
+          <button className="px-4 py-2 bg-blue-600 rounded-md hover:bg-blue-700">
+            Confirm Return
+          </button>
         </div>
       </div>
     </div>
   );
-};
-
-export default ReturnWeaponModal;
+}

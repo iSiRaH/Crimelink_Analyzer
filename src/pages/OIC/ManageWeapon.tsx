@@ -41,7 +41,7 @@ export default function ManageWeapon({ onBack }: Props) {
   };
 
   return (
-    <div className="bg-[#111827] rounded-xl p-6 mt-4">
+    <div className="bg-[#111827] rounded-xl p-6 mt-4 ">
       {/* HEADER */}
       <div className="flex justify-between items-center mb-6">
         <div>
@@ -113,7 +113,7 @@ export default function ManageWeapon({ onBack }: Props) {
           {/* STEP 1 */}
           <div>
             <h3 className="text-lg font-medium mb-2">
-              1️⃣ Select Weapon
+               Select Weapon
             </h3>
 
             <div className="relative">
@@ -145,7 +145,7 @@ export default function ManageWeapon({ onBack }: Props) {
             <>
               <div>
                 <h3 className="text-lg font-medium mb-2">
-                  2️⃣ Update Information
+                   Update Information
                 </h3>
 
                 <div className="grid grid-cols-3 gap-4">
