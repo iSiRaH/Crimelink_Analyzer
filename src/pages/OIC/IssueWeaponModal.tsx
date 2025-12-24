@@ -73,8 +73,8 @@ const IssueWeaponModal: React.FC<Props> = ({ weapon, onClose })=> {
 
 
         {/* Header */}
-        <div className="flex justify-between px-4 py-3 border-b border-gray-600 ">
-          <h2 className="text-xl text-white font-semibold ">Issue Weapon</h2>
+        <div className="flex justify-between px-4 py-3 border-b border-gray-600 backdrop-blur-xl bg-gradient-to-t from-gray-900 to-blue-950">
+          <h2 className="text-xl text-white  font-semibold ">Issue Weapon</h2>
           <button   onClick={onClose} className="text-gray-400 hover:text-white">✕</button>
         </div>
 
@@ -146,8 +146,8 @@ const IssueWeaponModal: React.FC<Props> = ({ weapon, onClose })=> {
       </p>
     </div>
   </div>
-)}
 
+)}
           </section>
 
           {/* Issue Info */}
@@ -191,13 +191,23 @@ const IssueWeaponModal: React.FC<Props> = ({ weapon, onClose })=> {
                 </div>
                 
             </div>
+            
         </section>
+
+          
+      <div className="pt-4 ">
+        <div className="grid grid-cols-2 ">
+          <span>Add Due Date</span>
+          <input type="date" className="text-gray-500 text-sm text-center rounded-lg border bg-gray-900 "></input>
+          </div>
+      </div>
+
           <textarea
               placeholder="Notes"
               rows={3}
               className="w-full rounded-md bg-[#020617] border border-gray-700 px-3 py-2 text-xs"
             />
-
+        
           {/* Confirmation */}
           <div className="flex gap-2 text-xs text-gray-400">
             <input type="checkbox" />
@@ -205,7 +215,7 @@ const IssueWeaponModal: React.FC<Props> = ({ weapon, onClose })=> {
           </div>
 
           {/* Action */}
-          <div className="w-full flex flex-row gap-5">
+          <div className="w-full flex flex-row gap-5  ">
             <button
                 // onClick={"RestForm"}
                 className="w-1/2 border border-bg-blue-700 py-2 rounded-md text-sm font-semibold hover:bg-blue-500"
@@ -214,7 +224,7 @@ const IssueWeaponModal: React.FC<Props> = ({ weapon, onClose })=> {
             </button>
             <button
                 onClick={handleIssue}
-                className="w-1/2 bg-blue-700 py-2 rounded-md text-sm font-semibold hover:bg-blue-500"
+                className="w-1/2 bg-blue-800 py-2 rounded-md text-sm font-semibold hover:bg-blue-500"
             >
                 Issue Weapon
             </button>
