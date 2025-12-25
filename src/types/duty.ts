@@ -1,4 +1,4 @@
-// src/types/duty.ts
+export type DutyStatus = "Active" | "Completed" | "Absent";
 
 export type OfficerDutyRow = {
   officerId: number;
@@ -7,8 +7,9 @@ export type OfficerDutyRow = {
   // These come from duty_schedule if already assigned
   location: string;
   datetime: string; // full ISO string "2025-11-25T08:00:00"
-  status: string;
+  status: DutyStatus;
   description: string;
+  timeRange?: string;
 
   // optional for save
   duration?: number;
@@ -20,9 +21,29 @@ export type DutyCreatePayload = {
   date: string;
   duration: number;
   taskType: string;
-  status: string;
+  status: DutyStatus;
   location: string;
   description: string;
   timeRange: string;
 };
 
+export interface DutyRecommendationRequest {
+  date: string;        // "YYYY-MM-DD"
+  location: string;
+  timeRange?: string;
+  requiredOfficers?: number;
+  statusFilter?: "Active" | "Absent" | "Completed" | "All";
+}
+
+export interface OfficerRecommendation {
+  officerId: number;
+  name: string;
+  badgeNo?: string;
+  recommendationScore: number;
+  availabilityStatus: string;
+  lastDutyDate?: string;
+  totalDuties: number;
+  locationMatch: boolean;
+  reason: string;
+  status: "Active" | "Absent" | "Completed";
+}

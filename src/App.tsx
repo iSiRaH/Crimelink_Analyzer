@@ -17,6 +17,7 @@ import { setUnauthorizedCallback } from "./services/api";
 import DutyManagement from "./pages/OIC/DutyManagement";
 import WeaponHandover from "./pages/OIC/WeaponHandover";
 import PlateRegistry from "./pages/OIC/PlateRegistry";
+import OICReport from "./pages/OIC/OICReport";
 import OICDashboard from "./pages/OIC/OICDashboard";
 import ManageProfiles from "./pages/OIC/ManageProfiles";
 import InvestigatorDashboard from "./pages/Investigator/InvestigatorDashboard";
@@ -24,9 +25,16 @@ import CallAnalysis from "./pages/Investigator/CallAnalysis";
 import FacialRecognition from "./pages/Investigator/FacialRecognition";
 import SafetyZone from "./pages/Investigator/SafetyZone";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
+import UserManagement from "./pages/Admin/UserManagement";
+import BackupRestore from "./pages/Admin/BackupRestore";
+import AuditLogs from "./pages/Admin/AuditLogs";
+import SystemSettings from "./pages/Admin/SystemSettings";
+import Reports from "./pages/Admin/Reports";
+import SystemHealth from "./pages/Admin/SystemHealth";
 import NotFound from "./pages/NotFound";
 import { MapProvider } from "./contexts/MapContext";
 import ReportCrimes from "./pages/OIC/ReportCrimes";
+
 
 function AppContent() {
   const navigate = useNavigate();
@@ -57,6 +65,12 @@ function AppContent() {
       >
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<AdminDashboard />} />
+        <Route path="user-management" element={<UserManagement />} />
+        <Route path="backup-restore" element={<BackupRestore />} />
+        <Route path="audit-logs" element={<AuditLogs />} />
+        <Route path="system-settings" element={<SystemSettings />} />
+        <Route path="reports" element={<Reports />} />
+        <Route path="system-health" element={<SystemHealth />} />
       </Route>
 
       {/* OIC page routing */}
@@ -72,8 +86,10 @@ function AppContent() {
         <Route path="dashboard" element={<OICDashboard />} />
         <Route path="duty-management" element={<DutyManagement />} />
         <Route path="weapon-handover" element={<WeaponHandover />} />
+
         <Route path="plate-registry" element={<PlateRegistry />} />
         <Route path="report-crimes" element={<ReportCrimes />} />
+        <Route path="report" element={<OICReport />} />
         <Route path="manage-profiles" element={<ManageProfiles />} />
       </Route>
 
