@@ -1,5 +1,6 @@
 import {useState} from "react";
 import { downloadDutyScheduleReportPdf } from "../../api/dutyService";
+import { downloadPlateRegistryReportPdf } from "../../api/vehicleService";
 
 
 function OICReport(){
@@ -10,52 +11,53 @@ function OICReport(){
     const [loading, setLoading] = useState(false);
 
     const handleGenerate = async () => {
-        if (!dateFrom || !dateTo) {
-            alert("Please select both From Date and To Date");
-            return;
-        }
+    if (!dateFrom || !dateTo) {
+        alert("Please select both From Date and To Date");
+        return;
+    }
 
-        if (dateFrom > dateTo) {
-            alert("From Date cannot be after To Date");
-            return;
-        }
+    if (dateFrom > dateTo) {
+        alert("From Date cannot be after To Date");
+        return;
+    }
 
-       // For now we only implement Duty Schedule PDF
+    try {
+        setLoading(true);
+        let pdfBlob: Blob;
+        let fileName: string;
+
         if (reportType === "duty") {
-            try {
-                setLoading(true);
-                // 1) Call API to get PDF as Blob
-                const pdfBlob = await downloadDutyScheduleReportPdf(dateFrom, dateTo);
-
-                // 2) Create temporary URL
-                const url = window.URL.createObjectURL(
-                new Blob([pdfBlob], { type: "application/pdf" })
-                );
-
-                // 3) Create a hidden <a> and click it to trigger download
-                const link = document.createElement("a");
-                link.href = url;
-                link.download = `duty-schedule-${dateFrom}-to-${dateTo}.pdf`;
-                document.body.appendChild(link);
-                link.click();
-                alert("Duty Schedule PDF report generated successfully.");
-
-                 // 4) Cleanup
-                link.remove();
-                window.URL.revokeObjectURL(url);
-                } catch (err) {
-                console.error("Failed to generate duty schedule PDF", err);
-                alert("Failed to generate duty schedule report. Please try again.");
-                } finally {
-                setLoading(false);
-                }   
+            pdfBlob = await downloadDutyScheduleReportPdf(dateFrom, dateTo);
+            fileName = `duty-schedule-${dateFrom}-to-${dateTo}.pdf`;
+        } else if (reportType === "plate") {
+            pdfBlob = await downloadPlateRegistryReportPdf(dateFrom, dateTo);
+            fileName = `plate-registry-${dateFrom}-to-${dateTo}.pdf`;
         } else {
-                // later you can implement weapon/plate PDFs here
-            alert(
-                `Report type "${reportType}" PDF download not implemented yet. Currently only Duty Schedule is supported.`
-            );
+            alert(`Report type "${reportType}" is not implemented yet.`);
+            setLoading(false);
+            return;
         }
-    };
+
+        // Create temporary URL and trigger download
+        const url = window.URL.createObjectURL(new Blob([pdfBlob], { type: "application/pdf" }));
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        
+    
+        link.remove();
+        window.URL.revokeObjectURL(url);
+        
+        alert(`${reportType === "duty" ? "Duty Schedule" : "Plate Registry"} PDF report generated successfully.`);
+    } catch (err) {
+        console.error(`Failed to generate ${reportType} PDF`, err);
+        alert(`Failed to generate ${reportType} report. Please try again.`);
+    } finally {
+        setLoading(false);
+    }
+};
 
 
 

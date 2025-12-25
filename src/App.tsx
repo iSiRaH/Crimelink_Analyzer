@@ -81,7 +81,7 @@ function AppContent() {
             <OIC />
           </ProtectedRoute>
         }
-      >
+      > 
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<OICDashboard />} />
         <Route path="duty-management" element={<DutyManagement />} />
