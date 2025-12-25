@@ -80,13 +80,14 @@ function AppContent() {
             <OIC />
           </ProtectedRoute>
         }
-      > 
+      >
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<OICDashboard />} />
         <Route path="duty-management" element={<DutyManagement />} />
         <Route path="weapon-handover" element={<WeaponHandover />} />
         <Route path="plate-registry" element={<PlateRegistry />} />
         <Route path="report-crimes" element={<ReportCrimes />} />
+        <Route path="reports" element={<Reports />} />
         <Route path="manage-profiles" element={<ManageProfiles />} />
       </Route>
 
