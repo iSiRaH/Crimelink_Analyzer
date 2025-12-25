@@ -790,8 +790,6 @@ function CombinedNetworkGraphs({ incomingData, outgoingData }: CombinedNetworkGr
 
 function LocationTimePeriods({ results }: { results: AnalysisResult[] }) {
   return (
-  
-
     <div className="bg-white rounded-lg shadow p-6">
       <h2 className="text-xl font-bold text-gray-800 mb-2">Location Time Periods</h2>
 
