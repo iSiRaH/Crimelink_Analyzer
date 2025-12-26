@@ -88,7 +88,6 @@ function AppContent() {
         <Route path="plate-registry" element={<PlateRegistry />} />
         <Route path="report" element={<OICReport />} />
         <Route path="report-crimes" element={<ReportCrimes />} />
-        <Route path="reports" element={<Reports />} />
         <Route path="manage-profiles" element={<ManageProfiles />} />
       </Route>
 
