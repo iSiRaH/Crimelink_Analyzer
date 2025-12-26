@@ -86,6 +86,7 @@ function AppContent() {
         <Route path="duty-management" element={<DutyManagement />} />
         <Route path="weapon-handover" element={<WeaponHandover />} />
         <Route path="plate-registry" element={<PlateRegistry />} />
+        <Route path="report" element={<OICReport />} />
         <Route path="report-crimes" element={<ReportCrimes />} />
         <Route path="manage-profiles" element={<ManageProfiles />} />
       </Route>
