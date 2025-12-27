@@ -64,7 +64,7 @@ export default function WeaponHandover() {
     </button>
   </div>
 
-  {/* ✅ SHOW ONLY IN WEAPON HANDOVER PAGE */}
+
   
     <div className="grid grid-cols-3 gap-40 mt-5">
       {[
