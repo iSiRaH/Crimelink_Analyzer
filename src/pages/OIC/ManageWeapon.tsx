@@ -1,4 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  addWeapon,
+  updateWeapon,
+  getAllWeapons,
+} from "../../api/weaponApi";
 import {
   ArrowLeft,
   PlusCircle,
@@ -7,41 +12,109 @@ import {
   CheckCircle,
 } from "lucide-react";
 
+/* ================= TYPES ================= */
+
 type Props = {
   onBack: () => void;
 };
 
 type Weapon = {
-  id: number;
-  type: string;
-  serial: string;
-  registerDate: string;
+  serialNumber: string;
+  weaponType: string;
+  remarks?: string;
+  status: string;
 };
+
+/* ================= COMPONENT ================= */
 
 export default function ManageWeapon({ onBack }: Props) {
   const [mode, setMode] = useState<"add" | "update">("add");
 
-  const weapons: Weapon[] = [
-    { id: 1, type: "AK 47", serial: "G-1359", registerDate: "2024-01-10" },
-    { id: 2, type: "Minimi", serial: "T-4579", registerDate: "2024-02-05" },
-    { id: 3, type: "Glock 17", serial: "K-6438", registerDate: "2023-12-20" },
-  ];
-
+  const [weapons, setWeapons] = useState<Weapon[]>([]);
   const [selectedWeapon, setSelectedWeapon] = useState<Weapon | null>(null);
 
   const [weaponType, setWeaponType] = useState("");
-  const [serial, setSerial] = useState("");
-  const [registerDate, setRegisterDate] = useState("");
+  const [serialNumber, setSerialNumber] = useState("");
+  const [remarks, setRemarks] = useState("");
+  const [status, setStatus] = useState("ACTIVE");
+
+  /* ================= LOAD WEAPONS ================= */
+
+  useEffect(() => {
+    loadWeapons();
+  }, []);
+
+  const loadWeapons = async () => {
+    try {
+      const res = await getAllWeapons();
+      setWeapons(res.data);
+    } catch {
+      alert("Failed to load weapons");
+    }
+  };
+
+  /* ================= SELECT WEAPON ================= */
 
   const selectWeapon = (weapon: Weapon) => {
     setSelectedWeapon(weapon);
-    setWeaponType(weapon.type);
-    setSerial(weapon.serial);
-    setRegisterDate(weapon.registerDate);
+    setWeaponType(weapon.weaponType);
+    setSerialNumber(weapon.serialNumber);
+    setRemarks(weapon.remarks || "");
+    setStatus(weapon.status);
   };
 
+  /* ================= ADD WEAPON ================= */
+
+  const handleAdd = async () => {
+    if (!weaponType || !serialNumber) {
+      alert("Weapon Type and Serial Number are required");
+      return;
+    }
+
+    try {
+      await addWeapon({
+        weaponType,
+        serialNumber,
+        remarks,
+      });
+
+      alert("Weapon added successfully");
+
+      setWeaponType("");
+      setSerialNumber("");
+      setRemarks("");
+
+      await loadWeapons();
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Failed to add weapon");
+    }
+  };
+
+  /* ================= UPDATE WEAPON ================= */
+
+  const handleUpdate = async () => {
+    if (!selectedWeapon) return;
+
+    try {
+      await updateWeapon(selectedWeapon.serialNumber, {
+        weaponType,
+        status,
+        remarks,
+      });
+
+      alert("Weapon updated successfully");
+
+      setSelectedWeapon(null);
+      await loadWeapons();
+    } catch {
+      alert("Failed to update weapon");
+    }
+  };
+
+  /* ================= UI ================= */
+
   return (
-    <div className="bg-[#111827] rounded-xl p-6 mt-4 ">
+    <div className="bg-[#111827] rounded-xl p-6 mt-4 text-white">
       {/* HEADER */}
       <div className="flex justify-between items-center mb-6">
         <div>
@@ -63,7 +136,10 @@ export default function ManageWeapon({ onBack }: Props) {
       {/* MODE SWITCH */}
       <div className="flex gap-4 mb-6">
         <button
-          onClick={() => setMode("add")}
+          onClick={() => {
+            setMode("add");
+            setSelectedWeapon(null);
+          }}
           className={`flex items-center gap-2 px-4 py-2 rounded-full border ${
             mode === "add"
               ? "bg-blue-600 border-blue-600"
@@ -87,52 +163,54 @@ export default function ManageWeapon({ onBack }: Props) {
         </button>
       </div>
 
-      {/* ================= ADD MODE ================= */}
+      {/* ADD MODE */}
       {mode === "add" && (
         <div className="bg-[#1f2937] rounded-xl p-5">
           <h3 className="text-lg font-medium mb-4">Add New Weapon</h3>
 
-          <div className="grid grid-cols-3 gap-4">
-            <Input label="Weapon Type" value={weaponType} onChange={setWeaponType} />
-            <Input label="Serial Number" value={serial} onChange={setSerial} />
+          <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Register Date"
-              type="date"
-              value={registerDate}
-              onChange={setRegisterDate}
+              label="Weapon Type"
+              value={weaponType}
+              onChange={setWeaponType}
+            />
+            <Input
+              label="Serial Number"
+              value={serialNumber}
+              onChange={setSerialNumber}
             />
           </div>
 
-          <ActionButton label="Save Weapon" color="blue" />
+          <Input label="Remarks" value={remarks} onChange={setRemarks} />
+
+          <ActionButton label="Save Weapon" color="blue" onClick={handleAdd} />
         </div>
       )}
 
-      {/* ================= UPDATE MODE ================= */}
+      {/* UPDATE MODE */}
       {mode === "update" && (
         <div className="bg-[#1f2937] rounded-xl p-5 space-y-6">
-          {/* STEP 1 */}
+          {/* SELECT */}
           <div>
-            <h3 className="text-lg font-medium mb-2">
-               Select Weapon
-            </h3>
-
+            <h3 className="text-lg font-medium mb-2">Select Weapon</h3>
             <div className="relative">
               <select
                 className="w-full bg-transparent border border-gray-600 rounded px-3 py-2 appearance-none"
                 onChange={(e) => {
                   const weapon = weapons.find(
-                    (w) => w.id === Number(e.target.value)
+                    (w) => w.serialNumber === e.target.value
                   );
                   if (weapon) selectWeapon(weapon);
                 }}
               >
                 <option value="">-- Select weapon --</option>
                 {weapons.map((w) => (
-                  <option key={w.id} value={w.id}>
-                    {w.type} ({w.serial})
+                  <option key={w.serialNumber} value={w.serialNumber}>
+                    {w.weaponType} ({w.serialNumber})
                   </option>
                 ))}
               </select>
+
               <ChevronDown
                 size={18}
                 className="absolute right-3 top-2.5 text-gray-400 pointer-events-none"
@@ -140,29 +218,46 @@ export default function ManageWeapon({ onBack }: Props) {
             </div>
           </div>
 
-          {/* STEP 2 */}
           {selectedWeapon && (
             <>
-              <div>
-                <h3 className="text-lg font-medium mb-2">
-                   Update Information
-                </h3>
-
-                <div className="grid grid-cols-3 gap-4">
-                  <Input label="Weapon Type" value={weaponType} onChange={setWeaponType} />
-                  <Input label="Serial Number" value={serial} onChange={setSerial} />
-                  <Input
-                    label="Register Date"
-                    type="date"
-                    value={registerDate}
-                    onChange={setRegisterDate}
-                  />
-                </div>
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  label="Weapon Type"
+                  value={weaponType}
+                  onChange={setWeaponType}
+                />
+                <Input
+                  label="Serial Number"
+                  value={serialNumber}
+                  onChange={setSerialNumber}
+                  disabled
+                />
               </div>
 
-              {/* ACTION */}
+              <Input label="Remarks" value={remarks} onChange={setRemarks} />
+
+              <div>
+                <label className="text-sm text-gray-400">Status</label>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="mt-1 w-full bg-transparent border border-gray-600 rounded px-3 py-2"
+                >
+                  <option value="ACTIVE">ACTIVE</option>
+                  <option value="INACTIVE">INACTIVE</option>
+                  <option value="AVAILABLE">AVAILABLE</option>
+                  <option value="ISSUED">ISSUED</option>
+                  <option value="DISABLED">DISABLED</option>
+                  <option value="MAINTENANCE">MAINTENANCE</option>
+                  <option value="LOST">LOST</option>
+                </select>
+              </div>
+
               <div className="flex justify-end">
-                <button className="flex items-center gap-2 bg-purple-600 px-6 py-2 rounded hover:bg-purple-500">
+                <button
+                  onClick={handleUpdate}
+                  className="flex items-center gap-2 bg-purple-600 px-6 py-2 rounded hover:bg-purple-500"
+                >
                   <CheckCircle size={18} />
                   Update Weapon
                 </button>
@@ -175,42 +270,50 @@ export default function ManageWeapon({ onBack }: Props) {
   );
 }
 
-/* ================= REUSABLE INPUT ================= */
+/* ================= INPUT ================= */
+
 function Input({
   label,
   value,
   onChange,
   type = "text",
+  disabled = false,
 }: {
   label: string;
   value: string;
   type?: string;
+  disabled?: boolean;
   onChange: (v: string) => void;
 }) {
   return (
-    <div>
+    <div className="mt-3">
       <label className="text-sm text-gray-400">{label}</label>
       <input
         type={type}
         value={value}
+        disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1 w-full bg-transparent border border-gray-600 rounded px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+        className="mt-1 w-full bg-transparent border border-gray-600 rounded px-3 py-2 disabled:opacity-50"
       />
     </div>
   );
 }
 
-/* ================= ACTION BUTTON ================= */
+/* ================= BUTTON ================= */
+
 function ActionButton({
   label,
   color,
+  onClick,
 }: {
   label: string;
   color: "blue" | "purple";
+  onClick: () => void;
 }) {
   return (
     <div className="flex justify-end mt-6">
       <button
+        onClick={onClick}
         className={`px-6 py-2 rounded text-white ${
           color === "blue"
             ? "bg-blue-600 hover:bg-blue-500"
