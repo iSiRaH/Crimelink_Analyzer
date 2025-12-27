@@ -1,12 +1,10 @@
-import axios from "axios";
-
-const API_URL = "http://localhost:8080/api/weapon";
+import api from "../services/api";
 
 export const addWeapon = (data: {
   weaponType: string;
   serialNumber: string;
   remarks: string;
-}) => axios.post(`${API_URL}/add-weapon`, data);
+}) => api.post(`/weapon/add-weapon`, data);
 
 export const updateWeapon = (
   serialNumber: string,
@@ -15,7 +13,7 @@ export const updateWeapon = (
     status: string;
     remarks: string;
   }
-) => axios.put(`${API_URL}/weapon-update/${serialNumber}`, data);
+) => api.put(`/weapon/weapon-update/${serialNumber}`, data);
 
 export const getAllWeapons = () =>
-  axios.get(`${API_URL}/all`);
+  api.get(`/weapon/all`);
