@@ -10,3 +10,13 @@ export async function saveCrimeReports(reports: crimeReportType) {
     throw error;
   }
 }
+
+export async function getCrimeReports(): Promise<crimeReportType[]> {
+  try {
+    const res = await api.get<crimeReportType[]>("/crime-reports");
+    return res.data;
+  } catch (error) {
+    console.error("Error fetching crime reports:", error);
+    throw error;
+  }
+}

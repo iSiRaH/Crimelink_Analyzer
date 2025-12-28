@@ -3,6 +3,7 @@ import { saveCrimeReports } from "../../api/crimeReportService";
 import type { crimeReportType } from "../../types/crime";
 import { useState } from "react";
 import MapPopup from "../../components/UI/MapPopup";
+import { NavLink } from "react-router-dom";
 
 function ReportCrimes() {
   const [crimetype, setCrimeType] = useState("");
@@ -110,9 +111,16 @@ function ReportCrimes() {
     <>
       <div className="bg-slate-500 w-full h-full p-6">
         <div className="bg-slate-800 p-5 rounded-lg">
-          <h1 className="font-semibold text-3xl text-white mb-5 pl-4">
-            Report Crimes
-          </h1>
+          <div className="flex flex-row justify-between items-start">
+            <h1 className="font-semibold text-3xl text-white mb-5 pl-4">
+              Report Crimes
+            </h1>
+            <NavLink to={"reports"}>
+              <button className="bg-white text-black py-2 px-6 rounded-md font-semibold hover:bg-slate-300/90">
+                View Crime Reports
+              </button>
+            </NavLink>
+          </div>
           <div className="flex flex-row justify-between">
             <div className="flex-1 bg-white mr-2 space-y-2 p-4 rounded-md">
               <h2 className="font-medium text-2xl">Crime Details</h2>

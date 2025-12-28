@@ -34,7 +34,7 @@ import SystemHealth from "./pages/Admin/SystemHealth";
 import NotFound from "./pages/NotFound";
 import { MapProvider } from "./contexts/MapContext";
 import ReportCrimes from "./pages/OIC/ReportCrimes";
-
+import ViewCrimeReports from "./pages/OIC/ViewCrimeReports";
 
 function AppContent() {
   const navigate = useNavigate();
@@ -81,14 +81,14 @@ function AppContent() {
             <OIC />
           </ProtectedRoute>
         }
-      > 
+      >
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<OICDashboard />} />
         <Route path="duty-management" element={<DutyManagement />} />
         <Route path="weapon-handover" element={<WeaponHandover />} />
-
         <Route path="plate-registry" element={<PlateRegistry />} />
         <Route path="report-crimes" element={<ReportCrimes />} />
+        <Route path="report-crimes/reports" element={<ViewCrimeReports />} />
         <Route path="report" element={<OICReport />} />
         <Route path="manage-profiles" element={<ManageProfiles />} />
       </Route>
