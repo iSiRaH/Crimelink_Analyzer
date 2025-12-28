@@ -17,6 +17,7 @@ const MapPopup: React.FC<MapPopupProps> = ({
   open,
   onClose,
   onLocationSelect,
+  onClear,
 }) => {
   const mapRef = useRef<google.maps.Map | null>(null);
   const { map, setMap, markers, setMarkers } = useMapContext();
@@ -56,6 +57,11 @@ const MapPopup: React.FC<MapPopupProps> = ({
       },
     ]);
     onLocationSelect(location);
+  };
+
+  const handleClear = () => {
+    setMarkers([]);
+    onClear();
   };
 
   if (!open) return null;
@@ -103,6 +109,20 @@ const MapPopup: React.FC<MapPopupProps> = ({
             </GoogleMap>
           </div>
         )}
+        <div className="mt-3">
+          <button
+            onClick={onClose}
+            className="bg-slate-700 py-2 px-4 rounded-md text-white hover:bg-slate-500 hover:text-black mx-2"
+          >
+            Submit
+          </button>
+          <button
+            className="bg-slate-600 py-2 px-4 rounded-md text-white hover:bg-slate-500 hover:text-black"
+            onClick={handleClear}
+          >
+            Clear
+          </button>
+        </div>
       </div>
     </div>,
     document.body

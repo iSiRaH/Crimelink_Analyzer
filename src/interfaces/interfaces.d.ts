@@ -20,4 +20,5 @@ interface MapPopupProps {
   open: boolean;
   onClose: () => void;
   onLocationSelect: (location: { latitude: number; longitude: number }) => void;
+  onClear: () => void;
 }

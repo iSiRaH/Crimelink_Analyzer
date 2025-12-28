@@ -47,6 +47,22 @@ function ReportCrimes() {
     return true;
   };
 
+  const resetForm = () => {
+    setCrimeType("");
+    setLocation("");
+    setLatitude("");
+    setLongitude("");
+    setDate("");
+    setTime("");
+    setDescription("");
+  };
+
+  const handleClear = () => {
+    setLocation("");
+    setLatitude("");
+    setLongitude("");
+  };
+
   // on submit btn click
   const onSubmit = async () => {
     if (!validateForm()) return;
@@ -62,8 +78,11 @@ function ReportCrimes() {
       };
       const res = await saveCrimeReports(report);
       console.log("Crime Report Saved \n ", res);
+      alert("Crime Report Saved Successfully");
+      resetForm();
     } catch (e) {
       console.log(e);
+      alert("Failed to save report");
     }
   };
 
@@ -78,8 +97,13 @@ function ReportCrimes() {
     setLocation(`${location.latitude}, ${location.longitude}`);
   };
 
+  const onMapSubmit = () => {
+    setIsMapOpen(false);
+  };
+
   const onCancel = () => {
     console.log("Cancel Clicked");
+    resetForm();
   };
 
   return (
@@ -159,16 +183,16 @@ function ReportCrimes() {
           </div>
           <div className="pl-4 mt-4 flex gap-3">
             <button
-              onClick={onCancel}
+              onClick={onSubmit}
               className="py-2 px-4 rounded-md bg-white hover:bg-slate-300"
             >
-              Cancel
+              Submit Report
             </button>
             <button
-              onClick={onSubmit}
+              onClick={onCancel}
               className="py-2 px-4 rounded-md bg-slate-500 hover:bg-slate-600"
             >
-              Submit Report
+              Cancel
             </button>
           </div>
         </div>
@@ -177,8 +201,9 @@ function ReportCrimes() {
       {/* Map popup */}
       <MapPopup
         open={isMapOpen}
-        onClose={() => setIsMapOpen(false)}
+        onClose={onMapSubmit}
         onLocationSelect={onMapClick}
+        onClear={handleClear}
       />
     </>
   );
