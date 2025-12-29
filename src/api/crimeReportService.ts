@@ -1,5 +1,5 @@
 import api from "../services/api";
-import type { crimeReportType } from "../types/crime";
+import type { crimeLocationType, crimeReportType } from "../types/crime";
 
 export async function saveCrimeReports(reports: crimeReportType) {
   try {
@@ -18,5 +18,15 @@ export async function getCrimeReports(): Promise<crimeReportType[]> {
   } catch (error) {
     console.error("Error fetching crime reports:", error);
     throw error;
+  }
+}
+
+export async function getCrimeLocations(): Promise<crimeLocationType[]> {
+  try {
+    const res = await api.get<crimeLocationType[]>("/crime-reports/map");
+    return res.data;
+  } catch (err) {
+    console.error("Error fetching crime locations:", err);
+    throw err;
   }
 }

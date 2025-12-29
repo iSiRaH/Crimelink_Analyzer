@@ -121,7 +121,6 @@ function AppContent() {
         }
       /> */}
 
-      {/* Catch all - redirect to login */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

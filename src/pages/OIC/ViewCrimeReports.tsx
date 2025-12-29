@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getCrimeReports } from "../../api/crimeReportService";
 import type { crimeReportType } from "../../types/crime";
+import { NavLink } from "react-router-dom";
 
 function ViewCrimeReports() {
   const [reports, setReports] = useState<crimeReportType[]>([]);
@@ -11,7 +12,7 @@ function ViewCrimeReports() {
     const fetchReports = async () => {
       try {
         const data = await getCrimeReports();
-        console.log(data);
+        // console.log(data);
         setReports(data);
       } catch (error) {
         console.error(error);
@@ -22,22 +23,6 @@ function ViewCrimeReports() {
     };
     fetchReports();
   }, []);
-
-  if (loading) {
-    return (
-      <div className="text-white text-xl p-5">Loading crime reports...</div>
-    );
-  }
-
-  if (error) {
-    return <div className="text-red-500 text-xl p-5">{error}</div>;
-  }
-
-  if (reports.length === 0) {
-    return (
-      <div className="text-white text-xl p-5">No crime reports found.</div>
-    );
-  }
 
   return (
     <>
@@ -57,18 +42,30 @@ function ViewCrimeReports() {
             </tr>
           </thead>
           <tbody>
-            {reports.map((report) => (
-              <tr key={report.reportId}>
-                <td className="p-3 border">{report.reportId}</td>
-                <td className="p-3 border">{report.crimeType}</td>
-                <td className="p-3 border">{report.dateReported}</td>
-                <td className="p-3 border">{report.timeReported}</td>
-                <td className="p-3 border">{`${report.latitude}, ${report.longitude}`}</td>
-                <td className="p-3 border">{report.description}</td>
-              </tr>
-            ))}
+            {loading ? (
+              <p>Loading...</p>
+            ) : reports.length === 0 ? (
+              <p>No crime reports found.</p>
+            ) : (
+              reports.map((report) => (
+                <tr key={report.reportId}>
+                  <td className="p-3 border">{report.reportId}</td>
+                  <td className="p-3 border">{report.crimeType}</td>
+                  <td className="p-3 border">{report.dateReported}</td>
+                  <td className="p-3 border">{report.timeReported}</td>
+                  <td className="p-3 border">{`${report.latitude}, ${report.longitude}`}</td>
+                  <td className="p-3 border">{report.description}</td>
+                </tr>
+              ))
+            )}
+            {error && <p className="text-red-500 text-xl p-5">{error}</p>}
           </tbody>
         </table>
+        <NavLink to={"/oic/report-crimes"}>
+          <button className="bg-blue-500 text-white py-2 px-5 rounded mt-5">
+            Back
+          </button>
+        </NavLink>
       </div>
     </>
   );

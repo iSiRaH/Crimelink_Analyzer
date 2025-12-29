@@ -5,12 +5,20 @@ import { AiTwotoneAlert } from "react-icons/ai";
 import { FaPersonShelter } from "react-icons/fa6";
 import { CiBank } from "react-icons/ci";
 import { IoLibraryOutline } from "react-icons/io5";
-import { GoogleMap, Marker, useLoadScript } from "@react-google-maps/api";
+import {
+  Circle,
+  GoogleMap,
+  Marker,
+  useLoadScript,
+} from "@react-google-maps/api";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMapContext } from "../../contexts/useMapContext";
 import CircularProgress from "@mui/material/CircularProgress";
 import Box from "@mui/material/Box";
 import searchPlacesInViewport from "../../services/searchPlacesInViewport";
+import { getCrimeLocations } from "../../api/crimeReportService";
+import type { crimeLocationType } from "../../types/crime";
+import { getCrimeColor } from "../../utils/utils";
 
 const LIBRARIES: "places"[] = ["places"];
 
@@ -73,6 +81,7 @@ function SafetyZone() {
   const [filterType, setFilterType] = useState<string>("");
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
+  const [crimes, setCrimes] = useState<crimeLocationType[]>([]);
 
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: GOOGLE_MAP_API_KEY,
@@ -120,6 +129,17 @@ function SafetyZone() {
         map.setZoom(15);
       });
     }
+
+    const fetchCrimeLocations = async () => {
+      try {
+        const crimeLocations = await getCrimeLocations();
+        setCrimes(crimeLocations);
+        console.log(crimeLocations);
+      } catch (err) {
+        console.error("Error Fetching crime locations: ", err);
+      }
+    };
+    fetchCrimeLocations();
   }, [isLoaded, map, setMarkers]);
 
   const onDropdownItemClicked = (type: string) => {
@@ -233,6 +253,20 @@ function SafetyZone() {
                   <Marker
                     key={index}
                     position={{ lat: marker.latitude, lng: marker.longitude }}
+                  />
+                ))}
+                {crimes.map((crime, index) => (
+                  <Circle
+                    key={index}
+                    center={{ lat: crime.latitude, lng: crime.longitude }}
+                    radius={200}
+                    options={{
+                      fillColor: getCrimeColor(crime.crimeType),
+                      fillOpacity: 0.5,
+                      strokeColor: getCrimeColor(crime.crimeType),
+                      strokeWeight: 2,
+                      strokeOpacity: 0.9,
+                    }}
                   />
                 ))}
               </GoogleMap>
