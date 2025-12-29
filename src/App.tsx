@@ -32,7 +32,9 @@ import SystemSettings from "./pages/Admin/SystemSettings";
 import Reports from "./pages/Admin/Reports";
 import SystemHealth from "./pages/Admin/SystemHealth";
 import NotFound from "./pages/NotFound";
-
+import { MapProvider } from "./contexts/MapContext";
+import ReportCrimes from "./pages/OIC/ReportCrimes";
+import ViewCrimeReports from "./pages/OIC/ViewCrimeReports";
 
 function AppContent() {
   const navigate = useNavigate();
@@ -84,8 +86,9 @@ function AppContent() {
         <Route path="dashboard" element={<OICDashboard />} />
         <Route path="duty-management" element={<DutyManagement />} />
         <Route path="weapon-handover" element={<WeaponHandover />} />
-
         <Route path="plate-registry" element={<PlateRegistry />} />
+        <Route path="report-crimes" element={<ReportCrimes />} />
+        <Route path="report-crimes/reports" element={<ViewCrimeReports />} />
         <Route path="report" element={<OICReport />} />
         <Route path="manage-profiles" element={<ManageProfiles />} />
       </Route>
@@ -118,7 +121,6 @@ function AppContent() {
         }
       /> */}
 
-      {/* Catch all - redirect to login */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
@@ -128,8 +130,9 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <AppContent />
-        {/* <IssueWeaponModal/> */}
+        <MapProvider>
+          <AppContent />
+        </MapProvider>
       </AuthProvider>
     </Router>
   );
