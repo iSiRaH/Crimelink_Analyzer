@@ -6,24 +6,22 @@ type Officer = {
   rank: string;
 };
 
-type Weapon = {
-  type: string;
-  serial: string;
-  issuedDate: string;
-  dueBack: string;
-  assignedTo: string;
-};
-
 type Props = {
-  weapon: Weapon;
   onClose: () => void;
 };
 
-export default function ReturnWeaponModal({ weapon, onClose }: Props) {
+export default function ReturnWeaponModal({ onClose }: Props) {
+  // ----- MOCK DATA -----
+  const weapon = {
+    name: "Minimi",
+    serial: "T-4579",
+    status: "Issued",
+    issuedDate: "2025-11-01",
+    dueDate: "2025-11-27",
+  };
 
-  /* MOCK – normally from backend */
   const issuedTo: Officer = {
-    name: weapon.assignedTo,
+    name: "J.B. Millawithanachchi",
     serviceNo: "P-3841",
     rank: "Sergeant",
   };
@@ -34,30 +32,33 @@ export default function ReturnWeaponModal({ weapon, onClose }: Props) {
     rank: "Sergeant",
   };
 
-  /* AUTO DATE & TIME */
+  // ----- AUTO DATE & TIME -----
   const now = new Date();
   const returnDate = now.toISOString().split("T")[0];
   const returnTime = now.toTimeString().slice(0, 5);
 
-  /* OVERDUE CALCULATION */
-  const overdueDays = Math.max(
+  // ----- OVERDUE CALCULATION -----
+  const overdueDays =
     Math.floor(
       (new Date(returnDate).getTime() -
-        new Date(weapon.dueBack).getTime()) /
+        new Date(weapon.dueDate).getTime()) /
         (1000 * 60 * 60 * 24)
-    ),
-    0
-  );
+    ) || 0;
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-
+      {/* MODAL */}
       <div className="w-[450px] backdrop-blur-xl text-white rounded-xl border border-gray-700 shadow-xl p-5">
 
         {/* HEADER */}
-        <div className="flex justify-between items-center mb-3">
+        <div className="flex justify-between items-center mb-3 ">
           <h2 className="text-xl font-semibold">Return Weapon</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white text-xl">
+
+          {/* X BUTTON */}
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white text-xl"
+          >
             ✕
           </button>
         </div>
@@ -70,19 +71,19 @@ export default function ReturnWeaponModal({ weapon, onClose }: Props) {
         )}
 
         {/* WEAPON INFO */}
-        <div className="bg-[#111A2E] rounded-lg p-3 mb-3 text-sm">
-          <div className="grid grid-cols-2">
-            <p>Weapon: <span className="text-white">{weapon.type}</span></p>
+        <div className="w-full flex flex-col bg-[#111A2E] rounded-lg p-3 mb-3 text-sm">
+          <div className="w-full grid grid-cols-2">
+            <p>Weapon: <span className="text-white">{weapon.name}</span></p>
             <p>Serial No: <span className="text-white">{weapon.serial}</span></p>
           </div>
-          <div className="grid grid-cols-2">
+          <div className="w-full grid grid-cols-2">
             <p>Issued Date: {weapon.issuedDate}</p>
-            <p>Due Back Date: {weapon.dueBack}</p>
+            <p>Due Back Date: {weapon.dueDate}</p>
           </div>
+          
         </div>
 
-        {/* OFFICERS */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
+    <div className="grid grid-cols-2 gap-3 mb-4">
           <div className="bg-[#0F172A] rounded-xl p-3 border border-gray-700">
             <p className="text-xs text-gray-400 mb-1">Issued To</p>
             <p className="font-medium text-sm">{issuedTo.name}</p>
@@ -99,47 +100,49 @@ export default function ReturnWeaponModal({ weapon, onClose }: Props) {
             </p>
           </div>
         </div>
-
-        {/* RETURN DATE & TIME */}
-        <span className="text-md text-gray-300">Return Date & Time</span>
-
-        <div className="flex gap-5 mb-4">
-          <div className="w-1/2">
-            <span className="text-sm text-gray-400">Returned Date</span>
-            <input
-              value={returnDate}
-              readOnly
-              className="bg-gray-900 w-full border border-gray-700 px-3 py-2 text-xs rounded text-gray-400"
-            />
-          </div>
-
-          <div className="w-1/2">
-            <span className="text-sm text-gray-400">Returned Time</span>
-            <input
-              value={returnTime}
-              readOnly
-              className="bg-gray-900 w-full border border-gray-700 px-3 py-2 text-xs rounded text-gray-400"
-            />
-          </div>
-        </div>
+        
+         {/* RETURN TIME */}
+         <span className="text-md text-gray-300">Return Date & Time</span>
+       
+        <div className="w-full  flex justify-between gap-5 mb-4 ">
+                <div className="w-1/2">
+                    <span className="text-sm text-gray-400 ">Returned Date</span>
+                    <input
+                        value={returnDate }
+                        readOnly
+                        className="bg-gray-900 border w-full  border-gray-700 px-3 py-2 text-xs rounded text-gray-400"
+                    />
+                </div>
+                <div className="w-1/2 ">
+                    <span className="text-sm text-gray-400">Returned Time</span>
+                    <input
+                        value={returnTime}
+                        readOnly
+                        className="bg-gray-900 w-full border border-gray-700 px-3 py-2 text-xs rounded text-gray-400"
+                    />
+                </div>
+              
+            </div>
 
         {/* REMARK */}
-        <textarea
-          placeholder="Enter remark..."
-          className="w-full h-20 bg-[#0B1220] border border-gray-600 rounded-md p-2 text-sm focus:outline-none focus:border-blue-500 mb-4"
-        />
-
-        {/* CONFIRM */}
-        <div className="flex gap-2 text-xs text-gray-400 mb-5">
-          <input type="checkbox" />
-          <p>I confirm all Return details are correct.</p>
+        <div className="mb-4">
+          <textarea
+            placeholder="Enter remark..."
+            className="w-full h-20 bg-[#0B1220] border border-gray-600 rounded-md p-2 text-sm focus:outline-none focus:border-blue-500"
+          />
         </div>
 
+           {/* Confirmation */}
+          <div className="flex gap-2 text-xs text-gray-400 mb-5">
+            <input type="checkbox" />
+            <p>I confirm all Return details are correct.</p>
+          </div>
+
         {/* ACTIONS */}
-        <div className="flex gap-5">
+        <div className="w-full flex flex-row gap-5">
           <button
             onClick={onClose}
-            className="w-1/2 px-4 py-2 border border-gray-600 rounded-md hover:bg-gray-800"
+            className="w-1/2 px-4 py-2 border border-gray-600 rounded-md text-gray-300 hover:bg-gray-800"
           >
             Cancel
           </button>
@@ -148,7 +151,6 @@ export default function ReturnWeaponModal({ weapon, onClose }: Props) {
             Confirm Return
           </button>
         </div>
-
       </div>
     </div>
   );
