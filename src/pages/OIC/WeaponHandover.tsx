@@ -1,8 +1,11 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Search } from "lucide-react";
 import IssueWeaponModal from "./IssueWeaponModal";
 import ReturnWeaponModal from "./ReturnWeaponModal";
 import ManageWeaponSimple from "./ManageWeapon";
+import { getAllWeapons } from "../../api/weaponApi";
+
+/* ================= TYPES ================= */
 
 type WeaponRow = {
   type: string;
@@ -13,75 +16,67 @@ type WeaponRow = {
   issuedDate?: string;
 };
 
+type ApiWeapon = {
+  serialNumber: string;
+  weaponType: string;
+  status: string;
+};
+
+/* ================= COMPONENT ================= */
+
 export default function WeaponHandover() {
-
-  /* ---------------- MOCK TABLE DATA ---------------- */
-  const weapons: WeaponRow[] = [
-    {
-      type: "AK 47",
-      serial: "G-1359",
-      status: "Available",
-      assignedTo: "--",
-      dueBack: "--",
-    },
-    {
-      type: "Minimi",
-      serial: "T-4579",
-      status: "Issued",
-      assignedTo: "J.B. Millawithanachchi",
-      dueBack: "2025-11-27",
-      issuedDate: "2025-11-01",
-    },
-    {
-      type: "Space 12",
-      serial: "G-0851",
-      status: "Available",
-      assignedTo: "--",
-      dueBack: "--",
-    },
-    {
-      type: "Glock 17",
-      serial: "K-6438",
-      status: "Issued",
-      assignedTo: "A.B.C. Bandara",
-      dueBack: "2025-12-03",
-      issuedDate: "2025-11-20",
-    },
-  ];
-
-  /* ---------------- STATES ---------------- */
+  const [weapons, setWeapons] = useState<WeaponRow[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] =
     useState<"ALL" | "Available" | "Issued">("ALL");
 
   const [isIssueOpen, setIsIssueOpen] = useState(false);
   const [isReturnOpen, setIsReturnOpen] = useState(false);
-
   const [selectedWeapon, setSelectedWeapon] = useState<any>(null);
   const [showManageWeapon, setShowManageWeapon] = useState(false);
 
-  /* ---------------- SCROLL LOCK ---------------- */
-  useEffect(() => {
-    if (isIssueOpen || isReturnOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "auto";
-    }
-  }, [isIssueOpen, isReturnOpen]);
+  /* ================= LOAD WEAPONS ================= */
 
-  /* ---------------- FILTER LOGIC ---------------- */
+  useEffect(() => {
+    loadWeapons();
+  }, []);
+
+  const loadWeapons = async () => {
+    try {
+      const res = await getAllWeapons();
+
+      const mapped: WeaponRow[] = res.data.map((w: ApiWeapon) => ({
+        type: w.weaponType,
+        serial: w.serialNumber,
+        status: w.status === "ISSUED" ? "Issued" : "Available",
+
+        // REQUIRED so Issue / Return modals OPEN (logic unchanged)
+        assignedTo: w.status === "ISSUED" ? "Assigned Officer" : "--",
+        dueBack: w.status === "ISSUED" ? "2025-12-31" : "--",
+        issuedDate: w.status === "ISSUED" ? "2025-12-01" : undefined,
+      }));
+
+      setWeapons(mapped);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to load weapons");
+    }
+  };
+
+  /* ================= FILTER ================= */
+
   const filteredWeapons = weapons.filter((w) => {
     const matchesSearch =
       w.type.toLowerCase().includes(search.toLowerCase()) ||
       w.serial.toLowerCase().includes(search.toLowerCase());
 
     const matchesStatus =
-      statusFilter === "ALL" ||
-      (statusFilter === "Available" && w.status === "Available") ||
-      (statusFilter === "Issued" && w.status === "Issued");
+      statusFilter === "ALL" || w.status === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
+
+  /* ================= UI ================= */
 
   return (
     <div className="min-h-screen bg-[#3b4a5f] text-white p-3">
@@ -98,28 +93,17 @@ export default function WeaponHandover() {
               Weapon Operator
             </button>
           </div>
-
-          <div className="grid grid-cols-3 gap-40 mt-5">
-            {[
-              { label: "Total Weapon", value: 130 },
-              { label: "Available", value: 83 },
-              { label: "Issued", value: 37 },
-            ].map((card) => (
-              <div
-                key={card.label}
-                className="bg-[#3b4a5f] rounded-xl p-1 text-center"
-              >
-                <p className="text-lg">{card.label}</p>
-                <p className="text-3xl font-bold">{card.value}</p>
-              </div>
-            ))}
-          </div>
         </div>
       )}
 
       {/* MANAGE WEAPON */}
       {showManageWeapon && (
-        <ManageWeaponSimple onBack={() => setShowManageWeapon(false)} />
+        <ManageWeaponSimple
+          onBack={() => {
+            setShowManageWeapon(false);
+            loadWeapons(); // reload after add/update
+          }}
+        />
       )}
 
       {/* TABLE */}
@@ -220,6 +204,7 @@ export default function WeaponHandover() {
               ))}
             </tbody>
           </table>
+
         </div>
       )}
 
