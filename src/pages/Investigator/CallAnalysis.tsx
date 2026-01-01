@@ -78,29 +78,54 @@ function CallAnalysis() {
 
     try {
       const formData = new FormData();
-      formData.append('files', selectedFile);
+      formData.append('file', selectedFile);
 
-      const response = await fetch('http://localhost:5001/analyze/batch', {
+      const response = await fetch('http://localhost:5001/analyze', {
         method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to analyze PDF');
+        throw new Error(errorData.error || 'Failed to analyze PDF');
       }
 
       const data = await response.json();
       
       console.log('Analysis response:', data);
       
-      if (data.analyses && data.analyses.length > 0) {
-        const newResult = data.analyses[0];
+      // Flask returns {analysis_id, status, message}, need to fetch results
+      if (data.analysis_id && data.status === 'completed') {
+        const resultsResponse = await fetch(`http://localhost:5001/results/${data.analysis_id}`);
+        if (!resultsResponse.ok) {
+          throw new Error('Failed to fetch analysis results');
+        }
+        
+        const analysisData = await resultsResponse.json();
+        console.log('Analysis data:', analysisData);
+        
+        // Transform the data to match frontend expectations
+        const newResult = {
+          main_number: analysisData.main_number || selectedFile.name.replace('.pdf', ''),
+          analysis_id: analysisData.analysis_id,
+          total_calls: analysisData.total_calls,
+          total_incoming: analysisData.total_incoming,
+          total_outgoing: analysisData.total_outgoing,
+          unique_contacts: analysisData.unique_numbers.length,
+          risk_score: analysisData.risk_score,
+          incoming_graph: analysisData.incoming_graph,
+          outgoing_graph: analysisData.outgoing_graph,
+          time_distribution: analysisData.time_pattern,
+          call_frequency: analysisData.call_frequency,
+          common_contacts: analysisData.common_contacts,
+          timestamp: analysisData.timestamp
+        };
+        
         console.log('Adding result with main number:', newResult.main_number);
         setResults(prev => [...prev, newResult]);
         setSelectedFile(null);
       } else {
-        throw new Error('No analysis results returned');
+        throw new Error('Analysis failed or incomplete');
       }
     } catch (err: unknown) {
       const error = err as Error;
