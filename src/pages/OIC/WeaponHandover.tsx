@@ -82,6 +82,7 @@ export default function WeaponHandover() {
     <div className="min-h-screen bg-[#3b4a5f] text-white p-3">
 
       {/* HEADER */}
+      
       {!showManageWeapon && (
         <div className="bg-[#111827] rounded-xl p-4">
           <div className="flex justify-between items-center">
@@ -92,6 +93,21 @@ export default function WeaponHandover() {
             >
               Weapon Operator
             </button>
+          </div>
+             <div className="grid grid-cols-3 gap-40 mt-5">
+            {[
+              { label: "Total Weapon", value: 130 },
+              { label: "Available", value: 83 },
+              { label: "Issued", value: 37 },
+            ].map((card) => (
+              <div
+                key={card.label}
+                className="bg-[#3b4a5f] rounded-xl p-1 text-center"
+              >
+                <p className="text-lg">{card.label}</p>
+                <p className="text-3xl font-bold">{card.value}</p>
+              </div>
+            ))}
           </div>
         </div>
       )}
