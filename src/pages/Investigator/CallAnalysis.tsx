@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import cytoscape from 'cytoscape';
 import { FaUpload, FaFileAlt, FaNetworkWired, FaExclamationTriangle, FaSpinner, FaTrash } from 'react-icons/fa';
+import { CallAnalysisPDFButton } from './CallAnalysisPDF';
 
 interface GraphData {
   nodes: Array<{ 
@@ -22,15 +23,15 @@ interface GraphData {
   total_nodes: number;
   total_edges: number;
 }
-
 interface AnalysisResult {
   pdf_filename: string;
   main_number: string;
-  total_calls: number;
+  total_calls: number
   total_incoming: number;
   total_outgoing: number;
   unique_numbers: string[];
   common_contacts: Array<{ phone: string; count: number }>;
+  call_frequency: Record<string, number>;
   incoming_graph: GraphData;
   outgoing_graph: GraphData;
   criminal_matches: Array<{
@@ -41,8 +42,17 @@ interface AnalysisResult {
     crime_history: Array<{ crime_type: string; date: string; status: string }>;
   }>;
   risk_score: number;
-}
+  location_analysis?: {
+    gap_minutes?: number;
+    locations?: Array<{
+      location: string;
+      start: string;
+      end: string;
+      count: number;
+    }>;
+  };
 
+}
 interface CombinedGraphData {
   nodes: cytoscape.NodeDefinition[];
   edges: cytoscape.EdgeDefinition[];
@@ -388,9 +398,12 @@ function CallAnalysis() {
           </div>
         )}
       </div>
+      
 
       {results.length > 0 && combinedGraphs && (
+        
         <div className="space-y-6">
+          
           {/* Summary Stats */}
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-bold text-gray-800 mb-4">Analysis Summary</h2>
@@ -418,7 +431,6 @@ function CallAnalysis() {
                 <div className="text-sm text-gray-600">Outgoing Calls</div>
               </div>
             </div>
-
             {/* PDF List */}
             <div className="mt-4 border-t pt-4">
               <h3 className="text-sm font-medium text-gray-700 mb-2">Analyzed Files:</h3>
@@ -437,17 +449,36 @@ function CallAnalysis() {
                   </div>
                 ))}
               </div>
-            </div>
+              <div className="flex items-center justify-between mb-8 mt-6">
+                <div className="flex items-center gap-3">
+                  <FaNetworkWired className="text-3xl text-blue-600" />
+                  <div>
+                    <h1 className="text-2xl font-bold text-gray-800">Call Record Analysis</h1>
+                    <p className="text-gray-600">Download PDF call records to analyze patterns</p>
+                  </div>
+                </div>
+              </div>
+
+            {/* Add PDF Download Button */}
+              <div className="mb-4">
+                <CallAnalysisPDFButton results={results} />
+              </div>
           </div>
+        </div>
 
           {/* Combined Network Graphs */}
           <CombinedNetworkGraphs 
             incomingData={combinedGraphs.incoming}
             outgoingData={combinedGraphs.outgoing}
-          />
+          /> 
+          {/* Location Time Periods as LAST SECTION */}
+          <LocationTimePeriods results={results} />
+          
         </div>
       )}
+      
     </div>
+    
   );
 }
 
@@ -455,7 +486,14 @@ function CallAnalysis() {
 const getPdfColor = (index: number): string => {
   const colors = [
     '#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', 
-    '#ffff33', '#a65628', '#f781bf', '#999999'
+    '#ffff33', '#a65628', '#f781bf', '#999999','#2563eb', // blue
+    '#16a34a', // green
+    '#dc2626', // red
+    '#7c3aed', // purple
+    '#ea580c', // orange
+    '#0891b2', // cyan
+    '#0f172a', // slate
+    '#be185d',
   ];
   return colors[index % colors.length];
 };
@@ -499,7 +537,7 @@ function CombinedNetworkGraphs({ incomingData, outgoingData }: CombinedNetworkGr
               'width': '60px',
               'height': '60px',
               'border-width': '3px',
-              'border-color': '#1e40af',
+              'border-color': '#03091bcb',
               'font-weight': 'bold'
             }
           },
@@ -548,7 +586,7 @@ function CombinedNetworkGraphs({ incomingData, outgoingData }: CombinedNetworkGr
               'target-arrow-shape': 'triangle',
               'curve-style': 'bezier',
               'label': 'data(label)',
-              'font-size': '9px',
+              'font-size': '15px',
               'text-background-color': '#fff',
               'text-background-opacity': 0.8,
               'text-background-padding': '2px'
@@ -601,7 +639,7 @@ function CombinedNetworkGraphs({ incomingData, outgoingData }: CombinedNetworkGr
               'width': '60px',
               'height': '60px',
               'border-width': '3px',
-              'border-color': '#1e40af',
+              'border-color': '#020613ca',
               'font-weight': 'bold'
             }
           },
@@ -615,7 +653,7 @@ function CombinedNetworkGraphs({ incomingData, outgoingData }: CombinedNetworkGr
               'color': '#fff',
               'text-outline-color': '#dc2626',
               'text-outline-width': '2px',
-              'background-color': '#ef4444',
+              'background-color': '#2563eb',
               'width': '40px',
               'height': '40px'
             }
@@ -642,12 +680,12 @@ function CombinedNetworkGraphs({ incomingData, outgoingData }: CombinedNetworkGr
             selector: 'edge[edgeType="normal"]',
             style: {
               'width': 'data(callCount)',
-              'line-color': '#ef4444',
-              'target-arrow-color': '#ef4444',
+              'line-color': '#7c3aed',
+              'target-arrow-color': '#7c3aed',
               'target-arrow-shape': 'triangle',
               'curve-style': 'bezier',
               'label': 'data(label)',
-              'font-size': '9px',
+              'font-size': '15px',
               'text-background-color': '#fff',
               'text-background-opacity': 0.8,
               'text-background-padding': '2px'
@@ -772,7 +810,97 @@ function CombinedNetworkGraphs({ incomingData, outgoingData }: CombinedNetworkGr
         </div>
       </div>
     </div>
-  );
+  );  
+}
+
+function LocationTimePeriods({ results }: { results: AnalysisResult[] }) {
+  return (
+    <div className="bg-white rounded-lg shadow p-6">
+      <h2 className="text-xl font-bold text-gray-800 mb-2">Location Time Periods</h2>
+
+      <p className="text-sm text-gray-600 mb-4">
+        Sessions are split when there is a gap greater than{" "}
+      <span className="font-semibold">
+        {results[0]?.location_analysis?.gap_minutes ?? 180} minutes
+      </span>.
+      </p>
+
+      <div className="overflow-x-auto">
+        <table className="min-w-full border border-gray-200 rounded-lg">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="text-left text-sm font-semibold text-gray-700 p-3 border-b">
+                Main Number
+              </th>
+              <th className="text-left text-sm font-semibold text-gray-700 p-3 border-b">
+                
+              </th>
+              <th className="text-left text-sm font-semibold text-gray-700 p-3 border-b">
+                Location
+              </th>
+              <th className="text-left text-sm font-semibold text-gray-700 p-3 border-b">
+                Time Period
+              </th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {results.map((r, idx) => {
+              const locs = r.location_analysis?.locations ?? [];
+
+              return (
+                <React.Fragment key={`pdf-${idx}`}>
+                  {/*  PDF/Main Number Header Row */}
+                  <tr className="bg-gray-100 border-b">
+                    <td className="p-3 text-sm font-bold text-gray-800" colSpan={4}>
+                      {r.main_number}{" "}
+                      <span className="text-gray-500 font-normal">
+                        ({r.pdf_filename})
+                      </span>
+                    </td>
+                  </tr>
+
+                  {/* If no location data */}
+                {locs.length === 0 ? (
+                    <tr className="border-b">
+                      <td className="p-3 text-sm text-gray-500" colSpan={4}>
+                        No location data found in this PDF
+                      </td>
+                    </tr>
+              ) : (
+                /* Location session rows */
+                locs.map((l, j) => (
+                    <tr key={`row-${idx}-${j}`} className="border-b hover:bg-gray-50">
+                        {/* ↳ indent column under main number */}
+                        <td className="p-3 text-sm text-gray-400 font-mono"></td>
+
+                        {/* Session number per PDF */}
+                        <td className="p-3 text-sm text-gray-700 font-semibold">
+                          {j + 1}
+                        </td>
+
+                        <td className="p-3 text-sm text-gray-700">{l.location}</td>
+
+                        <td className="p-3 text-sm text-gray-700">
+                          {l.start} - {l.end}
+                          <span className="text-gray-500"> ({l.count} records)</span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+
+                  {/* Optional spacer between PDFs */}
+                  <tr>
+                    <td colSpan={4} className="h-2 bg-white"></td>
+                  </tr>
+                </React.Fragment>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+   );
 }
 
 export default CallAnalysis;

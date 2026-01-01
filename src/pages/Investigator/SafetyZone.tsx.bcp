@@ -5,60 +5,126 @@ import { AiTwotoneAlert } from "react-icons/ai";
 import { FaPersonShelter } from "react-icons/fa6";
 import { CiBank } from "react-icons/ci";
 import { IoLibraryOutline } from "react-icons/io5";
-import { GoogleMap, Marker, useLoadScript } from "@react-google-maps/api";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  GoogleMap,
+  Marker,
+  useJsApiLoader,
+} from "@react-google-maps/api";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMapContext } from "../../contexts/useMapContext";
-import CircularProgress from "@mui/material/CircularProgress";
-import Box from "@mui/material/Box";
-import searchPlacesInViewport from "../../services/searchPlacesInViewport";
+import axios from "axios";
 
 const LIBRARIES: "places"[] = ["places"];
 
+interface SafetyLocation {
+  id: number;
+  name: string;
+  latitude: number;
+  longitude: number;
+  type: string;
+}
+
 function SafetyZone() {
   const GOOGLE_MAP_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+
+  // const safetyTypes: string[] = [
+  //   "POLICE",
+  //   "HOSPITAL",
+  //   "FIRE_STATION",
+  //   "SHELTER",
+  //   "SAFE_HEAVEN",
+  //   "COMMUNITY_CENTER",
+  //   "SECURITY_POST",
+  //   "LIBRARY",
+  // ];
+
+  const { map, setMap, markers, setMarkers } = useMapContext();
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const [locations, setLocations] = useState<SafetyLocation[]>([]);
+  const [filterType, setFilterType] = useState<string>("");
+  const [selectedLocation, setSelectedLocation] =
+    useState<SafetyLocation | null>(null);
+
+  const { isLoaded } = useJsApiLoader({
+    id: "google-map-script",
+    googleMapsApiKey: GOOGLE_MAP_API_KEY,
+    libraries: LIBRARIES,
+  });
 
   const dropdownItems = [
     {
       itemTitle: "Police Station",
       itemIcon: <RiPoliceBadgeLine />,
-      action: () => onDropdownItemClicked("POLICE"),
+      actions: () => setFilterType("POLICE"),
     },
     {
       itemTitle: "Hospital",
       itemIcon: <FaRegHospital />,
-      action: () => onDropdownItemClicked("HOSPITAL"),
+      actions: () => setFilterType("HOSPITAL"),
     },
     {
       itemTitle: "Fire Station",
       itemIcon: <AiTwotoneAlert />,
-      action: () => onDropdownItemClicked("FIRE_STATION"),
+      actions: () => setFilterType("FIRE_STATION"),
     },
     {
       itemTitle: "Shelter",
       itemIcon: <FaPersonShelter />,
-      action: () => onDropdownItemClicked("SHELTER"),
+      actions: () => setFilterType("SHELTER"),
     },
     {
       itemTitle: "Safe Heven",
       itemIcon: <FaHeart />,
-      action: () => onDropdownItemClicked("SAFE_HEAVEN"),
+      actions: () => setFilterType("SAFE_HEAVEN"),
     },
     {
       itemTitle: "Commiunity Center",
       itemIcon: <CiBank />,
-      action: () => onDropdownItemClicked("COMMIUNITY_CENTER"),
+      actions: () => setFilterType("COMMUNITY_CENTER"),
     },
     {
       itemTitle: "Security Post",
       itemIcon: <FaShieldAlt />,
-      action: () => onDropdownItemClicked("SECURITY_POST"),
+      actions: () => setFilterType("SECURITY_POST"),
     },
     {
       itemTitle: "Public Library",
       itemIcon: <IoLibraryOutline />,
-      action: () => onDropdownItemClicked("PUBLIC_LIBRARY"),
+      actions: () => setFilterType("LIBRARY"),
     },
   ];
+
+  const currentLabel = filterType
+    ? filterType.replace("_", " ")
+    : "Select Safety Type";
+
+  // Fetch data
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const response = await axios.get<SafetyLocation[]>(
+          "http://localhost:8080/api/safety-locations",
+          { params: { type: filterType } }
+        );
+        setLocations(response.data);
+      } catch (err) {
+        console.error("Error fetching safety locations:", err);
+      }
+    };
+    fetchLocations();
+  }, [filterType]);
+
+  const onLoad = useCallback(
+    (mapInstance: google.maps.Map) => {
+      setMap(mapInstance);
+    },
+    [setMap]
+  );
+
+  const onUnmount = useCallback(() => {
+    setMap(null);
+  }, [setMap]);
 
   const center = useMemo(
     () => ({
@@ -67,21 +133,6 @@ function SafetyZone() {
     }),
     []
   );
-
-  const { map, setMap, markers, setMarkers } = useMapContext();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterType, setFilterType] = useState<string>("");
-  const searchInputRef = useRef<HTMLInputElement | null>(null);
-  const mapRef = useRef<google.maps.Map | null>(null);
-
-  const { isLoaded } = useLoadScript({
-    googleMapsApiKey: GOOGLE_MAP_API_KEY,
-    libraries: LIBRARIES,
-  });
-
-  const currentDropdownLabel = filterType
-    ? filterType.replace("_", " ")
-    : "Safety Type";
 
   useEffect(() => {
     if (isLoaded && searchInputRef.current && map) {
@@ -111,8 +162,8 @@ function SafetyZone() {
 
         setMarkers([
           {
-            latitude: newCenter.lat,
-            longitude: newCenter.lng,
+            lat: newCenter.lat,
+            lng: newCenter.lng,
             name: place.name,
           },
         ]);
@@ -122,21 +173,8 @@ function SafetyZone() {
     }
   }, [isLoaded, map, setMarkers]);
 
-  const onDropdownItemClicked = (type: string) => {
-    console.log(`Dropdown item clicked: ${type}`); //testing purposes
-    setFilterType(type);
-
-    if (mapRef.current && searchQuery) {
-      searchPlacesInViewport(
-        mapRef.current,
-        `${searchQuery} ${type.replace("_", " ")}`,
-        setMarkers
-      );
-    }
-  };
-
   const handleLoad = (mapInstance: google.maps.Map) => {
-    mapRef.current = mapInstance;
+    onLoad(mapInstance);
     setMap(mapInstance);
   };
 
@@ -169,22 +207,14 @@ function SafetyZone() {
           lng: place.geometry.location.lng(),
         };
 
-        setMarkers([{ latitude: newCenter.lat, longitude: newCenter.lng }]);
+        setMarkers([{ lat: newCenter.lat, lng: newCenter.lng }]);
         map.panTo(newCenter);
       }
     });
   };
 
-  // if map still loading
   if (!isLoaded) {
-    return (
-      <div className="flex justify-center items-center gap-3 font-semibold text-lg h-full">
-        <Box>
-          <CircularProgress />
-        </Box>
-        Loading Map....
-      </div>
-    );
+    return <div>Loading Map....</div>;
   }
 
   return (
@@ -216,7 +246,7 @@ function SafetyZone() {
             </div>
             <div>
               <DropDownMenu
-                dropdownLabelName={currentDropdownLabel}
+                dropdownLabelName={currentLabel}
                 items={dropdownItems}
               />
             </div>
@@ -228,13 +258,27 @@ function SafetyZone() {
                 mapContainerClassName="w-full h-[500px] rounded-lg"
                 zoom={14}
                 onLoad={handleLoad}
+                onUnmount={onUnmount}
               >
                 {markers.map((marker, index) => (
                   <Marker
                     key={index}
-                    position={{ lat: marker.latitude, lng: marker.longitude }}
+                    position={{ lat: marker.lat, lng: marker.lng }}
+                    // onClick={()=> setSelectedLocation(marker)}
                   />
                 ))}
+                {
+                  // locations.map((location) => (
+                  //   <MarkerF
+                  //     key={location.id}
+                  //     position={{
+                  //       lat: location.latitude,
+                  //       lng: location.longitude,
+                  //     }}
+                  //     onClick={() => setSelectedLocation(location)}
+                  //   />
+                  // ))
+                }
               </GoogleMap>
             )}
           </div>

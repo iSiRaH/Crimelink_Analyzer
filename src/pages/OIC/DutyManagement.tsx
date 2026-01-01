@@ -33,7 +33,6 @@ function DutyManagement() {
     { value: "Absent",    label: "Absent" },
   ];
 
-  // AI recommend button
   const handleRecommend = async () => {
     if (!selectedDate) return;
 
@@ -63,7 +62,7 @@ function DutyManagement() {
     }
   };
 
-  // when user clicks calendar date
+  
   const handleDateClick = (info: DateClickArg) => {
     setSelectedDate(info.dateStr);
     setOpen(true);
@@ -92,7 +91,7 @@ function DutyManagement() {
 
   // save duties
   const handleAddDuties = async () => {
-    // ✅ build payload matching backend DutyScheduleRequest
+    //  build payload matching backend DutyScheduleRequest
     const payload: DutyCreatePayload[] = rows
       .filter((r) => {
     // ignore rows with no status at all
@@ -148,8 +147,8 @@ function DutyManagement() {
 
   return (
     <>
-      {/* Calendar */}
-      <div className="flex-1 p-5 overflow-y-auto">
+      
+      <div className="flex-1 p-5 overflow-y-auto bg-slate-50">
         <FullCalendar
           height="auto"
           plugins={[dayGridPlugin, interactionPlugin]}
@@ -186,7 +185,7 @@ function DutyManagement() {
                   {/* Name auto-load */}
                   <td className="p-2 border font-medium">{r.officerName}</td>
 
-                  {/* Location */}
+                  
                   <td className="p-2 border">
                     <select
                       className="w-full border rounded px-2 py-1"
@@ -204,7 +203,7 @@ function DutyManagement() {
                     </select>
                   </td>
 
-                  {/* Time */}
+                
                   <td className="p-2 border">
                     <select
                       className="w-full border rounded px-2 py-1"
@@ -236,7 +235,7 @@ function DutyManagement() {
                     </select>
                   </td>
 
-                  {/* Status */}
+                  
                   <td className="p-2 border">
                     <select
                       className="w-full border rounded px-2 py-1"
@@ -252,7 +251,7 @@ function DutyManagement() {
                     </select>
                   </td>
 
-                  {/* Description */}
+                  
                   <td className="p-2 border">
                     <input
                       className="w-full border rounded px-2 py-1"
@@ -303,17 +302,17 @@ function DutyManagement() {
             disabled={recommending}
             className="bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-semibold"
         >
-          {recommending ? "Recommending..." : "AI Recommend Officers"}
+          {recommending ? "Recommending..." : "Recommend Officers"}
         </button>
         </div>
 
       </DutyPopupModel>
       
 
-      {/* 🔹 Popup – AI Recommended Officers */}
+      {/* 🔹 Popup –  Recommended Officers */}
       <DutyPopupModel open={recommendOpen} onClose={() => setRecommendOpen(false)}>
         <h2 className="text-xl font-semibold mb-4">
-          AI Recommended Officers for {selectedDate}
+          Recommended Officers for {selectedDate}
         </h2>
 
         {recommending && <p className="mb-3 text-sm">Loading recommendations...</p>}

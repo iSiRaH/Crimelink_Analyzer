@@ -91,7 +91,7 @@ api.interceptors.response.use(
       _retry?: boolean;
     };
 
-    // ✅ refresh ONLY for 401 (Unauthorized)
+    // refresh ONLY for 401 (Unauthorized)
     if (error.response.status === 401 && !originalRequest._retry) {
       // If refresh already happening, queue this request
       if (isRefreshing) {
@@ -156,7 +156,7 @@ api.interceptors.response.use(
       }
     }
 
-    // ✅ for 403 / others just reject (no refresh)
+    //  for 403 / others just reject (no refresh)
     return Promise.reject(error);
   }
 );

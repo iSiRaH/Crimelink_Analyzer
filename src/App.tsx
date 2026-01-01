@@ -33,6 +33,8 @@ import Reports from "./pages/Admin/Reports";
 import SystemHealth from "./pages/Admin/SystemHealth";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import { MapProvider } from "./contexts/MapContext";
+import ReportCrimes from "./pages/OIC/ReportCrimes";
 
 function AppContent() {
   const navigate = useNavigate();
@@ -87,6 +89,7 @@ function AppContent() {
         <Route path="weapon-handover" element={<WeaponHandover />} />
         <Route path="plate-registry" element={<PlateRegistry />} />
         <Route path="report" element={<OICReport />} />
+        <Route path="report-crimes" element={<ReportCrimes />} />
         <Route path="manage-profiles" element={<ManageProfiles />} />
         <Route path="settings" element={<Settings />} />
       </Route>
@@ -130,7 +133,9 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <AppContent />
+        <MapProvider>
+          <AppContent />
+        </MapProvider>
       </AuthProvider>
     </Router>
   );

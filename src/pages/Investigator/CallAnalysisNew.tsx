@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import cytoscape from "cytoscape";
-import { FaUpload, FaExclamationTriangle, FaSpinner } from "react-icons/fa";
+import { FaUpload, FaExclamationTriangle, FaSpinner, FaNetworkWired } from "react-icons/fa";
 
 interface GraphData {
   nodes: Array<{
