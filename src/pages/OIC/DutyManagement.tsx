@@ -148,7 +148,7 @@ function DutyManagement() {
   return (
     <>
       
-      <div className="flex-1 p-5 overflow-y-auto">
+      <div className="flex-1 p-5 overflow-y-auto bg-slate-50">
         <FullCalendar
           height="auto"
           plugins={[dayGridPlugin, interactionPlugin]}
@@ -302,17 +302,17 @@ function DutyManagement() {
             disabled={recommending}
             className="bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-semibold"
         >
-          {recommending ? "Recommending..." : "AI Recommend Officers"}
+          {recommending ? "Recommending..." : "Recommend Officers"}
         </button>
         </div>
 
       </DutyPopupModel>
       
 
-      {/* 🔹 Popup – AI Recommended Officers */}
+      {/* 🔹 Popup –  Recommended Officers */}
       <DutyPopupModel open={recommendOpen} onClose={() => setRecommendOpen(false)}>
         <h2 className="text-xl font-semibold mb-4">
-          AI Recommended Officers for {selectedDate}
+          Recommended Officers for {selectedDate}
         </h2>
 
         {recommending && <p className="mb-3 text-sm">Loading recommendations...</p>}

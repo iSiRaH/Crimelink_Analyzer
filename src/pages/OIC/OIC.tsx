@@ -29,6 +29,7 @@ function OIC() {
       path: "weapon-handover",
     },
     { name: "Plate Registry", icon: FaStickyNote, path: "plate-registry" },
+    { name: "Report", icon: FaFileAlt, path: "report" },
     { name: "Report Crimes", icon: MdOutlineBugReport, path: "report-crimes" },
     { name: "Manage Profiles", icon: FaUserGear, path: "manage-profiles" },
   ];
