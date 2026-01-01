@@ -77,8 +77,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const updateUserProfile = (updatedUser: { userId: number; name: string; role: string }) => {
+    setUser((prevUser) => {
+      if (!prevUser) return null;
+      return {
+        ...prevUser,
+        name: updatedUser.name,
+      };
+    });
+    
+    // Also update localStorage
+    const storedUser = authService.getStoredUser();
+    if (storedUser) {
+      const updated = { ...storedUser, name: updatedUser.name };
+      localStorage.setItem('user', JSON.stringify(updated));
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, loading, updateUserProfile }}>
       {children}
     </AuthContext.Provider>
   );

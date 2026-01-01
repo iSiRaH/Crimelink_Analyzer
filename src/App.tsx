@@ -31,6 +31,7 @@ import AuditLogs from "./pages/Admin/AuditLogs";
 import SystemSettings from "./pages/Admin/SystemSettings";
 import Reports from "./pages/Admin/Reports";
 import SystemHealth from "./pages/Admin/SystemHealth";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 function AppContent() {
@@ -68,6 +69,7 @@ function AppContent() {
         <Route path="system-settings" element={<SystemSettings />} />
         <Route path="reports" element={<Reports />} />
         <Route path="system-health" element={<SystemHealth />} />
+        <Route path="settings" element={<Settings />} />
       </Route>
 
       {/* OIC page routing */}
@@ -86,6 +88,7 @@ function AppContent() {
         <Route path="plate-registry" element={<PlateRegistry />} />
         <Route path="report" element={<OICReport />} />
         <Route path="manage-profiles" element={<ManageProfiles />} />
+        <Route path="settings" element={<Settings />} />
       </Route>
 
       {/* investigator page routing */}
@@ -102,6 +105,7 @@ function AppContent() {
         <Route path="call-analysis" element={<CallAnalysis />} />
         <Route path="facial-recognition" element={<FacialRecognition />} />
         <Route path="safety-zone" element={<SafetyZone />} />
+        <Route path="settings" element={<Settings />} />
       </Route>
 
       {/* Original protected route */}

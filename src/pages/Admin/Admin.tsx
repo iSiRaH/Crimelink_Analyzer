@@ -10,6 +10,7 @@ import {
   FaCog,
   FaFileAlt,
   FaHeartbeat,
+  FaUserCircle,
 } from "react-icons/fa";
 
 function Admin() {
@@ -23,6 +24,7 @@ function Admin() {
     { name: "System Settings", icon: FaCog, path: "system-settings" },
     { name: "Reports", icon: FaFileAlt, path: "reports" },
     { name: "System Health", icon: FaHeartbeat, path: "system-health" },
+    { name: "Settings", icon: FaUserCircle, path: "settings" },
   ];
 
   return (
