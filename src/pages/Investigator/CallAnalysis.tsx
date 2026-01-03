@@ -283,8 +283,8 @@ function CallAnalysis() {
   }, [results]);
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="bg-white rounded-lg shadow p-6">
+    <div className="p-6 space-y-6 bg-slate-400">
+      <div className="bg-slate-100 rounded-lg shadow p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <FaNetworkWired className="text-3xl text-blue-600" />
@@ -380,7 +380,7 @@ function CallAnalysis() {
         <div className="space-y-6">
           
           {/* Summary Stats */}
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-slate-100 rounded-lg shadow p-6">
             <h2 className="text-xl font-bold text-gray-800 mb-4">Analysis Summary</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center p-4 bg-blue-50 rounded-lg">
@@ -712,7 +712,7 @@ function CombinedNetworkGraphs({ incomingData, outgoingData }: CombinedNetworkGr
   }, [incomingData, outgoingData]);
 
   return (
-    <div className="bg-white rounded-lg shadow p-6 space-y-6">
+    <div className="bg-slate-100 rounded-lg shadow p-6 space-y-6">
       <div>
         <h2 className="text-xl font-bold text-gray-800 mb-2">Combined Network Analysis</h2>
         <p className="text-sm text-gray-600 mb-4">
@@ -773,7 +773,7 @@ function CombinedNetworkGraphs({ incomingData, outgoingData }: CombinedNetworkGr
               <span>Main Numbers (each PDF has unique color)</span>
             </div>
             <div className="flex items-center gap-2 mb-1">
-              <div className="w-4 h-4 bg-red-600 rounded-full"></div>
+              <div className="w-4 h-4 bg-blue-600 rounded-full"></div>
               <span>Numbers called by the main number</span>
             </div>
             <div className="flex items-center gap-2">
@@ -790,7 +790,7 @@ function CombinedNetworkGraphs({ incomingData, outgoingData }: CombinedNetworkGr
 
 function LocationTimePeriods({ results }: { results: AnalysisResult[] }) {
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-slate-100 rounded-lg shadow p-6">
       <h2 className="text-xl font-bold text-gray-800 mb-2">Location Time Periods</h2>
 
       <p className="text-sm text-gray-600 mb-4">
