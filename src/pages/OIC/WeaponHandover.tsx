@@ -51,7 +51,7 @@ export default function WeaponHandover() {
         status: w.status === "ISSUED" ? "Issued" : "Available",
 
         // REQUIRED so Issue / Return modals OPEN (logic unchanged)
-        assignedTo: w.status === "ISSUED" ? "Assigned Officer" : "--",
+        assignedTo: w.status === "ISSUED" ? "Officer Name" : "--",
         dueBack: w.status === "ISSUED" ? "2025-12-31" : "--",
         issuedDate: w.status === "ISSUED" ? "2025-12-01" : undefined,
       }));
@@ -77,7 +77,9 @@ export default function WeaponHandover() {
   });
 
   /* ================= UI ================= */
-
+  const totalCount = weapons.length;
+  const availableCount = weapons.filter((w) => w.status === "Available").length;
+  const issuedCount = weapons.filter((w) => w.status === "Issued").length;
   return (
     <div className="min-h-screen bg-[#3b4a5f] text-white p-3">
 
@@ -224,21 +226,26 @@ export default function WeaponHandover() {
         </div>
       )}
 
-      {/* ISSUE MODAL */}
-      {isIssueOpen && selectedWeapon && (
-        <IssueWeaponModal
-          weapon={selectedWeapon}
-          onClose={() => setIsIssueOpen(false)}
-        />
-      )}
+     {isIssueOpen && selectedWeapon && (
+  <IssueWeaponModal
+    weapon={selectedWeapon}
+    onClose={() => {
+      setIsIssueOpen(false);
+      loadWeapons();
+    }}
+  />
+)}
 
-      {/* RETURN MODAL */}
-      {isReturnOpen && selectedWeapon && (
-        <ReturnWeaponModal
-          weapon={selectedWeapon}
-          onClose={() => setIsReturnOpen(false)}
-        />
-      )}
+{isReturnOpen && selectedWeapon && (
+  <ReturnWeaponModal
+    weapon={selectedWeapon}
+    onClose={() => {
+      setIsReturnOpen(false);
+      loadWeapons();
+    }}
+  />
+)}
+
     </div>
   );
 }
