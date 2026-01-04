@@ -243,8 +243,7 @@ export default function ManageWeapon({ onBack }: Props) {
                   onChange={(e) => setStatus(e.target.value)}
                   className="mt-1 w-full bg-transparent border border-gray-600 rounded px-3 py-2"
                 >
-                  <option value="ACTIVE">ACTIVE</option>
-                  <option value="INACTIVE">INACTIVE</option>
+                  
                   <option value="AVAILABLE">AVAILABLE</option>
                   <option value="ISSUED">ISSUED</option>
                   <option value="DISABLED">DISABLED</option>

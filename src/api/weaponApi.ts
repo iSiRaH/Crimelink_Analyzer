@@ -15,5 +15,18 @@ export const updateWeapon = (
   }
 ) => api.put(`/weapon/weapon-update/${serialNumber}`, data);
 
-export const getAllWeapons = () =>
-  api.get(`/weapon/all`);
+export const getAllWeapons = () => api.get(`/weapon/all`);
+
+export const issueWeapon = (data: {
+  weaponSerial: string;
+  issuedToId: number;
+  handedOverById: number;
+  dueDate: string;
+  issueNote: string;
+}) => api.post("/weapon/issue", data);
+
+export const returnWeapon = (data: {
+  weaponSerial: string;
+  receivedByUserId: number;
+  returnNote: string;
+}) => api.post("/weapon/return", data);
