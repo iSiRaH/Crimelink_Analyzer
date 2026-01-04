@@ -1,4 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
+import { returnWeapon } from "../../api/weaponApi";
+
+const officers = [
+  { id: 1, serviceId: "P-1023", name: "A.B.C. Bandara", badge: "4452", role: "OIC", rank: "Inspector" },
+  { id: 2, serviceId: "A-5561", name: "J.B. Millawithanachchi", badge: "7811", role: "Investigator", rank: "Sub Inspector" },
+  { id: 3, serviceId: "P-7932", name: "Samantha Perera", badge: "3344", role: "Sergeant", rank: "Sergeant" },
+];
 
 type Officer = {
   name: string;
@@ -20,6 +27,12 @@ type Props = {
 };
 
 export default function ReturnWeaponModal({ weapon, onClose }: Props) {
+  const [selectedReceivedById, setSelectedReceivedById] = useState<number | null>(null);
+  const [returnNote, setReturnNote] = useState("");
+  const [confirmed, setConfirmed] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const selectedReceivedBy = officers.find(o => o.id === selectedReceivedById);
 
   /* MOCK – normally from backend */
   const issuedTo: Officer = {
@@ -29,9 +42,9 @@ export default function ReturnWeaponModal({ weapon, onClose }: Props) {
   };
 
   const returnedBy: Officer = {
-    name: "Samantha Perera",
-    serviceNo: "P-7932",
-    rank: "Sergeant",
+    name: selectedReceivedBy?.name || "Select Officer",
+    serviceNo: selectedReceivedBy?.serviceId || "--",
+    rank: selectedReceivedBy?.rank || "--",
   };
 
   /* AUTO DATE & TIME */
@@ -48,6 +61,35 @@ export default function ReturnWeaponModal({ weapon, onClose }: Props) {
     ),
     0
   );
+
+  const handleReturn = async () => {
+    if (!selectedReceivedById) {
+      alert("Please select receiving officer");
+      return;
+    }
+
+    if (!confirmed) {
+      alert("Please confirm the details");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await returnWeapon({
+        weaponSerial: weapon.serial,
+        receivedByUserId: selectedReceivedById,
+        returnNote: returnNote || "Returned",
+      });
+
+      alert("Weapon returned successfully");
+      onClose();
+    } catch (err: any) {
+      alert(err?.response?.data?.error || "Failed to return weapon");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
@@ -79,6 +121,23 @@ export default function ReturnWeaponModal({ weapon, onClose }: Props) {
             <p>Issued Date: {weapon.issuedDate}</p>
             <p>Due Back Date: {weapon.dueBack}</p>
           </div>
+        </div>
+
+        {/* SELECT RECEIVING OFFICER */}
+        <div className="mb-3">
+          <label className="text-sm text-gray-400 mb-1 block">Select Receiving Officer</label>
+          <select
+            value={selectedReceivedById || ""}
+            onChange={(e) => setSelectedReceivedById(Number(e.target.value))}
+            className="w-full bg-gray-900 border border-gray-700 px-3 py-2 rounded text-sm"
+          >
+            <option value="">-- Select Officer --</option>
+            {officers.map(o => (
+              <option key={o.id} value={o.id}>
+                {o.serviceId} - {o.name} ({o.rank})
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* OFFICERS */}
@@ -125,13 +184,19 @@ export default function ReturnWeaponModal({ weapon, onClose }: Props) {
 
         {/* REMARK */}
         <textarea
+          value={returnNote}
+          onChange={(e) => setReturnNote(e.target.value)}
           placeholder="Enter remark..."
           className="w-full h-20 bg-[#0B1220] border border-gray-600 rounded-md p-2 text-sm focus:outline-none focus:border-blue-500 mb-4"
         />
 
         {/* CONFIRM */}
         <div className="flex gap-2 text-xs text-gray-400 mb-5">
-          <input type="checkbox" />
+          <input 
+            type="checkbox" 
+            checked={confirmed}
+            onChange={(e) => setConfirmed(e.target.checked)}
+          />
           <p>I confirm all Return details are correct.</p>
         </div>
 
@@ -144,8 +209,12 @@ export default function ReturnWeaponModal({ weapon, onClose }: Props) {
             Cancel
           </button>
 
-          <button className="w-1/2 px-4 py-2 bg-blue-600 rounded-md hover:bg-blue-700">
-            Confirm Return
+          <button
+            onClick={handleReturn}
+            disabled={loading}
+            className="w-1/2 px-4 py-2 bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+          >
+            {loading ? "Processing..." : "Confirm Return"}
           </button>
         </div>
 
