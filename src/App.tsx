@@ -35,6 +35,7 @@ import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import { MapProvider } from "./contexts/MapContext";
 import ReportCrimes from "./pages/OIC/ReportCrimes";
+import ViewCrimeReports from "./pages/OIC/ViewCrimeReports";
 
 function AppContent() {
   const navigate = useNavigate();
@@ -90,6 +91,8 @@ function AppContent() {
         <Route path="plate-registry" element={<PlateRegistry />} />
         <Route path="report" element={<OICReport />} />
         <Route path="report-crimes" element={<ReportCrimes />} />
+        <Route path="report-crimes/reports" element={<ViewCrimeReports />} />
+        <Route path="report" element={<OICReport />} />
         <Route path="manage-profiles" element={<ManageProfiles />} />
         <Route path="settings" element={<Settings />} />
       </Route>
@@ -123,7 +126,6 @@ function AppContent() {
         }
       /> */}
 
-      {/* Catch all - redirect to login */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
