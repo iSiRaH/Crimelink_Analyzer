@@ -148,7 +148,7 @@ function DutyManagement() {
   return (
     <>
       
-      <div className="flex-1 p-5 overflow-y-auto bg-slate-50">
+      <div className="flex-1 p-5 overflow-y-auto bg-slate-100">
         <FullCalendar
           height="auto"
           plugins={[dayGridPlugin, interactionPlugin]}
@@ -167,7 +167,7 @@ function DutyManagement() {
 
         {loadingRows && <p className="mb-3">Loading officers...</p>}
 
-        <div className="max-h-96 overflow-y-auto block">
+        <div className="max-h-96 overflow-y-auto block bg-slate-50">
           <table className="w-full border mb-5 text-sm">
             <thead>
               <tr className="bg-gray-200">
