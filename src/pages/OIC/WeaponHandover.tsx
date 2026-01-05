@@ -50,7 +50,7 @@ export default function WeaponHandover() {
         serial: w.serialNumber,
         status: w.status === "ISSUED" ? "Issued" : "Available",
 
-        // REQUIRED so Issue / Return modals OPEN (logic unchanged)
+        // keep logic unchanged
         assignedTo: w.status === "ISSUED" ? "Officer Name" : "--",
         dueBack: w.status === "ISSUED" ? "2025-12-31" : "--",
         issuedDate: w.status === "ISSUED" ? "2025-12-01" : undefined,
@@ -62,6 +62,16 @@ export default function WeaponHandover() {
       alert("Failed to load weapons");
     }
   };
+
+  /* ================= COUNTS (FROM DB) ================= */
+
+  const totalCount = weapons.length;
+  const availableCount = weapons.filter(
+    (w) => w.status === "Available"
+  ).length;
+  const issuedCount = weapons.filter(
+    (w) => w.status === "Issued"
+  ).length;
 
   /* ================= FILTER ================= */
 
@@ -77,14 +87,10 @@ export default function WeaponHandover() {
   });
 
   /* ================= UI ================= */
-  const totalCount = weapons.length;
-  const availableCount = weapons.filter((w) => w.status === "Available").length;
-  const issuedCount = weapons.filter((w) => w.status === "Issued").length;
+
   return (
     <div className="min-h-screen bg-[#3b4a5f] text-white p-3">
 
-      {/* HEADER */}
-      
       {!showManageWeapon && (
         <div className="bg-[#111827] rounded-xl p-4">
           <div className="flex justify-between items-center">
@@ -96,11 +102,13 @@ export default function WeaponHandover() {
               Weapon Operator
             </button>
           </div>
-             <div className="grid grid-cols-3 gap-40 mt-5">
+
+          {/* ✅ DB-DRIVEN COUNTS (DESIGN UNCHANGED) */}
+          <div className="grid grid-cols-3 gap-40 mt-5">
             {[
-              { label: "Total Weapon", value: 130 },
-              { label: "Available", value: 83 },
-              { label: "Issued", value: 37 },
+              { label: "Total Weapon", value: totalCount },
+              { label: "Available", value: availableCount },
+              { label: "Issued", value: issuedCount },
             ].map((card) => (
               <div
                 key={card.label}
@@ -119,7 +127,7 @@ export default function WeaponHandover() {
         <ManageWeaponSimple
           onBack={() => {
             setShowManageWeapon(false);
-            loadWeapons(); // reload after add/update
+            loadWeapons();
           }}
         />
       )}
@@ -178,13 +186,7 @@ export default function WeaponHandover() {
                 <tr key={i} className="border-b border-gray-700">
                   <td className="pl-4 py-2">{w.type}</td>
                   <td>{w.serial}</td>
-                  <td
-                    className={
-                      w.status === "Available"
-                        ? "text-green-400"
-                        : "text-red-400"
-                    }
-                  >
+                  <td className={w.status === "Available" ? "text-green-400" : "text-red-400"}>
                     • {w.status}
                   </td>
                   <td>{w.assignedTo}</td>
@@ -226,25 +228,25 @@ export default function WeaponHandover() {
         </div>
       )}
 
-     {isIssueOpen && selectedWeapon && (
-  <IssueWeaponModal
-    weapon={selectedWeapon}
-    onClose={() => {
-      setIsIssueOpen(false);
-      loadWeapons();
-    }}
-  />
-)}
+      {isIssueOpen && selectedWeapon && (
+        <IssueWeaponModal
+          weapon={selectedWeapon}
+          onClose={() => {
+            setIsIssueOpen(false);
+            loadWeapons();
+          }}
+        />
+      )}
 
-{isReturnOpen && selectedWeapon && (
-  <ReturnWeaponModal
-    weapon={selectedWeapon}
-    onClose={() => {
-      setIsReturnOpen(false);
-      loadWeapons();
-    }}
-  />
-)}
+      {isReturnOpen && selectedWeapon && (
+        <ReturnWeaponModal
+          weapon={selectedWeapon}
+          onClose={() => {
+            setIsReturnOpen(false);
+            loadWeapons();
+          }}
+        />
+      )}
 
     </div>
   );
