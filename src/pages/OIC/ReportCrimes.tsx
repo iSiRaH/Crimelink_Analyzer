@@ -1,6 +1,6 @@
 import { CloudUpload } from "lucide-react";
 import { saveCrimeReports } from "../../api/crimeReportService";
-import type { crimeReportType } from "../../types/crime";
+import type { crimeReportType, crimeType } from "../../types/crime";
 import { useState } from "react";
 import MapPopup from "../../components/UI/MapPopup";
 import { NavLink } from "react-router-dom";
@@ -70,7 +70,7 @@ function ReportCrimes() {
     try {
       console.log("Submit Report Clicked");
       const report: crimeReportType = {
-        crimeType: crimetype,
+        crimeType: crimetype as crimeType,
         latitude: parseFloat(latitude),
         longitude: parseFloat(longitude),
         description: description,

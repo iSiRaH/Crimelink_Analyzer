@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import cytoscape from "cytoscape";
-import { FaUpload, FaExclamationTriangle, FaSpinner, FaNetworkWired } from "react-icons/fa";
+import { FaExclamationTriangle, FaSpinner, FaNetworkWired } from "react-icons/fa";
 
 interface GraphData {
   nodes: Array<{
@@ -43,7 +43,7 @@ function CallAnalysisNew() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [analyses, setAnalyses] = useState<Analysis[]>([]);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [_sessionId, _setSessionId] = useState<string | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [callCountFilter, setCallCountFilter] = useState(1);
 
@@ -85,7 +85,7 @@ function CallAnalysisNew() {
       }
 
       const data = await response.json();
-      setSessionId(data.session_id);
+      _setSessionId(data.session_id);
       setAnalyses(data.analyses);
       setSelectedIndex(0);
     } catch (err) {

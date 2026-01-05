@@ -117,7 +117,7 @@ export const CallAnalysisPDFButton = ({ results }: { results: CallAnalysisResult
       document={<CallAnalysisPDF results={results} />}
       fileName="call_analysis_report.pdf"
     >
-      {({ loading }) => (
+      {({ loading }: { loading: boolean }) => (
         <button
           style={{
             backgroundColor: 'red',

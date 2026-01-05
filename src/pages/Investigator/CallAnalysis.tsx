@@ -115,20 +115,19 @@ function CallAnalysis() {
         console.log('Analysis data:', analysisData);
         
         // Transform the data to match frontend expectations
-        const newResult = {
-          main_number: analysisData.main_number || selectedFile.name.replace('.pdf', ''),
-          analysis_id: analysisData.analysis_id,
+        const newResult: AnalysisResult = {
+          main_number: analysisData.main_number,
+          pdf_filename: analysisData.pdf_filename || '',
           total_calls: analysisData.total_calls,
           total_incoming: analysisData.total_incoming,
           total_outgoing: analysisData.total_outgoing,
-          unique_contacts: analysisData.unique_numbers.length,
+          unique_numbers: analysisData.unique_numbers || [],
           risk_score: analysisData.risk_score,
           incoming_graph: analysisData.incoming_graph,
           outgoing_graph: analysisData.outgoing_graph,
-          time_distribution: analysisData.time_pattern,
           call_frequency: analysisData.call_frequency,
           common_contacts: analysisData.common_contacts,
-          timestamp: analysisData.timestamp
+          criminal_matches: analysisData.criminal_matches || []
         };
         
         console.log('Adding result with main number:', newResult.main_number);

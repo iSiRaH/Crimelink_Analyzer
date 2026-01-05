@@ -77,9 +77,6 @@ export default function WeaponHandover() {
   });
 
   /* ================= UI ================= */
-  const totalCount = weapons.length;
-  const availableCount = weapons.filter((w) => w.status === "Available").length;
-  const issuedCount = weapons.filter((w) => w.status === "Issued").length;
   return (
     <div className="min-h-screen bg-[#3b4a5f] text-white p-3">
 

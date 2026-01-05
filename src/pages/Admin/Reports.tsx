@@ -152,9 +152,9 @@ function Reports() {
                       {key.replace(/([A-Z])/g, " $1").trim()}
                     </p>
                     <p className="text-2xl font-bold text-blue-600">
-                      {typeof value === "object"
+                      {typeof value === "object" && value !== null
                         ? JSON.stringify(value)
-                        : value}
+                        : String(value ?? '')}
                     </p>
                   </div>
                 ))}

@@ -13,7 +13,7 @@ import PasswordStrengthIndicator from "../components/PasswordStrengthIndicator";
 import { FaEye, FaEyeSlash, FaSave, FaTimes, FaKey, FaUser } from "react-icons/fa";
 
 const Settings: React.FC = () => {
-  const { user, updateUserProfile } = useAuth();
+  const { updateUserProfile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [error, setError] = useState<string>("");

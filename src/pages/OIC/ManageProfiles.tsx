@@ -17,8 +17,8 @@ function ManageProfiles() {
   const [showModal, setShowModal] = useState(false);
   const [editingOfficer, setEditingOfficer] = useState<FieldOfficer | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All");
-  const [areaFilter, setAreaFilter] = useState("All");
+  const [statusFilter] = useState("All");
+  const [areaFilter] = useState("All");
   const [successMessage, setSuccessMessage] = useState("");
 
   // Pagination
