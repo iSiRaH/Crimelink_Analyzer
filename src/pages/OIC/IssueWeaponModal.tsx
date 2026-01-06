@@ -125,18 +125,7 @@ const IssueWeaponModal: React.FC<Props> = ({ weapon, onClose }) => {
           </section>
 
           <section>
-            <h3 className="text-md text-gray-400 mb-1">Weapon Details</h3>
-            <div className="bg-[#020617] border border-gray-700 rounded-md p-3 text-sm space-y-2">
-              <p>
-                <span className="text-gray-400">Weapon :</span>{" "}
-                <span className="text-white">{weapon?.type}</span>
-              </p>
-              <p>
-                <span className="text-gray-400">Serial :</span>{" "}
-                <span className="text-white">{weapon?.serial}</span>
-              </p>
-              <p className="text-green-400 font-semibold">Status : Available</p>
-            </div>
+       
           </section>
 
           <section className="border border-2 p-1 pb-4 bg-gray-800 rounded-md border-gray-700">
@@ -161,24 +150,25 @@ const IssueWeaponModal: React.FC<Props> = ({ weapon, onClose }) => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-6 pb-3">
+                 <h3 className="text-md text-gray-400 mb-1">Weapon Details</h3>
+            <div className="bg-[#020617] border border-gray-700 rounded-md p-3 text-sm space-y-2 grid grid-cols-2 gap-6">
               <div>
-                <h3 className="text-sm text-gray-400">Officer Name</h3>
-                <input
-                  value={selectedIssuedTo?.name || ""}
-                  readOnly
-                  className="bg-gray-900 border border-gray-700 px-3 py-2 text-xs rounded text-gray-400 w-full"
-                />
+                  <p>
+                    <span className="text-gray-400">Weapon :</span>{" "}
+                    <span className="text-white">{weapon?.type}</span>
+                  </p>
+                  <p>
+                    <span className="text-gray-400">Serial :</span>{" "}
+                    <span className="text-white">{weapon?.serial}</span>
+                  </p>
               </div>
               <div>
-                <h3 className="text-sm text-gray-400">Officer ID</h3>
-                <input
-                  value={selectedIssuedTo?.serviceId || ""}
-                  readOnly
-                  className="bg-gray-900 border border-gray-700 px-3 py-2 text-xs rounded text-gray-400 w-full"
-                />
+                  <p className="text-green-400 font-semibold">Status : Available</p>
               </div>
+              
             </div>
+
+        
           </section>
 
           <div className="grid grid-cols-2 pt-2 items-center">
@@ -187,7 +177,7 @@ const IssueWeaponModal: React.FC<Props> = ({ weapon, onClose }) => {
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              className="text-gray-500 text-sm text-center rounded-lg border bg-gray-900 px-2 py-2"
+              className="text-gray-200 text-sm text-center rounded-lg border bg-gray-700 px-2 py-2"
             />
           </div>
 

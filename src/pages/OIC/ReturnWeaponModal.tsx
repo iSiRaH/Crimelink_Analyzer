@@ -92,12 +92,12 @@ export default function ReturnWeaponModal({ weapon, onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
 
-      <div className="w-[450px] backdrop-blur-xl text-white rounded-xl border border-gray-700 shadow-xl p-5">
+      <div className="w-[450px]  text-white rounded-xl border bg-[#0f172a] border-gray-700 shadow-xl p-5">
 
         {/* HEADER */}
-        <div className="flex justify-between items-center mb-3">
+        <div className="flex justify-between items-center mb-3 ">
           <h2 className="text-xl font-semibold">Return Weapon</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-white text-xl">
             ✕
