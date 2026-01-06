@@ -24,9 +24,9 @@ function AuditLogs() {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-slate-500">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Audit Logs</h1>
+        <h1 className="text-3xl font-semibold">Audit Logs</h1>
         <button
           onClick={loadLogs}
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
@@ -36,10 +36,12 @@ function AuditLogs() {
       </div>
 
       {loading ? (
-        <p>Loading audit logs...</p>
+        <div className="h-screen">
+          <p>Loading audit logs...</p>
+        </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse border">
+        <div className="overflow-x-auto h-screen">
+          <table className="w-full border-collapse border bg-white">
             <thead className="bg-gray-200">
               <tr>
                 <th className="border p-2">ID</th>

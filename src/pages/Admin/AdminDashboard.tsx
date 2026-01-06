@@ -55,8 +55,8 @@ function AdminDashboard() {
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
+    <div className="p-6 bg-slate-500">
+      <h1 className="text-3xl font-semibold mb-6">Admin Dashboard</h1>
 
       {loading ? (
         <p>Loading statistics...</p>

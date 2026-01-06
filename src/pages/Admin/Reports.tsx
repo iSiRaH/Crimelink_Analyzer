@@ -11,8 +11,8 @@ function Reports() {
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Reports</h1>
+    <div className="p-6 bg-slate-500">
+      <h1 className="text-3xl font-semibold mb-6">Reports</h1>
 
       <div className="bg-white border rounded-lg p-6 shadow">
         <h2 className="text-xl font-semibold mb-4">Generate Report</h2>
