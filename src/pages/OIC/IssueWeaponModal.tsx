@@ -1,11 +1,6 @@
-import React, { useState } from "react";
-import { issueWeapon } from "../../api/weaponApi";
-
-const officers = [
-  { id: 1, serviceId: "P-1023", name: "A.B.C. Bandara", badge: "4452", role: "OIC" },
-  { id: 2, serviceId: "A-5561", name: "J.B. Millawithanachchi", badge: "7811", role: "Investigator" },
-  { id: 3, serviceId: "P-7932", name: "Samantha Perera", badge: "3344", role: "Sergeant" },
-];
+import React, { useState, useEffect } from "react";
+import { issueWeapon, getAllOfficers } from "../../api/weaponApi";
+import type { OfficerDTO } from "../../types/weapon";
 
 interface Props {
   weapon: any;
@@ -13,6 +8,8 @@ interface Props {
 }
 
 const IssueWeaponModal: React.FC<Props> = ({ weapon, onClose }) => {
+  const [officers, setOfficers] = useState<OfficerDTO[]>([]);
+  const [loadingOfficers, setLoadingOfficers] = useState(true);
   const [selectedIssuedToId, setSelectedIssuedToId] = useState<number | null>(null);
   const [selectedHandedOverById, setSelectedHandedOverById] = useState<number | null>(null);
   const [dueDate, setDueDate] = useState("");
@@ -22,6 +19,22 @@ const IssueWeaponModal: React.FC<Props> = ({ weapon, onClose }) => {
 
   const selectedIssuedTo = officers.find(o => o.id === selectedIssuedToId);
   const selectedHandedOverBy = officers.find(o => o.id === selectedHandedOverById);
+
+  useEffect(() => {
+    loadOfficers();
+  }, []);
+
+  const loadOfficers = async () => {
+    try {
+      const response = await getAllOfficers();
+      setOfficers(response.data);
+    } catch (err) {
+      console.error("Failed to load officers:", err);
+      alert("Failed to load officers. Please try again.");
+    } finally {
+      setLoadingOfficers(false);
+    }
+  };
 
   const now = new Date();
   const issuedDate = now.toISOString().split("T")[0];
@@ -86,8 +99,9 @@ const IssueWeaponModal: React.FC<Props> = ({ weapon, onClose }) => {
               value={selectedIssuedToId || ""}
               onChange={(e) => setSelectedIssuedToId(Number(e.target.value))}
               className="w-full bg-[#020617] border border-gray-700 px-3 py-2 rounded-md text-sm"
+              disabled={loadingOfficers}
             >
-              <option value="">Select Officer</option>
+              <option value="">{loadingOfficers ? "Loading..." : "Select Officer"}</option>
               {officers.map(o => (
                 <option key={o.id} value={o.id}>{o.serviceId} - {o.name}</option>
               ))}
@@ -108,8 +122,9 @@ const IssueWeaponModal: React.FC<Props> = ({ weapon, onClose }) => {
               value={selectedHandedOverById || ""}
               onChange={(e) => setSelectedHandedOverById(Number(e.target.value))}
               className="w-full bg-[#020617] border border-gray-700 px-3 py-2 rounded-md text-sm"
+              disabled={loadingOfficers}
             >
-              <option value="">Select Officer</option>
+              <option value="">{loadingOfficers ? "Loading..." : "Select Officer"}</option>
               {officers.map(o => (
                 <option key={o.id} value={o.id}>{o.serviceId} - {o.name}</option>
               ))}

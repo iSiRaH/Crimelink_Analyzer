@@ -3,7 +3,9 @@ import { Search } from "lucide-react";
 import IssueWeaponModal from "./IssueWeaponModal";
 import ReturnWeaponModal from "./ReturnWeaponModal";
 import ManageWeaponSimple from "./ManageWeapon";
-import { getAllWeapons } from "../../api/weaponApi";
+import { getAllWeaponsWithDetails } from "../../api/weaponApi";
+import type { WeaponResponseDTO } from "../../types/weapon";
+import { formatWeaponDate, isWeaponOverdue } from "../../utils/weaponUtils";
 
 /* ================= TYPES ================= */
 
@@ -16,19 +18,28 @@ type WeaponRow = {
   issuedDate?: string;
 };
 
-type ApiWeapon = {
-  serialNumber: string;
-  weaponType: string;
-  status: string;
-};
-
 /* ================= COMPONENT ================= */
 
+/**
+ * WeaponHandover Component
+ * 
+ * Manages weapon inventory, issue, and return operations for OIC role.
+ * Features:
+ * - Real-time weapon status tracking from database
+ * - Search and filter capabilities
+ * - Issue weapons to officers
+ * - Process weapon returns
+ * - Overdue weapon alerts
+ * 
+ * @returns JSX.Element - The weapon handover management interface
+ */
 export default function WeaponHandover() {
   const [weapons, setWeapons] = useState<WeaponRow[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] =
     useState<"ALL" | "Available" | "Issued">("ALL");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [isIssueOpen, setIsIssueOpen] = useState(false);
   const [isReturnOpen, setIsReturnOpen] = useState(false);
@@ -41,25 +52,35 @@ export default function WeaponHandover() {
     loadWeapons();
   }, []);
 
+  /**
+   * Fetches weapon data from the backend API
+   * Includes weapon details, assignment info, and due dates
+   * Handles loading states and error scenarios
+   */
   const loadWeapons = async () => {
+    setIsLoading(true);
+    setError(null);
+    
     try {
-      const res = await getAllWeapons();
+      const res = await getAllWeaponsWithDetails();
 
-      const mapped: WeaponRow[] = res.data.map((w: ApiWeapon) => ({
+      const mapped: WeaponRow[] = res.data.map((w: WeaponResponseDTO) => ({
         type: w.weaponType,
         serial: w.serialNumber,
         status: w.status === "ISSUED" ? "Issued" : "Available",
-
-        // keep logic unchanged
-        assignedTo: w.status === "ISSUED" ? "Officer Name" : "--",
-        dueBack: w.status === "ISSUED" ? "2025-12-31" : "--",
-        issuedDate: w.status === "ISSUED" ? "2025-12-01" : undefined,
+        assignedTo: w.issuedTo?.name ?? "--",
+        dueBack: formatWeaponDate(w.dueDate),
+        issuedDate: w.issuedDate,
       }));
 
       setWeapons(mapped);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to load weapons");
+    } catch (err: any) {
+      const errorMsg = err?.response?.data?.error || err?.message || "Failed to load weapons";
+      console.error("Failed to load weapons:", err);
+      console.error("Error details:", err?.response?.data);
+      setError(errorMsg + ". Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -168,21 +189,52 @@ export default function WeaponHandover() {
             </div>
           </div>
 
-          {/* TABLE */}
-          <table className="w-full">
-            <thead className="bg-[#3b4a5f]">
-              <tr>
-                <th className="py-2 text-left pl-4">Weapon</th>
-                <th className="text-left">Serial</th>
-                <th className="text-left">Status</th>
-                <th className="text-left">Assigned</th>
-                <th className="text-left">Due Back</th>
-                <th className="text-left">Action</th>
-              </tr>
-            </thead>
+          {/* ERROR MESSAGE */}
+          {error && (
+            <div className="bg-red-500/10 border border-red-500 text-red-400 px-4 py-3 rounded-lg mb-3">
+              <p className="font-semibold">Error</p>
+              <p className="text-sm">{error}</p>
+              <button
+                onClick={loadWeapons}
+                className="mt-2 text-sm underline hover:text-red-300"
+              >
+                Retry
+              </button>
+            </div>
+          )}
 
-            <tbody>
-              {filteredWeapons.map((w, i) => (
+          {/* LOADING STATE */}
+          {isLoading ? (
+            <div className="flex justify-center items-center py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+              <span className="ml-3 text-lg">Loading weapons...</span>
+            </div>
+          ) : (
+            <>
+              {/* TABLE */}
+              <table className="w-full">
+                <thead className="bg-[#3b4a5f]">
+                  <tr>
+                    <th className="py-2 text-left pl-4">Weapon</th>
+                    <th className="text-left">Serial</th>
+                    <th className="text-left">Status</th>
+                    <th className="text-left">Assigned</th>
+                    <th className="text-left">Due Back</th>
+                    <th className="text-left">Action</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {filteredWeapons.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="text-center py-10 text-gray-400">
+                        {weapons.length === 0 
+                          ? "No weapons found in the database." 
+                          : "No weapons match your search criteria."}
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredWeapons.map((w, i) => (
                 <tr key={i} className="border-b border-gray-700">
                   <td className="pl-4 py-2">{w.type}</td>
                   <td>{w.serial}</td>
@@ -190,7 +242,12 @@ export default function WeaponHandover() {
                     • {w.status}
                   </td>
                   <td>{w.assignedTo}</td>
-                  <td>{w.dueBack}</td>
+                  <td>
+                    <span className={isWeaponOverdue(w.dueBack) ? "text-red-500 font-semibold" : ""}>
+                      {w.dueBack}
+                      {isWeaponOverdue(w.dueBack) && " ⚠️"}
+                    </span>
+                  </td>
                   <td>
                     {w.status === "Available" ? (
                       <button
@@ -221,9 +278,12 @@ export default function WeaponHandover() {
                     )}
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </>
+          )}
 
         </div>
       )}

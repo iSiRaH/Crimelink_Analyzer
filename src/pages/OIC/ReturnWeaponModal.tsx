@@ -1,11 +1,6 @@
-import React, { useState } from "react";
-import { returnWeapon } from "../../api/weaponApi";
-
-const officers = [
-  { id: 1, serviceId: "P-1023", name: "A.B.C. Bandara", badge: "4452", role: "OIC", rank: "Inspector" },
-  { id: 2, serviceId: "A-5561", name: "J.B. Millawithanachchi", badge: "7811", role: "Investigator", rank: "Sub Inspector" },
-  { id: 3, serviceId: "P-7932", name: "Samantha Perera", badge: "3344", role: "Sergeant", rank: "Sergeant" },
-];
+import React, { useState, useEffect } from "react";
+import { returnWeapon, getAllOfficers } from "../../api/weaponApi";
+import type { OfficerDTO } from "../../types/weapon";
 
 type Officer = {
   name: string;
@@ -27,12 +22,30 @@ type Props = {
 };
 
 export default function ReturnWeaponModal({ weapon, onClose }: Props) {
+  const [officers, setOfficers] = useState<OfficerDTO[]>([]);
+  const [loadingOfficers, setLoadingOfficers] = useState(true);
   const [selectedReceivedById, setSelectedReceivedById] = useState<number | null>(null);
   const [returnNote, setReturnNote] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const selectedReceivedBy = officers.find(o => o.id === selectedReceivedById);
+
+  useEffect(() => {
+    loadOfficers();
+  }, []);
+
+  const loadOfficers = async () => {
+    try {
+      const response = await getAllOfficers();
+      setOfficers(response.data);
+    } catch (err) {
+      console.error("Failed to load officers:", err);
+      alert("Failed to load officers. Please try again.");
+    } finally {
+      setLoadingOfficers(false);
+    }
+  };
 
   /* MOCK – normally from backend */
   const issuedTo: Officer = {
@@ -76,16 +89,21 @@ export default function ReturnWeaponModal({ weapon, onClose }: Props) {
     setLoading(true);
 
     try {
-      await returnWeapon({
+      const payload = {
         weaponSerial: weapon.serial,
         receivedByUserId: selectedReceivedById,
         returnNote: returnNote || "Returned",
-      });
+      };
+      console.log("Returning weapon with payload:", payload);
+      
+      await returnWeapon(payload);
 
       alert("Weapon returned successfully");
       onClose();
     } catch (err: any) {
-      alert(err?.response?.data?.error || "Failed to return weapon");
+      console.error("Failed to return weapon:", err);
+      console.error("Error response:", err?.response?.data);
+      alert(err?.response?.data?.error || err?.message || "Failed to return weapon");
     } finally {
       setLoading(false);
     }
@@ -130,8 +148,9 @@ export default function ReturnWeaponModal({ weapon, onClose }: Props) {
             value={selectedReceivedById || ""}
             onChange={(e) => setSelectedReceivedById(Number(e.target.value))}
             className="w-full bg-gray-900 border border-gray-700 px-3 py-2 rounded text-sm"
+            disabled={loadingOfficers}
           >
-            <option value="">-- Select Officer --</option>
+            <option value="">{loadingOfficers ? "Loading..." : "-- Select Officer --"}</option>
             {officers.map(o => (
               <option key={o.id} value={o.id}>
                 {o.serviceId} - {o.name} ({o.rank})
