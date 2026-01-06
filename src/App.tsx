@@ -90,7 +90,6 @@ function AppContent() {
         <Route path="report" element={<OICReport />} />
         <Route path="report-crimes" element={<ReportCrimes />} />
         <Route path="report-crimes/reports" element={<ViewCrimeReports />} />
-        <Route path="report" element={<OICReport />} />
         <Route path="manage-profiles" element={<ManageProfiles />} />
       </Route>
 
