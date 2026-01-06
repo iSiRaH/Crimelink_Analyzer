@@ -5,12 +5,21 @@ import { AiTwotoneAlert } from "react-icons/ai";
 import { FaPersonShelter } from "react-icons/fa6";
 import { CiBank } from "react-icons/ci";
 import { IoLibraryOutline } from "react-icons/io5";
-import { GoogleMap, Marker, useLoadScript } from "@react-google-maps/api";
+import {
+  Circle,
+  GoogleMap,
+  Marker,
+  useLoadScript,
+} from "@react-google-maps/api";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMapContext } from "../../contexts/useMapContext";
 import CircularProgress from "@mui/material/CircularProgress";
 import Box from "@mui/material/Box";
 import searchPlacesInViewport from "../../services/searchPlacesInViewport";
+import { getCrimeLocations } from "../../api/crimeReportService";
+import type { crimeLocationType } from "../../types/crime";
+import { getCrimeColor } from "../../utils/utils";
+import { CRIME_COLORS } from "../../constants/crimeTypeColors";
 
 const LIBRARIES: "places"[] = ["places"];
 
@@ -73,6 +82,7 @@ function SafetyZone() {
   const [filterType, setFilterType] = useState<string>("");
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
+  const [crimes, setCrimes] = useState<crimeLocationType[]>([]);
 
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: GOOGLE_MAP_API_KEY,
@@ -120,6 +130,17 @@ function SafetyZone() {
         map.setZoom(15);
       });
     }
+
+    const fetchCrimeLocations = async () => {
+      try {
+        const crimeLocations = await getCrimeLocations();
+        setCrimes(crimeLocations);
+        console.log(crimeLocations);
+      } catch (err) {
+        console.error("Error Fetching crime locations: ", err);
+      }
+    };
+    fetchCrimeLocations();
   }, [isLoaded, map, setMarkers]);
 
   const onDropdownItemClicked = (type: string) => {
@@ -192,35 +213,112 @@ function SafetyZone() {
       <div className="bg-slate-500 w-full h-full p-5">
         <p className="font-semibold text-3xl text-white mb-5">Safety Zone</p>
         <div className="flex flex-row w-full justify-around">
-          <form
-            onSubmit={handleSearchSubmit}
-            className="flex flex-col aspect-auto w-1/5 gap-4 items-center bg-[#131e38] py-5 rounded-lg"
-          >
-            <div>
-              <input
-                type="text"
-                placeholder="🔎 Search....."
-                value={searchQuery}
-                onChange={handleSearchChange}
-                ref={searchInputRef}
-                className="h-8 rounded-lg w-full pl-3"
-              />
+          <div className="flex flex-col aspect-auto w-1/5 gap-4 items-center bg-[#131e38] py-5 rounded-lg">
+            <form
+              onSubmit={handleSearchSubmit}
+              className="flex flex-col gap-4 items-center"
+            >
+              <div>
+                <input
+                  type="text"
+                  placeholder="🔎 Search....."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  ref={searchInputRef}
+                  className="h-8 rounded-lg w-full pl-3"
+                />
+              </div>
+              <div>
+                <button
+                  type="submit"
+                  className="bg-blue-600 text-white font-semibold hover:bg-blue-800 hover:text-black px-7 py-2 rounded-xl"
+                >
+                  Search
+                </button>
+              </div>
+              <div>
+                <DropDownMenu
+                  dropdownLabelName={currentDropdownLabel}
+                  items={dropdownItems}
+                />
+              </div>
+            </form>
+            <div className="flex flex-col gap-2">
+              <p className="text-white font-semibold text-lg ">Color Guide</p>
+              <div className="flex flex-col gap-1 pl-3">
+                <div className="flex flex-row gap-2 items-center">
+                  <div
+                    className={"h-3 w-3 rounded-full"}
+                    style={{ backgroundColor: `${CRIME_COLORS.THEFT}` }}
+                  ></div>
+                  <p className="text-white font-medium">Theft</p>
+                </div>
+                <div className="flex flex-row gap-2 items-center">
+                  <div
+                    className={"h-3 w-3 rounded-full"}
+                    style={{ backgroundColor: `${CRIME_COLORS.ASSAULT}` }}
+                  ></div>
+                  <p className="text-white font-medium">Assault</p>
+                </div>
+                <div className="flex flex-row gap-2 items-center">
+                  <div
+                    className={"h-3 w-3 rounded-full"}
+                    style={{ backgroundColor: `${CRIME_COLORS.BURGLARY}` }}
+                  ></div>
+                  <p className="text-white font-medium">Burglary</p>
+                </div>
+                <div className="flex flex-row gap-2 items-center">
+                  <div
+                    className={"h-3 w-3 rounded-full"}
+                    style={{ backgroundColor: `${CRIME_COLORS.ROBBERY}` }}
+                  ></div>
+                  <p className="text-white font-medium">Robbery</p>
+                </div>
+                <div className="flex flex-row gap-2 items-center">
+                  <div
+                    className={"h-3 w-3 rounded-full"}
+                    style={{ backgroundColor: `${CRIME_COLORS.VANDALISM}` }}
+                  ></div>
+                  <p className="text-white font-medium">Vandalism</p>
+                </div>
+                <div className="flex flex-row gap-2 items-center">
+                  <div
+                    className={"h-3 w-3 rounded-full"}
+                    style={{ backgroundColor: `${CRIME_COLORS.DRUG_OFFENSE}` }}
+                  ></div>
+                  <p className="text-white font-medium">Drug Offense</p>
+                </div>
+                <div className="flex flex-row gap-2 items-center">
+                  <div
+                    className={"h-3 w-3 rounded-full"}
+                    style={{ backgroundColor: `${CRIME_COLORS.TRAFFIC_VIOLATION}` }}
+                  ></div>
+                  <p className="text-white font-medium">Traffic Violation</p>
+                </div>
+                <div className="flex flex-row gap-2 items-center">
+                  <div
+                    className={"h-3 w-3 rounded-full"}
+                    style={{ backgroundColor: `${CRIME_COLORS.HOMICIDE}` }}
+                  ></div>
+                  <p className="text-white font-medium">Homicide</p>
+                </div>
+                <div className="flex flex-row gap-2 items-center">
+                  <div
+                    className={"h-3 w-3 rounded-full"}
+                    style={{ backgroundColor: `${CRIME_COLORS.FRAUD}` }}
+                  ></div>
+                  <p className="text-white font-medium">Fraud</p>
+                </div>
+                <div className="flex flex-row gap-2 items-center">
+                  <div
+                    className={"h-3 w-3 rounded-full"}
+                    style={{ backgroundColor: `${CRIME_COLORS.ARSON}` }}
+                  ></div>
+                  <p className="text-white font-medium">Arson</p>
+                </div>
+              </div>
             </div>
-            <div>
-              <button
-                type="submit"
-                className="bg-blue-600 text-white font-semibold hover:bg-blue-800 hover:text-black px-7 py-2 rounded-xl"
-              >
-                Search
-              </button>
-            </div>
-            <div>
-              <DropDownMenu
-                dropdownLabelName={currentDropdownLabel}
-                items={dropdownItems}
-              />
-            </div>
-          </form>
+          </div>
           <div className="w-3/5">
             {isLoaded && (
               <GoogleMap
@@ -233,6 +331,20 @@ function SafetyZone() {
                   <Marker
                     key={index}
                     position={{ lat: marker.latitude, lng: marker.longitude }}
+                  />
+                ))}
+                {crimes.map((crime, index) => (
+                  <Circle
+                    key={index}
+                    center={{ lat: crime.latitude, lng: crime.longitude }}
+                    radius={200}
+                    options={{
+                      fillColor: getCrimeColor(crime.crimeType),
+                      fillOpacity: 0.5,
+                      strokeColor: getCrimeColor(crime.crimeType),
+                      strokeWeight: 2,
+                      strokeOpacity: 0.9,
+                    }}
                   />
                 ))}
               </GoogleMap>

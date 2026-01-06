@@ -3,8 +3,7 @@ import {
   FaUserFriends,
   FaUserShield,
   FaStickyNote,
-  FaFileAlt
-
+  FaFileAlt,
 } from "react-icons/fa";
 import { FaUserGear } from "react-icons/fa6";
 import Sidebar from "../../components/Sidebar";
