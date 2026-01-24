@@ -35,6 +35,7 @@ import NotFound from "./pages/NotFound";
 import { MapProvider } from "./contexts/MapContext";
 import ReportCrimes from "./pages/OIC/ReportCrimes";
 import ViewCrimeReports from "./pages/OIC/ViewCrimeReports";
+import LeaveManagement from "./pages/OIC/LeaveManagment";
 
 function AppContent() {
   const navigate = useNavigate();
@@ -85,6 +86,7 @@ function AppContent() {
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<OICDashboard />} />
         <Route path="duty-management" element={<DutyManagement />} />
+        <Route path="leave-management" element={<LeaveManagement />} />
         <Route path="weapon-handover" element={<WeaponHandover />} />
         <Route path="plate-registry" element={<PlateRegistry />} />
         <Route path="report" element={<OICReport />} />
