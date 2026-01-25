@@ -1,333 +1,239 @@
-import { useEffect, useState } from "react";
-import DutyPopupModel from "../../components/UI/DutyPopupModel";
+import { useEffect, useMemo, useState } from "react";
 import * as leaveService from "../../api/leaveService";
 import type { LeaveRequest, LeaveStatus } from "../../types/leave";
 
-type LeaveFilters = "All" | "Pending" | "Approved" | "Denied";
+function getCurrentMonthYYYYMM(): string {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  return `${y}-${m}`;
+}
 
-function LeaveManagement() {
-  const [open, setOpen] = useState(false);
-  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
-  const [filteredRequests, setFilteredRequests] = useState<LeaveRequest[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [processing, setProcessing] = useState<string | null>(null);
-  const [filter, setFilter] = useState<LeaveFilters>("Pending");
-  const [selectedMonth, setSelectedMonth] = useState<string>("");
-  const [responseReason, setResponseReason] = useState<Record<string, string>>({});
+function safeTime(value?: string): number {
+  if (!value) return 0;
+  const t = Date.parse(value);
+  return Number.isNaN(t) ? 0 : t;
+}
+
+export default function LeaveManagement() {
+  const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [processingId, setProcessingId] = useState<number | null>(null);
+  const [month, setMonth] = useState<string>(getCurrentMonthYYYYMM());
+
+  const pendingCount = useMemo(
+    () => leaves.filter((l) => String(l.status).toUpperCase() === "PENDING").length,
+    [leaves]
+  );
 
   useEffect(() => {
-    // Set current month as default
-    const today = new Date();
-    const monthStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
-    setSelectedMonth(monthStr);
-  }, []);
+    loadLeaves(month);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [month]);
 
-  useEffect(() => {
-    if (!selectedMonth) return;
-    loadLeaveRequests();
-  }, [selectedMonth]);
-
-  useEffect(() => {
-    filterRequests();
-  }, [leaveRequests, filter]);
-
-  const loadLeaveRequests = async () => {
+  const loadLeaves = async (m: string) => {
     try {
       setLoading(true);
-      const data = await leaveService.getAllLeaveRequests(selectedMonth);
-      setLeaveRequests(data);
-    } catch (e) {
-      console.error("Failed to load leave requests:", e);
+      const data = await leaveService.getAllLeaveRequests(m);
+      setLeaves(data);
+    } catch (err) {
+      console.error("Failed to load leave requests", err);
       alert("Failed to load leave requests");
     } finally {
       setLoading(false);
     }
   };
 
-  const filterRequests = () => {
-    if (filter === "All") {
-      setFilteredRequests(leaveRequests);
-    } else {
-      setFilteredRequests(
-        leaveRequests.filter((req) => req.status === filter)
-      );
-    }
-  };
+  /**
+   * ✅ SORT RULE:
+   * 1) PENDING first (top)
+   * 2) PENDING rows sorted by requestedDate DESC (newest request on top)
+   * 3) APPROVED/DENIED rows sorted by LEAVE DATE (leave.date) DESC
+   * 4) If same leave date -> requestedDate DESC
+   */
+  const sortedLeaves = useMemo(() => {
+    const copy = [...leaves];
 
-  const handleApprove = async (leaveId: string) => {
-    try {
-      setProcessing(leaveId);
-      await leaveService.updateLeaveStatus(leaveId, {
-        status: "Approved",
-        responseReason: responseReason[leaveId]?.trim() || undefined,
-      });
-      
-      alert("Leave approved successfully");
-      loadLeaveRequests();
-      setResponseReason((prev) => {
-        const updated = { ...prev };
-        delete updated[leaveId];
-        return updated;
-      });
-    } catch (e: any) {
-      const msg = e?.response?.data?.message || "Failed to approve leave";
-      alert(msg);
-    } finally {
-      setProcessing(null);
-    }
-  };
+    copy.sort((a, b) => {
+      const aStatus = String(a.status).toUpperCase();
+      const bStatus = String(b.status).toUpperCase();
 
-  const handleDeny = async (leaveId: string) => {
-    const reason = responseReason[leaveId]?.trim();
-    if (!reason) {
-      alert("Please provide a reason for denial");
-      return;
-    }
+      const aPending = aStatus === "PENDING";
+      const bPending = bStatus === "PENDING";
 
-    try {
-      setProcessing(leaveId);
-      await leaveService.updateLeaveStatus(leaveId, {
-        status: "Denied",
-        responseReason: reason,
-      });
-      
-      alert("Leave denied");
-      loadLeaveRequests();
-      setResponseReason((prev) => {
-        const updated = { ...prev };
-        delete updated[leaveId];
-        return updated;
-      });
-    } catch (e: any) {
-      const msg = e?.response?.data?.message || "Failed to deny leave";
-      alert(msg);
-    } finally {
-      setProcessing(null);
-    }
-  };
+      // 1) pending always first
+      if (aPending !== bPending) return aPending ? -1 : 1;
 
-  const getStatusBadgeClass = (status: LeaveStatus) => {
-    switch (status) {
-      case "Approved":
-        return "bg-emerald-500 text-white";
-      case "Denied":
-        return "bg-red-500 text-white";
-      case "Pending":
-        return "bg-amber-500 text-white";
-      default:
-        return "bg-gray-500 text-white";
-    }
-  };
+      // 2) both pending -> newest requested first
+      if (aPending && bPending) {
+        return safeTime(b.requestedDate) - safeTime(a.requestedDate);
+      }
 
-  const formatDate = (dateString: string) =>
-    new Date(dateString).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
+      // 3) both NOT pending -> sort by leave date descending
+      const byLeaveDate = safeTime(b.date) - safeTime(a.date);
+      if (byLeaveDate !== 0) return byLeaveDate;
+
+      // 4) tie-breaker: newest requestedDate first
+      return safeTime(b.requestedDate) - safeTime(a.requestedDate);
     });
 
-  const getMonthOptions = () => {
-    const options = [];
-    const today = new Date();
-    
-    // Current month and next 5 months
-    for (let i = 0; i < 6; i++) {
-      const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
-      const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-      const label = date.toLocaleDateString("en-US", {
-        month: "long",
-        year: "numeric",
-      });
-      options.push({ value, label });
-    }
-    
-    return options;
+    return copy;
+  }, [leaves]);
+
+  // ✅ Optional: NEW badge for pending requests (within last 60 mins)
+  const NEW_MINUTES = 60;
+  const isNew = (leave: LeaveRequest) => {
+    if (String(leave.status).toUpperCase() !== "PENDING") return false;
+    const diffMs = Date.now() - safeTime(leave.requestedDate);
+    return diffMs >= 0 && diffMs <= NEW_MINUTES * 60 * 1000;
   };
 
-  const getPendingCount = () =>
-    leaveRequests.filter((req) => req.status === "Pending").length;
+  const handleAction = async (leaveId: number, status: LeaveStatus) => {
+    let responseReason: string | undefined;
+
+    if (status === "DENIED") {
+      const reason = prompt("Enter reason for denial");
+      if (!reason || !reason.trim()) return;
+      responseReason = reason.trim();
+    }
+
+    try {
+      setProcessingId(leaveId);
+
+      const updated = await leaveService.updateLeaveStatus(leaveId, {
+        status,
+        responseReason,
+      });
+
+      // Update UI using backend response
+      setLeaves((prev) => prev.map((l) => (l.id === leaveId ? updated : l)));
+    } catch (err) {
+      console.error("Failed to update leave status", err);
+      alert("Failed to update leave status");
+    } finally {
+      setProcessingId(null);
+    }
+  };
 
   return (
     <div className="p-6 bg-slate-100 min-h-screen">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-2">Leave Management</h1>
-        <p className="text-gray-600">Review and manage leave requests</p>
-      </div>
-
-      {/* Header Controls */}
-      <div className="bg-white rounded-lg shadow p-4 mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex gap-4 items-center">
-            {/* Month Selector */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Select Month
-              </label>
-              <select
-                className="border rounded px-3 py-2 min-w-[200px]"
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-              >
-                {getMonthOptions().map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* View Leaves Button */}
-            <div className="flex items-end">
-              <button
-                onClick={() => setOpen(true)}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-              >
-                View Leave Requests
-                {getPendingCount() > 0 && (
-                  <span className="ml-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                    {getPendingCount()}
-                  </span>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Leave Requests Modal */}
-      <DutyPopupModel open={open} onClose={() => setOpen(false)}>
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold">
-            Leave Requests - {selectedMonth && new Date(selectedMonth + "-01").toLocaleDateString("en-US", { month: "long", year: "numeric" })}
-          </h2>
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
+        <div>
+          <h1 className="text-2xl font-bold">Leave Management</h1>
+          <p className="text-sm text-slate-600">
+            Pending requests: <span className="font-semibold">{pendingCount}</span>
+          </p>
         </div>
 
-        {/* Filter Tabs */}
-        <div className="flex gap-2 mb-6 border-b">
-          {(["All", "Pending", "Approved", "Denied"] as LeaveFilters[]).map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-4 py-2 font-medium transition-colors ${
-                filter === f
-                  ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              {f}
-              {f === "Pending" && getPendingCount() > 0 && (
-                <span className="ml-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
-                  {getPendingCount()}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-
-        {loading && (
-          <div className="text-center py-8">
-            <p>Loading leave requests...</p>
-          </div>
-        )}
-
-        {!loading && filteredRequests.length === 0 && (
-          <div className="text-center py-8 bg-slate-50 rounded-lg">
-            <p className="text-gray-600">No {filter.toLowerCase()} leave requests found</p>
-          </div>
-        )}
-
-        {/* Leave Requests Table */}
-        {!loading && filteredRequests.length > 0 && (
-          <div className="max-h-[600px] overflow-y-auto">
-            <table className="w-full border text-sm">
-              <thead className="bg-gray-100 sticky top-0">
-                <tr>
-                  <th className="p-3 border text-left">Officer Name</th>
-                  <th className="p-3 border text-left">Date</th>
-                  <th className="p-3 border text-left">Reason</th>
-                  <th className="p-3 border text-left">Status</th>
-                  <th className="p-3 border text-left">Requested On</th>
-                  <th className="p-3 border text-left">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredRequests
-                  .sort((a, b) => new Date(b.requestedDate).getTime() - new Date(a.requestedDate).getTime())
-                  .map((req) => (
-                    <tr key={req.id} className="hover:bg-gray-50">
-                      <td className="p-3 border font-medium">{req.officerName}</td>
-                      <td className="p-3 border">{formatDate(req.date)}</td>
-                      <td className="p-3 border max-w-xs">
-                        <div className="line-clamp-2">{req.reason}</div>
-                      </td>
-                      <td className="p-3 border">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(req.status)}`}>
-                          {req.status}
-                        </span>
-                      </td>
-                      <td className="p-3 border text-gray-600">
-                        {formatDate(req.requestedDate)}
-                      </td>
-                      <td className="p-3 border">
-                        {req.status === "Pending" ? (
-                          <div className="space-y-2">
-                            <input
-                              type="text"
-                              placeholder="Response reason (optional for approve, required for deny)"
-                              className="w-full border rounded px-2 py-1 text-xs"
-                              value={responseReason[req.id] || ""}
-                              onChange={(e) =>
-                                setResponseReason((prev) => ({
-                                  ...prev,
-                                  [req.id]: e.target.value,
-                                }))
-                              }
-                            />
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => handleApprove(req.id)}
-                                disabled={processing === req.id}
-                                className="bg-emerald-600 text-white px-3 py-1 rounded text-xs font-medium hover:bg-emerald-700 disabled:bg-gray-400"
-                              >
-                                {processing === req.id ? "..." : "Approve"}
-                              </button>
-                              <button
-                                onClick={() => handleDeny(req.id)}
-                                disabled={processing === req.id}
-                                className="bg-red-600 text-white px-3 py-1 rounded text-xs font-medium hover:bg-red-700 disabled:bg-gray-400"
-                              >
-                                {processing === req.id ? "..." : "Deny"}
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="text-xs text-gray-600">
-                            {req.responseReason && (
-                              <div>
-                                <span className="font-medium">Response:</span> {req.responseReason}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        <div className="mt-6 flex justify-end">
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium text-slate-700">Month</label>
+          <input
+            type="month"
+            value={month}
+            onChange={(e) => setMonth(e.target.value)}
+            className="border rounded px-3 py-2 text-sm"
+          />
           <button
-            onClick={() => setOpen(false)}
-            className="bg-gray-300 text-gray-800 px-6 py-2 rounded-lg font-semibold hover:bg-gray-400 transition-colors"
+            onClick={() => loadLeaves(month)}
+            className="bg-slate-800 text-white px-4 py-2 rounded text-sm font-semibold hover:bg-slate-900"
           >
-            Close
+            Refresh
           </button>
         </div>
-      </DutyPopupModel>
+      </div>
+
+      {loading ? (
+        <p>Loading leave requests...</p>
+      ) : (
+        <div className="overflow-x-auto bg-white rounded-lg shadow">
+          <table className="w-full border text-sm">
+            <thead className="bg-slate-200">
+              <tr>
+                <th className="p-2 border">Officer</th>
+                <th className="p-2 border">Leave Date</th>
+                <th className="p-2 border">Reason</th>
+                <th className="p-2 border">Status</th>
+                <th className="p-2 border">Requested On</th>
+                <th className="p-2 border">Response Reason</th>
+                <th className="p-2 border">Action</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {sortedLeaves.map((leave) => (
+                <tr
+                  key={leave.id}
+                  className={`text-center ${isNew(leave) ? "bg-yellow-50" : ""}`}
+                >
+                  <td className="p-2 border font-medium">
+                    <div className="flex items-center justify-center gap-2">
+                      <span>{leave.officerName}</span>
+
+                      {isNew(leave) && (
+                        <span className="px-2 py-[2px] rounded-full text-[10px] font-bold bg-yellow-500 text-white">
+                          NEW
+                        </span>
+                      )}
+                    </div>
+                  </td>
+
+                  <td className="p-2 border">{leave.date}</td>
+                  <td className="p-2 border">{leave.reason}</td>
+
+                  <td className="p-2 border">
+                    <span
+                      className={`px-2 py-1 rounded text-xs font-semibold ${
+                        leave.status === "APPROVED"
+                          ? "bg-green-100 text-green-700"
+                          : leave.status === "DENIED"
+                          ? "bg-red-100 text-red-700"
+                          : "bg-yellow-100 text-yellow-700"
+                      }`}
+                    >
+                      {leave.status}
+                    </span>
+                  </td>
+
+                  <td className="p-2 border">{leave.requestedDate}</td>
+                  <td className="p-2 border">{leave.responseReason || "-"}</td>
+
+                  <td className="p-2 border">
+                    {String(leave.status).toUpperCase() === "PENDING" ? (
+                      <div className="flex gap-2 justify-center">
+                        <button
+                          disabled={processingId === leave.id}
+                          onClick={() => handleAction(leave.id, "APPROVED")}
+                          className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 disabled:opacity-50"
+                        >
+                          {processingId === leave.id ? "..." : "Approve"}
+                        </button>
+
+                        <button
+                          disabled={processingId === leave.id}
+                          onClick={() => handleAction(leave.id, "DENIED")}
+                          className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 disabled:opacity-50"
+                        >
+                          {processingId === leave.id ? "..." : "Deny"}
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-gray-500 italic">Completed</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+
+              {sortedLeaves.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="p-4 text-center text-gray-500">
+                    No leave requests found for {month}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
-
-export default LeaveManagement;
