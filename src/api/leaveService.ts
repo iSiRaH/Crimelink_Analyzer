@@ -1,24 +1,31 @@
 import axios from "axios";
 import type { LeaveRequest, LeaveUpdateRequest } from "../types/leave";
 
-const API_BASE_URL = "http://localhost:8080/api"; // Update with your backend URL
+// Prefer env config if available (Vite). Fallback keeps local dev working.
+const API_BASE_URL =
+  (import.meta as any)?.env?.VITE_API_BASE_URL ||
+  (import.meta as any)?.env?.VITE_BACKEND_URL ||
+  "http://localhost:8080/api";
 
-export const getAllLeaveRequests = async (
-  month: string // Format: YYYY-MM
-): Promise<LeaveRequest[]> => {
-  const response = await axios.get(`${API_BASE_URL}/leaves/all`, {
+/**
+ * Get all leave requests for a given month.
+ * Backend: GET /api/leaves/all?month=YYYY-MM
+ */
+export const getAllLeaveRequests = async (month: string): Promise<LeaveRequest[]> => {
+  const res = await axios.get(`${API_BASE_URL}/leaves/all`, {
     params: { month },
   });
-  return response.data;
+  return res.data;
 };
 
+/**
+ * Update leave status.
+ * Backend: PUT /api/leaves/{leaveId}/status
+ */
 export const updateLeaveStatus = async (
-  leaveId: string,
+  leaveId: number,
   update: LeaveUpdateRequest
 ): Promise<LeaveRequest> => {
-  const response = await axios.put(
-    `${API_BASE_URL}/leaves/${leaveId}/status`,
-    update
-  );
-  return response.data;
+  const res = await axios.put(`${API_BASE_URL}/leaves/${leaveId}/status`, update);
+  return res.data;
 };
