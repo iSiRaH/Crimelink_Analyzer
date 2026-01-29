@@ -3,6 +3,7 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import type { DateClickArg } from "@fullcalendar/interaction";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import DutyPopupModel from "../../components/UI/DutyPopupModel";
 import type { OfficerDutyRow, DutyCreatePayload, DutyStatus } from "../../types/duty";
@@ -10,6 +11,7 @@ import * as dutyService from "../../api/dutyService";
 import type { OfficerRecommendation } from "../../types/duty";
 
 function DutyManagement() {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>("");
 
@@ -20,7 +22,6 @@ function DutyManagement() {
 
   const [recommendations, setRecommendations] = useState<OfficerRecommendation[]>([]);
   const [recommendOpen, setRecommendOpen] = useState(false);
-
 
   const locations = ["Matara", "Hakmana", "Weligama", "Akuressa"];
   const timeRanges = [
@@ -36,7 +37,6 @@ function DutyManagement() {
   const handleRecommend = async () => {
     if (!selectedDate) return;
 
-    // simple example: use first row location
     const firstRow = rows[0];
     const location = firstRow?.location || "Matara";
 
@@ -62,14 +62,12 @@ function DutyManagement() {
     }
   };
 
-  
   const handleDateClick = (info: DateClickArg) => {
     setSelectedDate(info.dateStr);
     setOpen(true);
-    setRecommendations([]); // clear old recommendations when changing date
+    setRecommendations([]);
   };
 
-  // Load officers rows when popup opens for a date
   useEffect(() => {
     if (!open || !selectedDate) return;
 
@@ -80,7 +78,6 @@ function DutyManagement() {
       .finally(() => setLoadingRows(false));
   }, [open, selectedDate]);
 
-  // update any row field
   const updateRow = (index: number, key: keyof OfficerDutyRow, value: any) => {
     setRows((prev) => {
       const copy = [...prev];
@@ -89,26 +86,19 @@ function DutyManagement() {
     });
   };
 
-  // save duties
   const handleAddDuties = async () => {
-    //  build payload matching backend DutyScheduleRequest
     const payload: DutyCreatePayload[] = rows
       .filter((r) => {
-    // ignore rows with no status at all
-      if (!r.status) return false;
-
-    // allow ABSENT even if other fields are empty
-      if (r.status === "Absent") return true;
-
-    // for ACTIVE / COMPLETED → require location + timeRange
-          return !!r.location && !!r.timeRange;
-    })
+        if (!r.status) return false;
+        if (r.status === "Absent") return true;
+        return !!r.location && !!r.timeRange;
+      })
       .map((r) => ({
         officerId: r.officerId,
-        date: r.datetime || `${selectedDate}T00:00:00`, // or send selectedDate separately if backend uses LocalDate
+        date: r.datetime || `${selectedDate}T00:00:00`,
         duration: r.duration ?? 240,
         taskType: r.taskType ?? "General",
-        status: r.status ??"" as DutyStatus,
+        status: r.status ?? "" as DutyStatus,
         location: r.status === "Absent" ? "" : r.location || "",
         description: r.description?.trim() || "",
         timeRange: r.timeRange || "",
@@ -124,21 +114,16 @@ function DutyManagement() {
     setSaving(true);
     try {
       await dutyService.saveDutiesBulk(payload);
-
-      // reload updated duties after save
       const updated = await dutyService.getOfficerRowsByDate(selectedDate);
       setRows(updated);
-
       alert("Duties saved successfully!");
     } catch (err: any) {
       console.error("Save duties failed:", err);
-
       const msg =
         err?.response?.data?.message ||
         err?.response?.data ||
         err?.message ||
         "Unknown error";
-
       alert("Save failed: " + msg);
     } finally {
       setSaving(false);
@@ -147,8 +132,17 @@ function DutyManagement() {
 
   return (
     <>
-      
-      <div className="flex-1 p-5 overflow-y-auto">
+      <div className="flex-1 p-5 overflow-y-auto bg-slate-100">
+        <div className="mb-4 flex justify-between items-center">
+          <h1 className="text-2xl font-bold">Duty Management</h1>
+          <button
+            onClick={() => navigate('/oic/leave-management')}
+            className="bg-purple-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-purple-700 transition-colors"
+          >
+            Manage Leave Requests
+          </button>
+        </div>
+
         <FullCalendar
           height="auto"
           plugins={[dayGridPlugin, interactionPlugin]}
@@ -159,7 +153,6 @@ function DutyManagement() {
         />
       </div>
 
-      {/* Popup */}
       <DutyPopupModel open={open} onClose={() => setOpen(false)}>
         <h2 className="text-xl font-semibold mb-4">
           Details for {selectedDate}
@@ -167,7 +160,7 @@ function DutyManagement() {
 
         {loadingRows && <p className="mb-3">Loading officers...</p>}
 
-        <div className="max-h-96 overflow-y-auto block">
+        <div className="max-h-96 overflow-y-auto block bg-slate-50">
           <table className="w-full border mb-5 text-sm">
             <thead>
               <tr className="bg-gray-200">
@@ -182,10 +175,8 @@ function DutyManagement() {
             <tbody>
               {rows.map((r, i) => (
                 <tr key={`${r.officerId}-${i}`}>
-                  {/* Name auto-load */}
                   <td className="p-2 border font-medium">{r.officerName}</td>
 
-                  
                   <td className="p-2 border">
                     <select
                       className="w-full border rounded px-2 py-1"
@@ -203,7 +194,6 @@ function DutyManagement() {
                     </select>
                   </td>
 
-                
                   <td className="p-2 border">
                     <select
                       className="w-full border rounded px-2 py-1"
@@ -212,13 +202,8 @@ function DutyManagement() {
                         const selected = timeRanges.find(
                           (tr) => tr.value === e.target.value
                         );
-
                         if (!selected) return;
-
-                        // save timeRange string (for DB time_range)
                         updateRow(i, "timeRange", selected.value);
-
-                        // if you still need datetime, use the *start* time
                         updateRow(
                           i,
                           "datetime",
@@ -235,7 +220,6 @@ function DutyManagement() {
                     </select>
                   </td>
 
-                  
                   <td className="p-2 border">
                     <select
                       className="w-full border rounded px-2 py-1"
@@ -251,7 +235,6 @@ function DutyManagement() {
                     </select>
                   </td>
 
-                  
                   <td className="p-2 border">
                     <input
                       className="w-full border rounded px-2 py-1"
@@ -276,43 +259,37 @@ function DutyManagement() {
           </table>
         </div>
 
-        {/* Buttons */}
         <div className="mt-4 flex justify-between items-center">
-        {/* Left side buttons */}
-        <div className="flex gap-5">
-        <button
-            onClick={handleAddDuties}
-            disabled={saving || loadingRows}
-            className="bg-red-600 text-white text-lg font-semibold px-5 py-2 rounded-full"
-        >
-          {saving ? "Adding..." : "Add Duty"}
-        </button>
+          <div className="flex gap-5">
+            <button
+              onClick={handleAddDuties}
+              disabled={saving || loadingRows}
+              className="bg-red-600 text-white text-lg font-semibold px-5 py-2 rounded-full"
+            >
+              {saving ? "Adding..." : "Add Duty"}
+            </button>
 
-        <button
-            onClick={() => setOpen(false)}
-            className="bg-gray-300 text-lg font-semibold px-5 py-2 rounded-full"
-        >
-          Cancel
-        </button>
-        </div>
+            <button
+              onClick={() => setOpen(false)}
+              className="bg-gray-300 text-lg font-semibold px-5 py-2 rounded-full"
+            >
+              Cancel
+            </button>
+          </div>
 
-        {/* Right side button */}
-        <button
+          <button
             onClick={handleRecommend}
             disabled={recommending}
             className="bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-semibold"
-        >
-          {recommending ? "Recommending..." : "AI Recommend Officers"}
-        </button>
+          >
+            {recommending ? "Recommending..." : "Recommend Officers"}
+          </button>
         </div>
-
       </DutyPopupModel>
-      
 
-      {/* 🔹 Popup – AI Recommended Officers */}
       <DutyPopupModel open={recommendOpen} onClose={() => setRecommendOpen(false)}>
         <h2 className="text-xl font-semibold mb-4">
-          AI Recommended Officers for {selectedDate}
+          Recommended Officers for {selectedDate}
         </h2>
 
         {recommending && <p className="mb-3 text-sm">Loading recommendations...</p>}
@@ -353,7 +330,6 @@ function DutyManagement() {
           </button>
         </div>
       </DutyPopupModel>
-
     </>
   );
 }
