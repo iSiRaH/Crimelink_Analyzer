@@ -28,7 +28,6 @@ export default function LeaveManagement() {
 
   useEffect(() => {
     loadLeaves(month);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [month]);
 
   const loadLeaves = async (m: string) => {
@@ -45,7 +44,7 @@ export default function LeaveManagement() {
   };
 
   /**
-   * ✅ SORT RULE:
+   *  SORT RULE:
    * 1) PENDING first (top)
    * 2) PENDING rows sorted by requestedDate DESC (newest request on top)
    * 3) APPROVED/DENIED rows sorted by LEAVE DATE (leave.date) DESC
@@ -80,7 +79,7 @@ export default function LeaveManagement() {
     return copy;
   }, [leaves]);
 
-  // ✅ Optional: NEW badge for pending requests (within last 60 mins)
+  //  Optional: NEW badge for pending requests (within last 60 mins)
   const NEW_MINUTES = 60;
   const isNew = (leave: LeaveRequest) => {
     if (String(leave.status).toUpperCase() !== "PENDING") return false;

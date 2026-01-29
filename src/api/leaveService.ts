@@ -1,7 +1,6 @@
 import axios from "axios";
 import type { LeaveRequest, LeaveUpdateRequest } from "../types/leave";
 
-// Prefer env config if available (Vite). Fallback keeps local dev working.
 const API_BASE_URL =
   (import.meta as any)?.env?.VITE_API_BASE_URL ||
   (import.meta as any)?.env?.VITE_BACKEND_URL ||

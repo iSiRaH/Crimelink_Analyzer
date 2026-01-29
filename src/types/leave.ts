@@ -1,15 +1,13 @@
-// Leave Types
-// Backend should return enum-like values (recommended): PENDING | APPROVED | DENIED
 export type LeaveStatus = "PENDING" | "APPROVED" | "DENIED";
 
 export interface LeaveRequest {
   id: number;
   officerId: number;
   officerName: string;
-  date: string; // YYYY-MM-DD format
+  date: string; // YYYY-MM-DD 
   reason: string;
   status: LeaveStatus;
-  requestedDate: string; // YYYY-MM-DD format
+  requestedDate: string; // YYYY-MM-DD
   responseReason?: string;
   respondedBy?: number;
   respondedDate?: string;

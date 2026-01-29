@@ -133,7 +133,6 @@ function DutyManagement() {
   return (
     <>
       <div className="flex-1 p-5 overflow-y-auto bg-slate-100">
-        {/* Header with Leave Management Button */}
         <div className="mb-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">Duty Management</h1>
           <button
@@ -154,7 +153,6 @@ function DutyManagement() {
         />
       </div>
 
-      {/* Duty Assignment Popup */}
       <DutyPopupModel open={open} onClose={() => setOpen(false)}>
         <h2 className="text-xl font-semibold mb-4">
           Details for {selectedDate}
@@ -289,7 +287,6 @@ function DutyManagement() {
         </div>
       </DutyPopupModel>
 
-      {/* Recommended Officers Popup */}
       <DutyPopupModel open={recommendOpen} onClose={() => setRecommendOpen(false)}>
         <h2 className="text-xl font-semibold mb-4">
           Recommended Officers for {selectedDate}
