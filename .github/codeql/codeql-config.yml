@@ -1,0 +1,13 @@
+name: "CodeQL React Vite Config"
+
+paths-ignore:
+  - node_modules
+  - dist
+  - build
+  - coverage
+  - .vite
+  - public
+  - **/*.test.ts
+  - **/*.test.tsx
+  - **/*.spec.ts
+  - **/*.spec.tsx
