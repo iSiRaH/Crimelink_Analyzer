@@ -2,15 +2,11 @@ name: CodeQL
 
 on:
   push:
-    branches:
-      - main
-      - master
+    branches: [ "main" ]
   pull_request:
-    branches:
-      - main
-      - master
+    branches: [ "main" ]
   schedule:
-    - cron: "30 2 * * 1" # Weekly scan (UTC)
+    - cron: "30 2 * * 1"
 
 jobs:
   analyze:
@@ -25,8 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language:
-          - javascript-typescript
+        language: [ "javascript-typescript" ]
 
     steps:
       - name: Checkout repository
@@ -38,6 +33,7 @@ jobs:
           node-version: "20"
           cache: "npm"
 
+      # IMPORTANT: requires package-lock.json
       - name: Install dependencies
         run: npm ci
 
@@ -47,6 +43,5 @@ jobs:
           languages: ${{ matrix.language }}
           queries: security-extended
 
-      # Vite / React does NOT need autobuild
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
