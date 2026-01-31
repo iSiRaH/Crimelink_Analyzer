@@ -97,14 +97,14 @@ const getIncomingGraphStyles = (): cytoscape.StylesheetStyle[] => [
       'text-valign': 'bottom',
       'text-margin-y': 6,
       'font-size': '10px',
-      'color': '#d1d5db',
-      'text-outline-width': 1,
-      'text-outline-color': '#1f2937',
-      'background-color': '#22c55e',
-      'width': 45,
-      'height': 45,
-      'border-width': 2,
-      'border-color': '#166534'
+      'color': '#fff',
+      'text-outline-width': 2,
+      'text-outline-color': '#064e3b',
+      'background-color': '#10b981',
+      'width': 50,
+      'height': 50,
+      'border-width': 3,
+      'border-color': '#34d399'
     }
   },
   {
@@ -113,24 +113,25 @@ const getIncomingGraphStyles = (): cytoscape.StylesheetStyle[] => [
       'label': 'data(label)',
       'text-valign': 'bottom',
       'text-margin-y': 6,
-      'font-size': '10px',
-      'color': '#fef3c7',
+      'font-size': '11px',
+      'color': '#fff',
       'text-outline-width': 2,
-      'text-outline-color': '#1f2937',
-      'background-color': '#f59e0b',
-      'width': 55,
-      'height': 55,
+      'text-outline-color': '#92400e',
+      'background-color': '#fbbf24',
+      'width': 58,
+      'height': 58,
       'border-width': 4,
-      'border-color': '#d97706',
-      'border-style': 'double'
+      'border-color': '#fcd34d',
+      'border-style': 'double',
+      'font-weight': 'bold'
     }
   },
   {
     selector: 'edge[edgeType="normal"]',
     style: {
-      'width': (ele: cytoscape.EdgeSingular) => Math.min(1 + ele.data('callCount') * 0.5, 8),
-      'line-color': '#22c55e',
-      'target-arrow-color': '#22c55e',
+      'width': (ele: cytoscape.EdgeSingular) => Math.min(2 + ele.data('callCount') * 0.6, 10),
+      'line-color': '#34d399',
+      'target-arrow-color': '#34d399',
       'target-arrow-shape': 'triangle',
       'curve-style': 'bezier',
       'label': 'data(label)',
@@ -145,16 +146,16 @@ const getIncomingGraphStyles = (): cytoscape.StylesheetStyle[] => [
   {
     selector: 'edge[edgeType="shared"]',
     style: {
-      'width': (ele: cytoscape.EdgeSingular) => Math.min(1 + ele.data('callCount') * 0.5, 8),
-      'line-color': '#f59e0b',
-      'target-arrow-color': '#f59e0b',
+      'width': (ele: cytoscape.EdgeSingular) => Math.min(2 + ele.data('callCount') * 0.6, 10),
+      'line-color': '#fbbf24',
+      'target-arrow-color': '#fbbf24',
       'target-arrow-shape': 'triangle',
       'curve-style': 'bezier',
       'line-style': 'dashed',
-      'line-dash-pattern': [8, 4],
+      'line-dash-pattern': [6, 3],
       'label': 'data(label)',
-      'font-size': '9px',
-      'color': '#fcd34d',
+      'font-size': '10px',
+      'color': '#fef3c7',
       'font-weight': 'bold',
       'text-background-color': '#1f2937',
       'text-background-opacity': 0.95,
@@ -166,7 +167,7 @@ const getIncomingGraphStyles = (): cytoscape.StylesheetStyle[] => [
     selector: 'node:selected',
     style: {
       'border-color': '#fff',
-      'border-width': 4
+      'border-width': 5
     }
   }
 ];
@@ -197,14 +198,14 @@ const getOutgoingGraphStyles = (): cytoscape.StylesheetStyle[] => [
       'text-valign': 'bottom',
       'text-margin-y': 6,
       'font-size': '10px',
-      'color': '#d1d5db',
-      'text-outline-width': 1,
-      'text-outline-color': '#1f2937',
-      'background-color': '#ef4444',
-      'width': 45,
-      'height': 45,
-      'border-width': 2,
-      'border-color': '#991b1b'
+      'color': '#fff',
+      'text-outline-width': 2,
+      'text-outline-color': '#7f1d1d',
+      'background-color': '#f87171',
+      'width': 50,
+      'height': 50,
+      'border-width': 3,
+      'border-color': '#fca5a5'
     }
   },
   {
@@ -213,24 +214,25 @@ const getOutgoingGraphStyles = (): cytoscape.StylesheetStyle[] => [
       'label': 'data(label)',
       'text-valign': 'bottom',
       'text-margin-y': 6,
-      'font-size': '10px',
-      'color': '#fef3c7',
+      'font-size': '11px',
+      'color': '#fff',
       'text-outline-width': 2,
-      'text-outline-color': '#1f2937',
-      'background-color': '#f59e0b',
-      'width': 55,
-      'height': 55,
+      'text-outline-color': '#92400e',
+      'background-color': '#fbbf24',
+      'width': 58,
+      'height': 58,
       'border-width': 4,
-      'border-color': '#d97706',
-      'border-style': 'double'
+      'border-color': '#fcd34d',
+      'border-style': 'double',
+      'font-weight': 'bold'
     }
   },
   {
     selector: 'edge[edgeType="normal"]',
     style: {
-      'width': (ele: cytoscape.EdgeSingular) => Math.min(1 + ele.data('callCount') * 0.5, 8),
-      'line-color': '#ef4444',
-      'target-arrow-color': '#ef4444',
+      'width': (ele: cytoscape.EdgeSingular) => Math.min(2 + ele.data('callCount') * 0.6, 10),
+      'line-color': '#f87171',
+      'target-arrow-color': '#f87171',
       'target-arrow-shape': 'triangle',
       'curve-style': 'bezier',
       'label': 'data(label)',
@@ -245,16 +247,16 @@ const getOutgoingGraphStyles = (): cytoscape.StylesheetStyle[] => [
   {
     selector: 'edge[edgeType="shared"]',
     style: {
-      'width': (ele: cytoscape.EdgeSingular) => Math.min(1 + ele.data('callCount') * 0.5, 8),
-      'line-color': '#f59e0b',
-      'target-arrow-color': '#f59e0b',
+      'width': (ele: cytoscape.EdgeSingular) => Math.min(2 + ele.data('callCount') * 0.6, 10),
+      'line-color': '#fbbf24',
+      'target-arrow-color': '#fbbf24',
       'target-arrow-shape': 'triangle',
       'curve-style': 'bezier',
       'line-style': 'dashed',
-      'line-dash-pattern': [8, 4],
+      'line-dash-pattern': [6, 3],
       'label': 'data(label)',
-      'font-size': '9px',
-      'color': '#fcd34d',
+      'font-size': '10px',
+      'color': '#fef3c7',
       'font-weight': 'bold',
       'text-background-color': '#1f2937',
       'text-background-opacity': 0.95,
@@ -266,7 +268,7 @@ const getOutgoingGraphStyles = (): cytoscape.StylesheetStyle[] => [
     selector: 'node:selected',
     style: {
       'border-color': '#fff',
-      'border-width': 4
+      'border-width': 5
     }
   }
 ];
@@ -509,11 +511,11 @@ function GraphModal({ isOpen, onClose, title, graphData, graphType, pdfResults }
               <span className="text-gray-300">Main Numbers</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className={`w-5 h-5 rounded-full ${graphType === 'incoming' ? 'bg-green-500' : 'bg-red-500'}`} />
+              <div className={`w-5 h-5 rounded-full ${graphType === 'incoming' ? 'bg-emerald-400' : 'bg-red-400'}`} />
               <span className="text-gray-300">{graphType === 'incoming' ? 'Callers' : 'Called Numbers'}</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-full bg-amber-500 border-2 border-amber-600" />
+              <div className="w-5 h-5 rounded-full bg-amber-400 border-2 border-amber-300" />
               <span className="text-gray-300">Shared Contacts</span>
             </div>
             {pdfResults.length > 1 && (
@@ -826,23 +828,23 @@ function CallAnalysis() {
   }, [results]);
 
   return (
-    <div className="p-6 space-y-6 bg-gray-100 min-h-screen">
+    <div className="p-6 space-y-6 bg-gray-900 min-h-screen">
       {/* Upload Section */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-blue-100 rounded-xl">
-              <FaNetworkWired className="text-2xl text-blue-600" />
+            <div className="p-3 bg-blue-900/50 rounded-xl border border-blue-700">
+              <FaNetworkWired className="text-2xl text-blue-400" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">Call Record Analysis</h1>
-              <p className="text-gray-500">Upload PDF call records to analyze communication patterns</p>
+              <h1 className="text-2xl font-bold text-gray-100">Call Record Analysis</h1>
+              <p className="text-gray-400">Upload PDF call records to analyze communication patterns</p>
             </div>
           </div>
           {results.length > 0 && (
             <button
               onClick={handleClearAll}
-              className="px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition flex items-center gap-2 border border-red-200"
+              className="px-4 py-2 bg-red-900/50 text-red-400 rounded-lg hover:bg-red-800/50 transition flex items-center gap-2 border border-red-700"
             >
               <FaTrash />
               Clear All
@@ -850,7 +852,7 @@ function CallAnalysis() {
           )}
         </div>
 
-        <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center bg-gray-50 hover:bg-gray-100 transition">
+        <div className="border-2 border-dashed border-gray-600 rounded-xl p-8 text-center bg-gray-900/50 hover:bg-gray-900 transition">
           <input
             type="file"
             ref={fileInputRef}
@@ -861,14 +863,14 @@ function CallAnalysis() {
           
           {!selectedFile ? (
             <div className="space-y-4">
-              <div className="w-16 h-16 mx-auto bg-gray-200 rounded-full flex items-center justify-center">
+              <div className="w-16 h-16 mx-auto bg-gray-700 rounded-full flex items-center justify-center">
                 <FaUpload className="text-2xl text-gray-400" />
               </div>
               <div>
-                <p className="text-gray-600 mb-3">Upload call record PDF file</p>
+                <p className="text-gray-400 mb-3">Upload call record PDF file</p>
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+                  className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition font-medium"
                 >
                   Select File
                 </button>
@@ -876,17 +878,17 @@ function CallAnalysis() {
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="w-16 h-16 mx-auto bg-blue-100 rounded-full flex items-center justify-center">
-                <FaFileAlt className="text-2xl text-blue-600" />
+              <div className="w-16 h-16 mx-auto bg-blue-900/50 rounded-full flex items-center justify-center border border-blue-700">
+                <FaFileAlt className="text-2xl text-blue-400" />
               </div>
               <div>
-                <p className="text-gray-800 font-medium">{selectedFile.name}</p>
-                <p className="text-gray-500 text-sm">{(selectedFile.size / 1024).toFixed(2)} KB</p>
+                <p className="text-gray-100 font-medium">{selectedFile.name}</p>
+                <p className="text-gray-400 text-sm">{(selectedFile.size / 1024).toFixed(2)} KB</p>
               </div>
               <div className="flex gap-3 justify-center">
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition border border-gray-300"
+                  className="px-4 py-2 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition border border-gray-600"
                 >
                   Change File
                 </button>
@@ -910,14 +912,14 @@ function CallAnalysis() {
         </div>
 
         {error && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700">
+          <div className="mt-4 p-4 bg-red-900/30 border border-red-700 rounded-lg flex items-center gap-2 text-red-400">
             <FaExclamationTriangle />
             <span>{error}</span>
           </div>
         )}
 
         {uploading && (
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2 text-blue-700">
+          <div className="mt-4 p-4 bg-blue-900/30 border border-blue-700 rounded-lg flex items-center gap-2 text-blue-400">
             <FaSpinner className="animate-spin" />
             <span>Analyzing call records... This may take a few moments.</span>
           </div>
@@ -928,48 +930,48 @@ function CallAnalysis() {
       {results.length > 0 && combinedGraphs && (
         <div className="space-y-6">
           {/* Summary Stats */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-bold text-gray-800 mb-4">Analysis Summary</h2>
+          <div className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 p-6">
+            <h2 className="text-lg font-bold text-gray-100 mb-4">Analysis Summary</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center p-4 bg-blue-50 rounded-xl border border-blue-100">
-                <div className="text-3xl font-bold text-blue-600">{results.length}</div>
-                <div className="text-sm text-gray-600 mt-1">PDFs Analyzed</div>
+              <div className="text-center p-4 bg-blue-900/30 rounded-xl border border-blue-800">
+                <div className="text-3xl font-bold text-blue-400">{results.length}</div>
+                <div className="text-sm text-gray-400 mt-1">PDFs Analyzed</div>
               </div>
-              <div className="text-center p-4 bg-gray-50 rounded-xl border border-gray-200">
-                <div className="text-3xl font-bold text-gray-800">
+              <div className="text-center p-4 bg-gray-700/50 rounded-xl border border-gray-600">
+                <div className="text-3xl font-bold text-gray-100">
                   {results.reduce((sum, r) => sum + r.total_calls, 0)}
                 </div>
-                <div className="text-sm text-gray-600 mt-1">Total Calls</div>
+                <div className="text-sm text-gray-400 mt-1">Total Calls</div>
               </div>
-              <div className="text-center p-4 bg-green-50 rounded-xl border border-green-100">
-                <div className="text-3xl font-bold text-green-600">
+              <div className="text-center p-4 bg-emerald-900/30 rounded-xl border border-emerald-800">
+                <div className="text-3xl font-bold text-emerald-400">
                   {results.reduce((sum, r) => sum + r.total_incoming, 0)}
                 </div>
-                <div className="text-sm text-gray-600 mt-1">Incoming Calls</div>
+                <div className="text-sm text-gray-400 mt-1">Incoming Calls</div>
               </div>
-              <div className="text-center p-4 bg-red-50 rounded-xl border border-red-100">
-                <div className="text-3xl font-bold text-red-600">
+              <div className="text-center p-4 bg-red-900/30 rounded-xl border border-red-800">
+                <div className="text-3xl font-bold text-red-400">
                   {results.reduce((sum, r) => sum + r.total_outgoing, 0)}
                 </div>
-                <div className="text-sm text-gray-600 mt-1">Outgoing Calls</div>
+                <div className="text-sm text-gray-400 mt-1">Outgoing Calls</div>
               </div>
             </div>
 
             {/* PDF List */}
-            <div className="mt-6 pt-4 border-t border-gray-200">
-              <h3 className="text-sm font-medium text-gray-700 mb-3">Analyzed Files:</h3>
+            <div className="mt-6 pt-4 border-t border-gray-700">
+              <h3 className="text-sm font-medium text-gray-300 mb-3">Analyzed Files:</h3>
               <div className="flex flex-wrap gap-2">
                 {results.map((result, index) => (
                   <div 
                     key={index}
-                    className="px-3 py-2 bg-gray-100 rounded-lg text-sm flex items-center gap-2 border border-gray-200"
+                    className="px-3 py-2 bg-gray-700 rounded-lg text-sm flex items-center gap-2 border border-gray-600"
                   >
                     <div 
                       className="w-3 h-3 rounded-full" 
                       style={{ backgroundColor: getPdfColor(index) }}
                     />
-                    <span className="font-medium text-gray-800">{result.main_number}</span>
-                    <span className="text-gray-500">({result.pdf_filename})</span>
+                    <span className="font-medium text-gray-100">{result.main_number}</span>
+                    <span className="text-gray-400">({result.pdf_filename})</span>
                   </div>
                 ))}
               </div>
@@ -977,12 +979,12 @@ function CallAnalysis() {
           </div>
 
           {/* Network Graphs */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 p-6">
             <div className="mb-6">
-              <h2 className="text-lg font-bold text-gray-800">Communication Network Analysis</h2>
-              <p className="text-sm text-gray-500 mt-1">
+              <h2 className="text-lg font-bold text-gray-100">Communication Network Analysis</h2>
+              <p className="text-sm text-gray-400 mt-1">
                 Visual representation of call patterns. 
-                <span className="text-amber-600 font-medium"> Orange nodes</span> indicate contacts shared across multiple PDFs.
+                <span className="text-amber-400 font-medium"> Yellow nodes</span> indicate contacts shared across multiple PDFs.
               </p>
             </div>
 
@@ -990,12 +992,12 @@ function CallAnalysis() {
               {/* Incoming Network */}
               <div>
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <FaPhoneVolume className="text-green-600" />
+                  <div className="p-2 bg-emerald-900/50 rounded-lg border border-emerald-700">
+                    <FaPhoneVolume className="text-emerald-400" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-800">Incoming Calls Network</h3>
-                    <p className="text-xs text-gray-500">Numbers that called the main number</p>
+                    <h3 className="font-bold text-gray-100">Incoming Calls Network</h3>
+                    <p className="text-xs text-gray-400">Numbers that called the main number</p>
                   </div>
                 </div>
                 <NetworkGraphPreview 
@@ -1008,12 +1010,12 @@ function CallAnalysis() {
               {/* Outgoing Network */}
               <div>
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-red-100 rounded-lg">
-                    <FaPhoneAlt className="text-red-600" />
+                  <div className="p-2 bg-red-900/50 rounded-lg border border-red-700">
+                    <FaPhoneAlt className="text-red-400" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-800">Outgoing Calls Network</h3>
-                    <p className="text-xs text-gray-500">Numbers called by the main number</p>
+                    <h3 className="font-bold text-gray-100">Outgoing Calls Network</h3>
+                    <p className="text-xs text-gray-400">Numbers called by the main number</p>
                   </div>
                 </div>
                 <NetworkGraphPreview 
@@ -1025,24 +1027,24 @@ function CallAnalysis() {
             </div>
 
             {/* Legend */}
-            <div className="mt-6 pt-4 border-t border-gray-200">
-              <h4 className="text-sm font-medium text-gray-700 mb-3">Legend:</h4>
+            <div className="mt-6 pt-4 border-t border-gray-700">
+              <h4 className="text-sm font-medium text-gray-300 mb-3">Legend:</h4>
               <div className="flex flex-wrap gap-6 text-sm">
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded-full" style={{ backgroundColor: getPdfColor(0) }} />
-                  <span className="text-gray-600">Main Numbers (unique color per PDF)</span>
+                  <span className="text-gray-400">Main Numbers (unique color per PDF)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full bg-green-500" />
-                  <span className="text-gray-600">Incoming Callers</span>
+                  <div className="w-4 h-4 rounded-full bg-emerald-400" />
+                  <span className="text-gray-400">Incoming Callers</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full bg-red-500" />
-                  <span className="text-gray-600">Outgoing Contacts</span>
+                  <div className="w-4 h-4 rounded-full bg-red-400" />
+                  <span className="text-gray-400">Outgoing Contacts</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full bg-amber-500 border-2 border-amber-600" />
-                  <span className="text-gray-600">Shared Contacts (dashed lines)</span>
+                  <div className="w-4 h-4 rounded-full bg-amber-400 border-2 border-amber-300" />
+                  <span className="text-gray-400">Shared Contacts (dashed lines)</span>
                 </div>
               </div>
             </div>
