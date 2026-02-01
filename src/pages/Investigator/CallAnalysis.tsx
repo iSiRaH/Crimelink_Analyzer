@@ -642,8 +642,18 @@ function CallAnalysis() {
       const formData = new FormData();
       formData.append('files', selectedFile);
 
-      const response = await fetch('http://localhost:5001/analyze/batch', {
+      // Get JWT token for authenticated request through Spring Boot
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        throw new Error('Authentication required. Please log in.');
+      }
+
+      // Route through Spring Boot API Gateway
+      const response = await fetch('/api/call-analysis/analyze/batch', {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
         body: formData,
       });
 

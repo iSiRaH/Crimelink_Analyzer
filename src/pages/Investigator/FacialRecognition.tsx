@@ -49,7 +49,9 @@ interface AnalysisResponse {
 // Configuration
 // ============================================================================
 
-const API_BASE_URL = 'http://localhost:5002';
+// Routes through Spring Boot API Gateway (proxied via Vite in development)
+// Architecture: Frontend -> Spring Boot (8080) -> Python ML Service (5002)
+const API_BASE_URL = '/api/facial';
 
 // ============================================================================
 // Helper Functions
@@ -327,11 +329,17 @@ const FacialRecognition: React.FC = () => {
       formData.append('image', selectedFile);
       formData.append('threshold', threshold.toString());
       
-      const userId = localStorage.getItem('userId') || 'unknown';
-      formData.append('user_id', userId);
+      // Get JWT token for authenticated request through Spring Boot
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        throw new Error('Authentication required. Please log in.');
+      }
 
       const response = await fetch(`${API_BASE_URL}/analyze`, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
         body: formData,
       });
 
@@ -341,8 +349,6 @@ const FacialRecognition: React.FC = () => {
       }
 
       const data: AnalysisResponse = await response.json();
-      console.log('API Response:', JSON.stringify(data, null, 2));
-      console.log('First match crime_history:', data.matches?.[0]?.crime_history);
       setResults(data);
 
     } catch (err) {
