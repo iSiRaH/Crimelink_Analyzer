@@ -341,6 +341,8 @@ const FacialRecognition: React.FC = () => {
       }
 
       const data: AnalysisResponse = await response.json();
+      console.log('API Response:', JSON.stringify(data, null, 2));
+      console.log('First match crime_history:', data.matches?.[0]?.crime_history);
       setResults(data);
 
     } catch (err) {
