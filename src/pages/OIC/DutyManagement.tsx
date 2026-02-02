@@ -3,6 +3,7 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import type { DateClickArg } from "@fullcalendar/interaction";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import DutyPopupModel from "../../components/UI/DutyPopupModel";
 import type {
@@ -15,6 +16,7 @@ import type { OfficerRecommendation } from "../../types/duty";
 import type { AxiosError } from "axios";
 
 function DutyManagement() {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   // const [selectedDateKey, setSelectedDateKey] = useState("");//REMOVE
@@ -52,7 +54,6 @@ function DutyManagement() {
   const handleRecommend = async () => {
     if (!selectedDate) return;
 
-    // simple example: use first row location
     const firstRow = rows[0];
     const location = firstRow?.location || "Matara";
 
@@ -89,7 +90,6 @@ function DutyManagement() {
     setOpen(true);
   };
 
-  // Load officers rows when popup opens for a date
   useEffect(() => {
     if (!open || !selectedDate) return;
 
@@ -125,7 +125,6 @@ function DutyManagement() {
     });
   };
 
-  // save duties
   const handleAddDuties = async () => {
     if (!selectedDate) {
       alert("Please select a date.");
@@ -177,18 +176,15 @@ function DutyManagement() {
       // reload updated duties after save
       const updated = await dutyService.getOfficerRowsByDate(dateKey);
       setRows(updated);
-
       alert("Duties saved successfully!");
     } catch (err: unknown) {
       const error = err as AxiosError<{ message?: string }>;
       console.error("Save duties failed:", err);
-
       const msg =
         error?.response?.data?.message ||
         error?.response?.data ||
         error?.message ||
         "Unknown error";
-
       alert("Save failed: " + msg);
     } finally {
       setSaving(false);
@@ -285,7 +281,7 @@ function DutyManagement() {
 
         {loadingRows && <p className="mb-3">Loading officers...</p>}
 
-        <div className="max-h-96 overflow-y-auto block">
+        <div className="max-h-96 overflow-y-auto block bg-slate-50">
           <table className="w-full border mb-5 text-sm">
             <thead>
               <tr className="bg-gray-200">
@@ -300,7 +296,6 @@ function DutyManagement() {
             <tbody>
               {rows.map((r, i) => (
                 <tr key={`${r.officerId}-${i}`}>
-                  {/* Name auto-load */}
                   <td className="p-2 border font-medium">{r.officerName}</td>
 
                   <td className="p-2 border">
@@ -328,13 +323,8 @@ function DutyManagement() {
                         const selected = timeRanges.find(
                           (tr) => tr.value === e.target.value,
                         );
-
                         if (!selected) return;
-
-                        // save timeRange string (for DB time_range)
                         updateRow(i, "timeRange", selected.value);
-
-                        // if you still need datetime, use the *start* time
                         updateRow(
                           i,
                           "datetime",
@@ -393,7 +383,6 @@ function DutyManagement() {
           </table>
         </div>
 
-        {/* Buttons */}
         <div className="mt-4 flex justify-between items-center">
           {/* Left side buttons */}
           <div className="flex gap-5">
@@ -424,7 +413,7 @@ function DutyManagement() {
         </div>
       </DutyPopupModel>
 
-      {/* 🔹 Popup – AI Recommended Officers */}
+      {/*  Popup – AI Recommended Officers */}
       <DutyPopupModel
         isOpen={recommendOpen}
         date={selectedDate}
