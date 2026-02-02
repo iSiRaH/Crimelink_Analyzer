@@ -12,11 +12,14 @@ import type {
 } from "../../types/duty";
 import * as dutyService from "../../api/dutyService";
 import type { OfficerRecommendation } from "../../types/duty";
+import type { AxiosError } from "axios";
 
 function DutyManagement() {
   const [open, setOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-
+  // const [selectedDateKey, setSelectedDateKey] = useState("");//REMOVE
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [currentMonth, setCurrentMonth] = useState(0);
   const [rows, setRows] = useState<OfficerDutyRow[]>([]);
   const [loadingRows, setLoadingRows] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -26,6 +29,14 @@ function DutyManagement() {
     OfficerRecommendation[]
   >([]);
   const [recommendOpen, setRecommendOpen] = useState(false);
+
+  const getDateKey = (date: Date): string => {
+    // const y = date.getFullYear();
+    // const m = String(date.getMonth() + 1).padStart(2, "0");
+    // const d = String(date.getDate()).padStart(2, "0");
+    // return `${y}-${m}-${d}`;   //REMOVE
+    return date.toISOString().split("T")[0];
+  };
 
   const locations = ["Matara", "Hakmana", "Weligama", "Akuressa"];
   const timeRanges = [
@@ -46,7 +57,7 @@ function DutyManagement() {
     const location = firstRow?.location || "Matara";
 
     const req = {
-      date: selectedDate,
+      date: getDateKey(selectedDate),
       location,
       timeRange: undefined,
       requiredOfficers: 5,
@@ -71,19 +82,42 @@ function DutyManagement() {
   //   setRecommendations([]); // clear old recommendations when changing date
   // };
 
+  const handleDateClick = (arg: DateClickArg) => {
+    const date = arg.date;
+    setSelectedDate(date);
+    // setSelectedDateKey(getDateKey(date)); //REMOVE
+    setOpen(true);
+  };
+
   // Load officers rows when popup opens for a date
   useEffect(() => {
     if (!open || !selectedDate) return;
 
     setLoadingRows(true);
+
+    const dateKey = getDateKey(selectedDate);
+    console.log("Loading officers for:", dateKey); //REMOVE
+
     dutyService
-      .getOfficerRowsByDate(selectedDate)
-      .then(setRows)
+      .getOfficerRowsByDate(dateKey)
+      .then((data) => {
+        console.log("Loaded officers:", data); //REMOVE
+        setRows(data);
+      })
+      .catch((err) => {
+        console.error("Failed to load officers", err);
+        alert("Failed to load officers for the selected date.");
+        setRows([]);
+      })
       .finally(() => setLoadingRows(false));
   }, [open, selectedDate]);
 
   // update any row field
-  const updateRow = (index: number, key: keyof OfficerDutyRow, value: any) => {
+  const updateRow = <K extends keyof OfficerDutyRow>(
+    index: number,
+    key: K,
+    value: OfficerDutyRow[K],
+  ) => {
     setRows((prev) => {
       const copy = [...prev];
       copy[index] = { ...copy[index], [key]: value };
@@ -93,6 +127,11 @@ function DutyManagement() {
 
   // save duties
   const handleAddDuties = async () => {
+    if (!selectedDate) {
+      alert("Please select a date.");
+      return;
+    }
+    const dateKey = getDateKey(selectedDate);
     //  build payload matching backend DutyScheduleRequest
     const payload: DutyCreatePayload[] = rows
       .filter((r) => {
@@ -103,18 +142,26 @@ function DutyManagement() {
         if (r.status === "Absent") return true;
 
         // for ACTIVE / COMPLETED → require location + timeRange
-        return !!r.location && !!r.timeRange;
+        return Boolean(r.location) && Boolean(r.timeRange);
       })
-      .map((r) => ({
-        officerId: r.officerId,
-        date: r.datetime || `${selectedDate}T00:00:00`, // or send selectedDate separately if backend uses LocalDate
-        duration: r.duration ?? 240,
-        taskType: r.taskType ?? "General",
-        status: r.status ?? ("" as DutyStatus),
-        location: r.status === "Absent" ? "" : r.location || "",
-        description: r.description?.trim() || "",
-        timeRange: r.timeRange || "",
-      }));
+      .map((r) => {
+        let finalDateTime = r.datetime;
+
+        if (!finalDateTime) {
+          const start = r.timeRange?.split("-")?.[0]?.trim() || "00:00";
+          finalDateTime = `${dateKey}T${start}:00`;
+        }
+        return {
+          officerId: r.officerId,
+          date: finalDateTime,
+          duration: r.duration ?? 240,
+          taskType: r.taskType ?? "General",
+          status: r.status ?? ("" as DutyStatus),
+          location: r.status === "Absent" ? "" : r.location || "",
+          description: (r.description ?? "").trim(),
+          timeRange: r.status === "Absent" ? "" : (r.timeRange ?? ""),
+        };
+      });
 
     console.log("Saving payload ->", payload);
 
@@ -128,17 +175,18 @@ function DutyManagement() {
       await dutyService.saveDutiesBulk(payload);
 
       // reload updated duties after save
-      const updated = await dutyService.getOfficerRowsByDate(selectedDate?.toLocaleDateString());
+      const updated = await dutyService.getOfficerRowsByDate(dateKey);
       setRows(updated);
 
       alert("Duties saved successfully!");
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const error = err as AxiosError<{ message?: string }>;
       console.error("Save duties failed:", err);
 
       const msg =
-        err?.response?.data?.message ||
-        err?.response?.data ||
-        err?.message ||
+        error?.response?.data?.message ||
+        error?.response?.data ||
+        error?.message ||
         "Unknown error";
 
       alert("Save failed: " + msg);
@@ -147,68 +195,54 @@ function DutyManagement() {
     }
   };
 
-  /* lal*/
-  const getDateKey = (date: Date): string => {
-    return date.toISOString().split("T")[0];
-  };
+  /* lal---------------------------------------------*/
 
-  const [currentYear, setCurrentYear] = useState(2026);
-  const [currentMonth, setCurrentMonth] = useState(0);
-  const [notes, setNotes] = useState<Record<string, string>>(() => {
-    const savedNotes = localStorage.getItem("dutyNotes");
-    if (savedNotes) {
-      try {
-        return JSON.parse(savedNotes);
-      } catch {
-        return {};
-      }
-    }
-    return {};
-  });
+  // const [notes, setNotes] = useState<Record<string, string>>(() => {
+  //   const savedNotes = localStorage.getItem("dutyNotes");
+  //   if (savedNotes) {
+  //     try {
+  //       return JSON.parse(savedNotes);
+  //     } catch {
+  //       return {};
+  //     }
+  //   }
+  //   return {};
+  // });
 
-  const [selectedDateKey, setSelectedDateKey] = useState("");
+  // useEffect(() => {
+  //   localStorage.setItem("dutyNotes", JSON.stringify(notes));
+  // }, [notes]);
 
-  useEffect(() => {
-    localStorage.setItem("dutyNotes", JSON.stringify(notes));
-  }, [notes]);
+  // const handleSaveNote = (note: string) => {
+  //   if (note.trim()) {
+  //     setNotes((prev) => ({
+  //       ...prev,
+  //       [selectedDateKey]: note,
+  //     }));
+  //   } else {
+  //     setNotes((prev) => {
+  //       const copy = { ...prev };
+  //       delete copy[selectedDateKey];
+  //       return copy;
+  //     });
+  //   }
+  // };
 
-  const handleDateClick = (arg: any) => {
-    const date = arg.date;
-    setSelectedDate(date);
-    setSelectedDateKey(getDateKey(date));
-    setOpen(true);
-  };
+  // const handleDeleteNote = () => {
+  //   setNotes((prev) => {
+  //     const copy = { ...prev };
+  //     delete copy[selectedDateKey];
+  //     return copy;
+  //   });
+  // };
 
-  const handleSaveNote = (note: string) => {
-    if (note.trim()) {
-      setNotes((prev) => ({
-        ...prev,
-        [selectedDateKey]: note,
-      }));
-    } else {
-      setNotes((prev) => {
-        const copy = { ...prev };
-        delete copy[selectedDateKey];
-        return copy;
-      });
-    }
-  };
-
-  const handleDeleteNote = () => {
-    setNotes((prev) => {
-      const copy = { ...prev };
-      delete copy[selectedDateKey];
-      return copy;
-    });
-  };
-
-  const events = Object.entries(notes).map(([date, note]) => ({
-    title: "•",
-    date,
-    allDay: true,
-    extendedProps: { note },
-  }));
-  /*lal*/
+  // const events = Object.entries(notes).map(([date, note]) => ({
+  //   title: "•",
+  //   date,
+  //   allDay: true,
+  //   extendedProps: { note },
+  // }));
+  /*lal-------------------------------------------------*/
 
   return (
     <div className="w-full h-screen bg-[#0b0c1a] text-white font-[Inter] flex items-center justify-center">
@@ -225,10 +259,10 @@ function DutyManagement() {
             right: "",
           }}
           dateClick={handleDateClick}
-          events={events}
-          eventContent={() => (
-            <div className="text-[#572aff] text-2xl text-center">•</div>
-          )}
+          // events={events}    //REMOVE
+          // eventContent={() => (
+          //   <div className="text-[#572aff] text-2xl text-center">•</div>
+          // )}
           datesSet={(arg) => {
             setCurrentMonth(arg.start.getMonth());
             setCurrentYear(arg.start.getFullYear());
@@ -239,15 +273,11 @@ function DutyManagement() {
         />
       </div>
 
-      {/* Note Modal */}
       {/* Popup */}
       <DutyPopupModel
         isOpen={open}
         date={selectedDate}
-        existingNote={notes[selectedDateKey] || ""}
-        onSave={handleSaveNote}
         onClose={() => setOpen(false)}
-        onDelete={handleDeleteNote}
       >
         <h2 className="text-xl font-semibold mb-4">
           Details for {selectedDate?.toLocaleDateString()}
@@ -275,6 +305,7 @@ function DutyManagement() {
 
                   <td className="p-2 border">
                     <select
+                      title="Select Location"
                       className="w-full border rounded px-2 py-1"
                       value={r.location || ""}
                       onChange={(e) => updateRow(i, "location", e.target.value)}
@@ -290,6 +321,7 @@ function DutyManagement() {
 
                   <td className="p-2 border">
                     <select
+                      title="Time Range"
                       className="w-full border rounded px-2 py-1"
                       value={r.timeRange || ""}
                       onChange={(e) => {
@@ -306,7 +338,7 @@ function DutyManagement() {
                         updateRow(
                           i,
                           "datetime",
-                          `${selectedDate}T${selected.start}:00`,
+                          `${getDateKey(selectedDate!)}T${selected.start}:00`,
                         );
                       }}
                     >
@@ -321,9 +353,12 @@ function DutyManagement() {
 
                   <td className="p-2 border">
                     <select
+                      title="Status"
                       className="w-full border rounded px-2 py-1"
                       value={r.status || ""}
-                      onChange={(e) => updateRow(i, "status", e.target.value)}
+                      onChange={(e) =>
+                        updateRow(i, "status", e.target.value as DutyStatus)
+                      }
                     >
                       <option value="">Select Status</option>
                       {statusOptions.map((st) => (
@@ -391,12 +426,9 @@ function DutyManagement() {
 
       {/* 🔹 Popup – AI Recommended Officers */}
       <DutyPopupModel
-        isOpen={open}
+        isOpen={recommendOpen}
         date={selectedDate}
-        existingNote={notes[selectedDateKey] || ""}
-        onSave={handleSaveNote}
-        onClose={() => setOpen(false)}
-        onDelete={handleDeleteNote}
+        onClose={() => setRecommendOpen(false)}
       >
         <h2 className="text-xl font-semibold mb-4">
           AI Recommended Officers for {selectedDate?.toLocaleDateString()}
