@@ -3,42 +3,24 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import type { DateClickArg } from "@fullcalendar/interaction";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 import DutyPopupModel from "../../components/UI/DutyPopupModel";
-import type {
-  OfficerDutyRow,
-  DutyCreatePayload,
-  DutyStatus,
-} from "../../types/duty";
+import type { OfficerDutyRow, DutyCreatePayload, DutyStatus } from "../../types/duty";
 import * as dutyService from "../../api/dutyService";
 import type { OfficerRecommendation } from "../../types/duty";
-import type { AxiosError } from "axios";
 
 function DutyManagement() {
-  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  // const [selectedDateKey, setSelectedDateKey] = useState("");//REMOVE
-  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-  const [currentMonth, setCurrentMonth] = useState(0);
-  const [rows, setRows] = useState<OfficerDutyRow[]>([]);
-  const [loadingRows, setLoadingRows] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [recommending, setRecommending] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string>("");
 
-  const [recommendations, setRecommendations] = useState<
-    OfficerRecommendation[]
-  >([]);
+  const [rows, setRows] = useState<OfficerDutyRow[]>([]);
+  const [loadingRows, setLoadingRows] = useState(false);   
+  const [saving, setSaving] = useState(false);             
+  const [recommending, setRecommending] = useState(false); 
+
+  const [recommendations, setRecommendations] = useState<OfficerRecommendation[]>([]);
   const [recommendOpen, setRecommendOpen] = useState(false);
 
-  const getDateKey = (date: Date): string => {
-    // const y = date.getFullYear();
-    // const m = String(date.getMonth() + 1).padStart(2, "0");
-    // const d = String(date.getDate()).padStart(2, "0");
-    // return `${y}-${m}-${d}`;   //REMOVE
-    return date.toISOString().split("T")[0];
-  };
 
   const locations = ["Matara", "Hakmana", "Weligama", "Akuressa"];
   const timeRanges = [
@@ -46,19 +28,20 @@ function DutyManagement() {
     { value: "21:00-06:00", label: "21:00 - 06:00", start: "21:00" },
   ];
   const statusOptions: { value: DutyStatus; label: string }[] = [
-    { value: "Active", label: "Active" },
+    { value: "Active",    label: "Active" },
     { value: "Completed", label: "Completed" },
-    { value: "Absent", label: "Absent" },
+    { value: "Absent",    label: "Absent" },
   ];
 
   const handleRecommend = async () => {
     if (!selectedDate) return;
 
+    // simple example: use first row location
     const firstRow = rows[0];
     const location = firstRow?.location || "Matara";
 
     const req = {
-      date: getDateKey(selectedDate),
+      date: selectedDate,
       location,
       timeRange: undefined,
       requiredOfficers: 5,
@@ -69,55 +52,36 @@ function DutyManagement() {
       const data = await dutyService.getRecommendations(req);
       setRecommendations(data);
       setRecommendOpen(true);
+      
     } catch (e) {
       console.error("Recommendation error", e);
       alert("Failed to load recommendations");
-    } finally {
+    }
+    finally {
       setRecommending(false);
     }
   };
 
-  // const handleDateClick = (info: DateClickArg) => {
-  //   setSelectedDate(info.dateStr);
-  //   setOpen(true);
-  //   setRecommendations([]); // clear old recommendations when changing date
-  // };
-
-  const handleDateClick = (arg: DateClickArg) => {
-    const date = arg.date;
-    setSelectedDate(date);
-    // setSelectedDateKey(getDateKey(date)); //REMOVE
+  
+  const handleDateClick = (info: DateClickArg) => {
+    setSelectedDate(info.dateStr);
     setOpen(true);
+    setRecommendations([]); // clear old recommendations when changing date
   };
 
+  // Load officers rows when popup opens for a date
   useEffect(() => {
     if (!open || !selectedDate) return;
 
     setLoadingRows(true);
-
-    const dateKey = getDateKey(selectedDate);
-    console.log("Loading officers for:", dateKey); //REMOVE
-
     dutyService
-      .getOfficerRowsByDate(dateKey)
-      .then((data) => {
-        console.log("Loaded officers:", data); //REMOVE
-        setRows(data);
-      })
-      .catch((err) => {
-        console.error("Failed to load officers", err);
-        alert("Failed to load officers for the selected date.");
-        setRows([]);
-      })
+      .getOfficerRowsByDate(selectedDate)
+      .then(setRows)
       .finally(() => setLoadingRows(false));
   }, [open, selectedDate]);
 
   // update any row field
-  const updateRow = <K extends keyof OfficerDutyRow>(
-    index: number,
-    key: K,
-    value: OfficerDutyRow[K],
-  ) => {
+  const updateRow = (index: number, key: keyof OfficerDutyRow, value: any) => {
     setRows((prev) => {
       const copy = [...prev];
       copy[index] = { ...copy[index], [key]: value };
@@ -125,42 +89,30 @@ function DutyManagement() {
     });
   };
 
+  // save duties
   const handleAddDuties = async () => {
-    if (!selectedDate) {
-      alert("Please select a date.");
-      return;
-    }
-    const dateKey = getDateKey(selectedDate);
     //  build payload matching backend DutyScheduleRequest
     const payload: DutyCreatePayload[] = rows
       .filter((r) => {
-        // ignore rows with no status at all
-        if (!r.status) return false;
+    // ignore rows with no status at all
+      if (!r.status) return false;
 
-        // allow ABSENT even if other fields are empty
-        if (r.status === "Absent") return true;
+    // allow ABSENT even if other fields are empty
+      if (r.status === "Absent") return true;
 
-        // for ACTIVE / COMPLETED → require location + timeRange
-        return Boolean(r.location) && Boolean(r.timeRange);
-      })
-      .map((r) => {
-        let finalDateTime = r.datetime;
-
-        if (!finalDateTime) {
-          const start = r.timeRange?.split("-")?.[0]?.trim() || "00:00";
-          finalDateTime = `${dateKey}T${start}:00`;
-        }
-        return {
-          officerId: r.officerId,
-          date: finalDateTime,
-          duration: r.duration ?? 240,
-          taskType: r.taskType ?? "General",
-          status: r.status ?? ("" as DutyStatus),
-          location: r.status === "Absent" ? "" : r.location || "",
-          description: (r.description ?? "").trim(),
-          timeRange: r.status === "Absent" ? "" : (r.timeRange ?? ""),
-        };
-      });
+    // for ACTIVE / COMPLETED → require location + timeRange
+          return !!r.location && !!r.timeRange;
+    })
+      .map((r) => ({
+        officerId: r.officerId,
+        date: r.datetime || `${selectedDate}T00:00:00`, // or send selectedDate separately if backend uses LocalDate
+        duration: r.duration ?? 240,
+        taskType: r.taskType ?? "General",
+        status: r.status ??"" as DutyStatus,
+        location: r.status === "Absent" ? "" : r.location || "",
+        description: r.description?.trim() || "",
+        timeRange: r.timeRange || "",
+      }));
 
     console.log("Saving payload ->", payload);
 
@@ -174,114 +126,48 @@ function DutyManagement() {
       await dutyService.saveDutiesBulk(payload);
 
       // reload updated duties after save
-      const updated = await dutyService.getOfficerRowsByDate(dateKey);
+      const updated = await dutyService.getOfficerRowsByDate(selectedDate);
       setRows(updated);
+
       alert("Duties saved successfully!");
-    } catch (err: unknown) {
-      const error = err as AxiosError<{ message?: string }>;
+    } catch (err: any) {
       console.error("Save duties failed:", err);
+
       const msg =
-        error?.response?.data?.message ||
-        error?.response?.data ||
-        error?.message ||
+        err?.response?.data?.message ||
+        err?.response?.data ||
+        err?.message ||
         "Unknown error";
+
       alert("Save failed: " + msg);
     } finally {
       setSaving(false);
     }
   };
 
-  /* lal---------------------------------------------*/
-
-  // const [notes, setNotes] = useState<Record<string, string>>(() => {
-  //   const savedNotes = localStorage.getItem("dutyNotes");
-  //   if (savedNotes) {
-  //     try {
-  //       return JSON.parse(savedNotes);
-  //     } catch {
-  //       return {};
-  //     }
-  //   }
-  //   return {};
-  // });
-
-  // useEffect(() => {
-  //   localStorage.setItem("dutyNotes", JSON.stringify(notes));
-  // }, [notes]);
-
-  // const handleSaveNote = (note: string) => {
-  //   if (note.trim()) {
-  //     setNotes((prev) => ({
-  //       ...prev,
-  //       [selectedDateKey]: note,
-  //     }));
-  //   } else {
-  //     setNotes((prev) => {
-  //       const copy = { ...prev };
-  //       delete copy[selectedDateKey];
-  //       return copy;
-  //     });
-  //   }
-  // };
-
-  // const handleDeleteNote = () => {
-  //   setNotes((prev) => {
-  //     const copy = { ...prev };
-  //     delete copy[selectedDateKey];
-  //     return copy;
-  //   });
-  // };
-
-  // const events = Object.entries(notes).map(([date, note]) => ({
-  //   title: "•",
-  //   date,
-  //   allDay: true,
-  //   extendedProps: { note },
-  // }));
-  /*lal-------------------------------------------------*/
-
   return (
-    <div className="w-full h-screen bg-[#0b0c1a] text-white font-[Inter] flex items-center justify-center">
-      {/* Calendar Container */}
-      <div className="w-[1111px] h-[575px] rounded-[32px] bg-[#181d30] p-6">
+    <>
+      
+      <div className="flex-1 p-5 overflow-y-auto">
         <FullCalendar
+          height="auto"
           plugins={[dayGridPlugin, interactionPlugin]}
           initialView="dayGridMonth"
-          initialDate={new Date(currentYear, currentMonth, 1)}
-          height="100%"
-          headerToolbar={{
-            left: "prev,next",
-            center: "title",
-            right: "",
-          }}
+          dayCellClassNames={"text-md font-semibold"}
+          weekends={true}
           dateClick={handleDateClick}
-          // events={events}    //REMOVE
-          // eventContent={() => (
-          //   <div className="text-[#572aff] text-2xl text-center">•</div>
-          // )}
-          datesSet={(arg) => {
-            setCurrentMonth(arg.start.getMonth());
-            setCurrentYear(arg.start.getFullYear());
-          }}
-          dayCellClassNames={() =>
-            "hover:bg-[rgba(87,42,255,0.15)] cursor-pointer transition-all"
-          }
         />
       </div>
 
       {/* Popup */}
-      <DutyPopupModel
-        isOpen={open}
-        date={selectedDate}
-        onClose={() => setOpen(false)}
-      >
+      <DutyPopupModel open={open} onClose={() => setOpen(false)}>
         <h2 className="text-xl font-semibold mb-4">
-          Details for {selectedDate?.toLocaleDateString()}
+          Details for {selectedDate}
         </h2>
 
         {loadingRows && <p className="mb-3">Loading officers...</p>}
 
-        <div className="max-h-96 overflow-y-auto block bg-slate-50">
+        <div className="max-h-96 overflow-y-auto block">
           <table className="w-full border mb-5 text-sm">
             <thead>
               <tr className="bg-gray-200">
@@ -296,14 +182,17 @@ function DutyManagement() {
             <tbody>
               {rows.map((r, i) => (
                 <tr key={`${r.officerId}-${i}`}>
+                  {/* Name auto-load */}
                   <td className="p-2 border font-medium">{r.officerName}</td>
 
+                  
                   <td className="p-2 border">
                     <select
-                      title="Select Location"
                       className="w-full border rounded px-2 py-1"
                       value={r.location || ""}
-                      onChange={(e) => updateRow(i, "location", e.target.value)}
+                      onChange={(e) =>
+                        updateRow(i, "location", e.target.value)
+                      }
                     >
                       <option value="">Select Location</option>
                       {locations.map((loc) => (
@@ -314,21 +203,26 @@ function DutyManagement() {
                     </select>
                   </td>
 
+                
                   <td className="p-2 border">
                     <select
-                      title="Time Range"
                       className="w-full border rounded px-2 py-1"
                       value={r.timeRange || ""}
                       onChange={(e) => {
                         const selected = timeRanges.find(
-                          (tr) => tr.value === e.target.value,
+                          (tr) => tr.value === e.target.value
                         );
+
                         if (!selected) return;
+
+                        // save timeRange string (for DB time_range)
                         updateRow(i, "timeRange", selected.value);
+
+                        // if you still need datetime, use the *start* time
                         updateRow(
                           i,
                           "datetime",
-                          `${getDateKey(selectedDate!)}T${selected.start}:00`,
+                          `${selectedDate}T${selected.start}:00`
                         );
                       }}
                     >
@@ -341,14 +235,12 @@ function DutyManagement() {
                     </select>
                   </td>
 
+                  
                   <td className="p-2 border">
                     <select
-                      title="Status"
                       className="w-full border rounded px-2 py-1"
                       value={r.status || ""}
-                      onChange={(e) =>
-                        updateRow(i, "status", e.target.value as DutyStatus)
-                      }
+                      onChange={(e) => updateRow(i, "status", e.target.value)}
                     >
                       <option value="">Select Status</option>
                       {statusOptions.map((st) => (
@@ -359,6 +251,7 @@ function DutyManagement() {
                     </select>
                   </td>
 
+                  
                   <td className="p-2 border">
                     <input
                       className="w-full border rounded px-2 py-1"
@@ -383,49 +276,46 @@ function DutyManagement() {
           </table>
         </div>
 
+        {/* Buttons */}
         <div className="mt-4 flex justify-between items-center">
-          {/* Left side buttons */}
-          <div className="flex gap-5">
-            <button
-              onClick={handleAddDuties}
-              disabled={saving || loadingRows}
-              className="bg-red-600 text-white text-lg font-semibold px-5 py-2 rounded-full"
-            >
-              {saving ? "Adding..." : "Add Duty"}
-            </button>
+        {/* Left side buttons */}
+        <div className="flex gap-5">
+        <button
+            onClick={handleAddDuties}
+            disabled={saving || loadingRows}
+            className="bg-red-600 text-white text-lg font-semibold px-5 py-2 rounded-full"
+        >
+          {saving ? "Adding..." : "Add Duty"}
+        </button>
 
-            <button
-              onClick={() => setOpen(false)}
-              className="bg-gray-300 text-lg font-semibold px-5 py-2 rounded-full"
-            >
-              Cancel
-            </button>
-          </div>
+        <button
+            onClick={() => setOpen(false)}
+            className="bg-gray-300 text-lg font-semibold px-5 py-2 rounded-full"
+        >
+          Cancel
+        </button>
+        </div>
 
-          {/* Right side button */}
-          <button
+        {/* Right side button */}
+        <button
             onClick={handleRecommend}
             disabled={recommending}
             className="bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-semibold"
-          >
-            {recommending ? "Recommending..." : "AI Recommend Officers"}
-          </button>
+        >
+          {recommending ? "Recommending..." : "AI Recommend Officers"}
+        </button>
         </div>
-      </DutyPopupModel>
 
-      {/*  Popup – AI Recommended Officers */}
-      <DutyPopupModel
-        isOpen={recommendOpen}
-        date={selectedDate}
-        onClose={() => setRecommendOpen(false)}
-      >
+      </DutyPopupModel>
+      
+
+      {/* 🔹 Popup – AI Recommended Officers */}
+      <DutyPopupModel open={recommendOpen} onClose={() => setRecommendOpen(false)}>
         <h2 className="text-xl font-semibold mb-4">
-          AI Recommended Officers for {selectedDate?.toLocaleDateString()}
+          AI Recommended Officers for {selectedDate}
         </h2>
 
-        {recommending && (
-          <p className="mb-3 text-sm">Loading recommendations...</p>
-        )}
+        {recommending && <p className="mb-3 text-sm">Loading recommendations...</p>}
 
         {!recommending && recommendations.length === 0 && (
           <p className="text-sm text-gray-600">No recommendations found.</p>
@@ -445,9 +335,7 @@ function DutyManagement() {
                 {recommendations.map((r) => (
                   <tr key={r.officerId}>
                     <td className="p-2 border font-medium">{r.name}</td>
-                    <td className="p-2 border">
-                      {r.recommendationScore.toFixed(1)}
-                    </td>
+                    <td className="p-2 border">{r.recommendationScore.toFixed(1)}</td>
                     <td className="p-2 border text-xs">{r.reason}</td>
                   </tr>
                 ))}
@@ -465,7 +353,8 @@ function DutyManagement() {
           </button>
         </div>
       </DutyPopupModel>
-    </div>
+
+    </>
   );
 }
 
