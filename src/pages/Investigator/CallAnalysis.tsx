@@ -88,15 +88,17 @@ const getIncomingGraphStyles = (): cytoscape.StylesheetStyle[] => [
     style: {
       'label': 'data(label)',
       'text-valign': 'bottom',
-      'text-margin-y': 8,
-      'font-size': '11px',
+      'text-margin-y': 5,
+      'font-size': '9px',
       'color': '#e5e7eb',
-      'text-outline-width': 2,
-      'text-outline-color': '#1f2937',
+      'text-background-color': '#111827',
+      'text-background-opacity': 0.75,
+      'text-background-padding': '2px',
+      'text-background-shape': 'roundrectangle',
       'background-color': (ele: cytoscape.NodeSingular) => getPdfColor(ele.data('pdfIndex')),
-      'width': 70,
-      'height': 70,
-      'border-width': 4,
+      'width': 50,
+      'height': 50,
+      'border-width': 2,
       'border-color': '#374151',
       'font-weight': 'bold'
     }
@@ -106,15 +108,17 @@ const getIncomingGraphStyles = (): cytoscape.StylesheetStyle[] => [
     style: {
       'label': 'data(label)',
       'text-valign': 'bottom',
-      'text-margin-y': 6,
-      'font-size': '10px',
-      'color': '#fff',
-      'text-outline-width': 2,
-      'text-outline-color': '#064e3b',
+      'text-margin-y': 4,
+      'font-size': '8px',
+      'color': '#d1d5db',
+      'text-background-color': '#111827',
+      'text-background-opacity': 0.7,
+      'text-background-padding': '2px',
+      'text-background-shape': 'roundrectangle',
       'background-color': '#10b981',
-      'width': 50,
-      'height': 50,
-      'border-width': 3,
+      'width': 36,
+      'height': 36,
+      'border-width': 2,
       'border-color': '#34d399'
     }
   },
@@ -123,15 +127,17 @@ const getIncomingGraphStyles = (): cytoscape.StylesheetStyle[] => [
     style: {
       'label': 'data(label)',
       'text-valign': 'bottom',
-      'text-margin-y': 6,
-      'font-size': '11px',
-      'color': '#fff',
-      'text-outline-width': 2,
-      'text-outline-color': '#92400e',
+      'text-margin-y': 4,
+      'font-size': '8px',
+      'color': '#fef3c7',
+      'text-background-color': '#111827',
+      'text-background-opacity': 0.75,
+      'text-background-padding': '2px',
+      'text-background-shape': 'roundrectangle',
       'background-color': '#fbbf24',
-      'width': 58,
-      'height': 58,
-      'border-width': 4,
+      'width': 42,
+      'height': 42,
+      'border-width': 2,
       'border-color': '#fcd34d',
       'border-style': 'double',
       'font-weight': 'bold'
@@ -140,37 +146,39 @@ const getIncomingGraphStyles = (): cytoscape.StylesheetStyle[] => [
   {
     selector: 'edge[edgeType="normal"]',
     style: {
-      'width': (ele: cytoscape.EdgeSingular) => Math.min(2 + ele.data('callCount') * 0.6, 10),
+      'width': (ele: cytoscape.EdgeSingular) => Math.min(1.5 + ele.data('callCount') * 0.4, 6),
       'line-color': '#34d399',
       'target-arrow-color': '#34d399',
       'target-arrow-shape': 'triangle',
+      'arrow-scale': 0.8,
       'curve-style': 'bezier',
       'label': 'data(label)',
-      'font-size': '9px',
+      'font-size': '7px',
       'color': '#9ca3af',
       'text-background-color': '#1f2937',
-      'text-background-opacity': 0.9,
-      'text-background-padding': '3px',
+      'text-background-opacity': 0.85,
+      'text-background-padding': '2px',
       'text-background-shape': 'roundrectangle'
     }
   },
   {
     selector: 'edge[edgeType="shared"]',
     style: {
-      'width': (ele: cytoscape.EdgeSingular) => Math.min(2 + ele.data('callCount') * 0.6, 10),
+      'width': (ele: cytoscape.EdgeSingular) => Math.min(1.5 + ele.data('callCount') * 0.4, 6),
       'line-color': '#fbbf24',
       'target-arrow-color': '#fbbf24',
       'target-arrow-shape': 'triangle',
+      'arrow-scale': 0.8,
       'curve-style': 'bezier',
       'line-style': 'dashed',
-      'line-dash-pattern': [6, 3],
+      'line-dash-pattern': [5, 2],
       'label': 'data(label)',
-      'font-size': '10px',
+      'font-size': '7px',
       'color': '#fef3c7',
       'font-weight': 'bold',
       'text-background-color': '#1f2937',
-      'text-background-opacity': 0.95,
-      'text-background-padding': '3px',
+      'text-background-opacity': 0.9,
+      'text-background-padding': '2px',
       'text-background-shape': 'roundrectangle'
     }
   },
@@ -178,7 +186,7 @@ const getIncomingGraphStyles = (): cytoscape.StylesheetStyle[] => [
     selector: 'node:selected',
     style: {
       'border-color': '#fff',
-      'border-width': 5
+      'border-width': 3
     }
   }
 ];
@@ -189,15 +197,17 @@ const getOutgoingGraphStyles = (): cytoscape.StylesheetStyle[] => [
     style: {
       'label': 'data(label)',
       'text-valign': 'bottom',
-      'text-margin-y': 8,
-      'font-size': '11px',
+      'text-margin-y': 5,
+      'font-size': '9px',
       'color': '#e5e7eb',
-      'text-outline-width': 2,
-      'text-outline-color': '#1f2937',
+      'text-background-color': '#111827',
+      'text-background-opacity': 0.75,
+      'text-background-padding': '2px',
+      'text-background-shape': 'roundrectangle',
       'background-color': (ele: cytoscape.NodeSingular) => getPdfColor(ele.data('pdfIndex')),
-      'width': 70,
-      'height': 70,
-      'border-width': 4,
+      'width': 50,
+      'height': 50,
+      'border-width': 2,
       'border-color': '#374151',
       'font-weight': 'bold'
     }
@@ -207,15 +217,17 @@ const getOutgoingGraphStyles = (): cytoscape.StylesheetStyle[] => [
     style: {
       'label': 'data(label)',
       'text-valign': 'bottom',
-      'text-margin-y': 6,
-      'font-size': '10px',
-      'color': '#fff',
-      'text-outline-width': 2,
-      'text-outline-color': '#7f1d1d',
+      'text-margin-y': 4,
+      'font-size': '8px',
+      'color': '#fecaca',
+      'text-background-color': '#111827',
+      'text-background-opacity': 0.7,
+      'text-background-padding': '2px',
+      'text-background-shape': 'roundrectangle',
       'background-color': '#f87171',
-      'width': 50,
-      'height': 50,
-      'border-width': 3,
+      'width': 36,
+      'height': 36,
+      'border-width': 2,
       'border-color': '#fca5a5'
     }
   },
@@ -224,15 +236,17 @@ const getOutgoingGraphStyles = (): cytoscape.StylesheetStyle[] => [
     style: {
       'label': 'data(label)',
       'text-valign': 'bottom',
-      'text-margin-y': 6,
-      'font-size': '11px',
-      'color': '#fff',
-      'text-outline-width': 2,
-      'text-outline-color': '#92400e',
+      'text-margin-y': 4,
+      'font-size': '8px',
+      'color': '#fef3c7',
+      'text-background-color': '#111827',
+      'text-background-opacity': 0.75,
+      'text-background-padding': '2px',
+      'text-background-shape': 'roundrectangle',
       'background-color': '#fbbf24',
-      'width': 58,
-      'height': 58,
-      'border-width': 4,
+      'width': 42,
+      'height': 42,
+      'border-width': 2,
       'border-color': '#fcd34d',
       'border-style': 'double',
       'font-weight': 'bold'
@@ -241,37 +255,39 @@ const getOutgoingGraphStyles = (): cytoscape.StylesheetStyle[] => [
   {
     selector: 'edge[edgeType="normal"]',
     style: {
-      'width': (ele: cytoscape.EdgeSingular) => Math.min(2 + ele.data('callCount') * 0.6, 10),
+      'width': (ele: cytoscape.EdgeSingular) => Math.min(1.5 + ele.data('callCount') * 0.4, 6),
       'line-color': '#f87171',
       'target-arrow-color': '#f87171',
       'target-arrow-shape': 'triangle',
+      'arrow-scale': 0.8,
       'curve-style': 'bezier',
       'label': 'data(label)',
-      'font-size': '9px',
+      'font-size': '7px',
       'color': '#9ca3af',
       'text-background-color': '#1f2937',
-      'text-background-opacity': 0.9,
-      'text-background-padding': '3px',
+      'text-background-opacity': 0.85,
+      'text-background-padding': '2px',
       'text-background-shape': 'roundrectangle'
     }
   },
   {
     selector: 'edge[edgeType="shared"]',
     style: {
-      'width': (ele: cytoscape.EdgeSingular) => Math.min(2 + ele.data('callCount') * 0.6, 10),
+      'width': (ele: cytoscape.EdgeSingular) => Math.min(1.5 + ele.data('callCount') * 0.4, 6),
       'line-color': '#fbbf24',
       'target-arrow-color': '#fbbf24',
       'target-arrow-shape': 'triangle',
+      'arrow-scale': 0.8,
       'curve-style': 'bezier',
       'line-style': 'dashed',
-      'line-dash-pattern': [6, 3],
+      'line-dash-pattern': [5, 2],
       'label': 'data(label)',
-      'font-size': '10px',
+      'font-size': '7px',
       'color': '#fef3c7',
       'font-weight': 'bold',
       'text-background-color': '#1f2937',
-      'text-background-opacity': 0.95,
-      'text-background-padding': '3px',
+      'text-background-opacity': 0.9,
+      'text-background-padding': '2px',
       'text-background-shape': 'roundrectangle'
     }
   },
@@ -279,7 +295,7 @@ const getOutgoingGraphStyles = (): cytoscape.StylesheetStyle[] => [
     selector: 'node:selected',
     style: {
       'border-color': '#fff',
-      'border-width': 5
+      'border-width': 3
     }
   }
 ];
@@ -292,17 +308,17 @@ const getLayoutConfig = () => ({
   nodeDimensionsIncludeLabels: true,
   refresh: 30,
   fit: true,
-  padding: 50,
+  padding: 30,
   randomize: true,
-  nodeRepulsion: 8500,
-  idealEdgeLength: 120,
-  edgeElasticity: 0.45,
+  nodeRepulsion: 6000,
+  idealEdgeLength: 80,
+  edgeElasticity: 0.35,
   nestingFactor: 0.1,
-  gravity: 0.25,
+  gravity: 0.4,
   numIter: 2500,
   tile: true,
   animate: false,
-  gravityRange: 3.8
+  gravityRange: 2.5
 });
 
 // ============= Tooltip Component =============
