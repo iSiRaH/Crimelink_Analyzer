@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import cytoscape from 'cytoscape';
 // @ts-expect-error - no types available for cytoscape-cose-bilkent
 import coseBilkent from 'cytoscape-cose-bilkent';
@@ -29,6 +29,8 @@ interface GraphData {
     label?: string;
     color?: string;
     width?: number;
+    locations?: string[];
+    location_counts?: Record<string, number>;
   }>;
   total_nodes: number;
   total_edges: number;
@@ -52,6 +54,15 @@ interface AnalysisResult {
     crime_history: Array<{ crime_type: string; date: string; status: string }>;
   }>;
   risk_score: number;
+  location_analysis?: {
+    gap_minutes?: number;
+    locations?: Array<{
+      location: string;
+      start: string;
+      end: string;
+      count: number;
+    }>;
+  };
 }
 
 interface CombinedGraphData {
@@ -615,6 +626,7 @@ function CallAnalysis() {
   const [results, setResults] = useState<AnalysisResult[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [modalState, setModalState] = useState<{ isOpen: boolean; type: 'incoming' | 'outgoing' }>({ isOpen: false, type: 'incoming' });
+  const [selectedLocations, setSelectedLocations] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -684,7 +696,41 @@ function CallAnalysis() {
     setResults([]);
     setSelectedFile(null);
     setError(null);
+    setSelectedLocations(new Set());
   };
+
+  // Extract all unique locations from results (including "Unknown" for edges without location data)
+  const allLocations = useMemo(() => {
+    const locationSet = new Set<string>();
+    
+    results.forEach(result => {
+      // Get locations from edges using location_counts
+      result.incoming_graph.edges.forEach(edge => {
+        if (edge.location_counts) {
+          Object.keys(edge.location_counts).forEach(loc => locationSet.add(loc));
+        } else if (edge.locations && edge.locations.length > 0) {
+          // Fallback to locations array if location_counts not available
+          edge.locations.forEach(loc => locationSet.add(loc));
+        }
+      });
+      result.outgoing_graph.edges.forEach(edge => {
+        if (edge.location_counts) {
+          Object.keys(edge.location_counts).forEach(loc => locationSet.add(loc));
+        } else if (edge.locations && edge.locations.length > 0) {
+          edge.locations.forEach(loc => locationSet.add(loc));
+        }
+      });
+    });
+    
+    return Array.from(locationSet).sort();
+  }, [results]);
+
+  // Initialize selected locations when results change
+  useEffect(() => {
+    if (allLocations.length > 0 && selectedLocations.size === 0) {
+      setSelectedLocations(new Set(allLocations));
+    }
+  }, [allLocations]);
 
   // Memoized combined graph data
   const combinedGraphs = useMemo(() => {
@@ -764,7 +810,9 @@ function CallAnalysis() {
             label: `${edge.call_count}`,
             callCount: edge.call_count,
             edgeType: isShared ? 'shared' : 'normal',
-            pdfIndex
+            pdfIndex,
+            locations: edge.locations || [],
+            locationCounts: edge.location_counts || {}
           }
         });
       });
@@ -819,7 +867,9 @@ function CallAnalysis() {
             label: `${edge.call_count}`,
             callCount: edge.call_count,
             edgeType: isShared ? 'shared' : 'normal',
-            pdfIndex
+            pdfIndex,
+            locations: edge.locations || [],
+            locationCounts: edge.location_counts || {}
           }
         });
       });
@@ -836,6 +886,148 @@ function CallAnalysis() {
       }
     };
   }, [results]);
+
+  // Filter graphs based on selected locations
+  const filteredGraphs = useMemo(() => {
+    if (!combinedGraphs) return null;
+    if (selectedLocations.size === 0) return combinedGraphs;
+
+    const filterGraph = (graph: CombinedGraphData): CombinedGraphData => {
+      // Filter and transform edges based on selected locations
+      const filteredEdges: cytoscape.EdgeDefinition[] = [];
+      
+      graph.edges.forEach(edge => {
+        const locationCounts = edge.data.locationCounts as Record<string, number> || {};
+        const edgeLocations = Object.keys(locationCounts);
+        
+        // Calculate filtered call count based on selected locations
+        let filteredCallCount = 0;
+        
+        if (edgeLocations.length === 0) {
+          // No location data - check if "Unknown" is selected
+          if (selectedLocations.has('Unknown')) {
+            filteredCallCount = edge.data.callCount as number || 0;
+          }
+        } else {
+          // Sum up call counts for selected locations only
+          edgeLocations.forEach(loc => {
+            if (selectedLocations.has(loc)) {
+              filteredCallCount += locationCounts[loc] || 0;
+            }
+          });
+        }
+        
+        // Only include edge if it has calls in selected locations
+        if (filteredCallCount > 0) {
+          filteredEdges.push({
+            data: {
+              ...edge.data,
+              callCount: filteredCallCount,
+              label: `${filteredCallCount}`,
+              // Recalculate width based on filtered count
+              width: Math.min(1 + (filteredCallCount * 0.5), 10)
+            }
+          });
+        }
+      });
+
+      // Calculate node call counts and which main numbers they're connected to (for shared status)
+      const nodeCallCounts = new Map<string, number>();
+      const nodeMainNumbers = new Map<string, Set<string>>();
+      
+      filteredEdges.forEach(edge => {
+        const source = edge.data.source as string;
+        const target = edge.data.target as string;
+        const callCount = edge.data.callCount as number;
+        
+        // Determine which is the contact and which is the main node
+        let contactNodeId: string;
+        let mainNumber: string;
+        
+        if (source.startsWith('contact_')) {
+          contactNodeId = source;
+          mainNumber = target.replace('main_', '');
+        } else {
+          contactNodeId = target;
+          mainNumber = source.replace('main_', '');
+        }
+        
+        // Accumulate call counts for the contact node
+        nodeCallCounts.set(contactNodeId, (nodeCallCounts.get(contactNodeId) || 0) + callCount);
+        
+        // Track which main numbers this contact is connected to
+        if (!nodeMainNumbers.has(contactNodeId)) {
+          nodeMainNumbers.set(contactNodeId, new Set());
+        }
+        nodeMainNumbers.get(contactNodeId)!.add(mainNumber);
+      });
+
+      // Get all node IDs that are connected by visible edges
+      const visibleNodeIds = new Set<string>();
+      filteredEdges.forEach(edge => {
+        visibleNodeIds.add(edge.data.source as string);
+        visibleNodeIds.add(edge.data.target as string);
+      });
+
+      // Filter and update nodes
+      const filteredNodes = graph.nodes
+        .filter(node => {
+          if (node.data.type === 'main') return true;
+          return visibleNodeIds.has(node.data.id as string);
+        })
+        .map(node => {
+          // Main nodes stay as-is
+          if (node.data.type === 'main') return node;
+          
+          const nodeId = node.data.id as string;
+          const filteredCallCount = nodeCallCounts.get(nodeId) || 0;
+          const mainNumbers = nodeMainNumbers.get(nodeId);
+          const isStillShared = mainNumbers ? mainNumbers.size > 1 : false;
+          
+          return {
+            data: {
+              ...node.data,
+              callCount: filteredCallCount,
+              type: isStillShared ? 'shared_contact' : 'contact',
+              // Update sharedWith to only include main numbers that have edges after filtering
+              sharedWith: mainNumbers ? Array.from(mainNumbers) : []
+            }
+          };
+        });
+
+      return {
+        nodes: filteredNodes,
+        edges: filteredEdges
+      };
+    };
+
+    return {
+      incoming: filterGraph(combinedGraphs.incoming),
+      outgoing: filterGraph(combinedGraphs.outgoing)
+    };
+  }, [combinedGraphs, selectedLocations]);
+
+  // Handler for location filter toggle
+  const handleLocationToggle = (location: string) => {
+    setSelectedLocations(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(location)) {
+        newSet.delete(location);
+      } else {
+        newSet.add(location);
+      }
+      return newSet;
+    });
+  };
+
+  // Handler to select/deselect all locations
+  const handleSelectAllLocations = () => {
+    if (selectedLocations.size === allLocations.length) {
+      setSelectedLocations(new Set());
+    } else {
+      setSelectedLocations(new Set(allLocations));
+    }
+  };
 
   return (
     <div className="p-6 space-y-6 bg-gray-900 min-h-screen">
@@ -998,6 +1190,44 @@ function CallAnalysis() {
               </p>
             </div>
 
+            {/* Location Filter */}
+            {allLocations.length > 0 && (
+              <div className="mb-6 p-4 bg-gray-700/50 rounded-lg border border-gray-600">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-gray-200">Filter by Location</h3>
+                  <button
+                    onClick={handleSelectAllLocations}
+                    className="text-xs px-2 py-1 bg-gray-600 hover:bg-gray-500 text-gray-200 rounded transition"
+                  >
+                    {selectedLocations.size === allLocations.length ? 'Deselect All' : 'Select All'}
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {allLocations.map(location => (
+                    <label
+                      key={location}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg cursor-pointer transition ${
+                        selectedLocations.has(location)
+                          ? 'bg-blue-600/30 border border-blue-500 text-blue-200'
+                          : 'bg-gray-600/50 border border-gray-500 text-gray-400'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedLocations.has(location)}
+                        onChange={() => handleLocationToggle(location)}
+                        className="w-4 h-4 rounded border-gray-500 text-blue-500 focus:ring-blue-500 focus:ring-offset-gray-800"
+                      />
+                      <span className="text-sm">{location}</span>
+                    </label>
+                  ))}
+                </div>
+                {selectedLocations.size === 0 && (
+                  <p className="mt-2 text-xs text-amber-400">Select at least one location to view the network</p>
+                )}
+              </div>
+            )}
+
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
               {/* Incoming Network */}
               <div>
@@ -1011,7 +1241,7 @@ function CallAnalysis() {
                   </div>
                 </div>
                 <NetworkGraphPreview 
-                  graphData={combinedGraphs.incoming}
+                  graphData={filteredGraphs?.incoming || combinedGraphs.incoming}
                   graphType="incoming"
                   onExpand={() => setModalState({ isOpen: true, type: 'incoming' })}
                 />
@@ -1029,7 +1259,7 @@ function CallAnalysis() {
                   </div>
                 </div>
                 <NetworkGraphPreview 
-                  graphData={combinedGraphs.outgoing}
+                  graphData={filteredGraphs?.outgoing || combinedGraphs.outgoing}
                   graphType="outgoing"
                   onExpand={() => setModalState({ isOpen: true, type: 'outgoing' })}
                 />
@@ -1059,20 +1289,117 @@ function CallAnalysis() {
               </div>
             </div>
           </div>
+
+          {/* Location Time Periods */}
+          <LocationTimePeriods results={results} />
         </div>
       )}
 
       {/* Fullscreen Modal */}
-      {combinedGraphs && (
+      {combinedGraphs && filteredGraphs && (
         <GraphModal
           isOpen={modalState.isOpen}
           onClose={() => setModalState(prev => ({ ...prev, isOpen: false }))}
           title={modalState.type === 'incoming' ? 'Incoming Calls Network' : 'Outgoing Calls Network'}
-          graphData={modalState.type === 'incoming' ? combinedGraphs.incoming : combinedGraphs.outgoing}
+          graphData={modalState.type === 'incoming' ? filteredGraphs.incoming : filteredGraphs.outgoing}
           graphType={modalState.type}
           pdfResults={results}
         />
       )}
+    </div>
+  );
+}
+
+/**
+ * LocationTimePeriods Component
+ * Displays cell tower location time periods extracted from call records
+ */
+function LocationTimePeriods({ results }: { results: AnalysisResult[] }) {
+  return (
+    <div className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 p-6">
+      <h2 className="text-lg font-bold text-gray-100 mb-2">Location Time Periods</h2>
+      
+      <p className="text-sm text-gray-400 mb-4">
+        Sessions are split when there is a gap greater than{" "}
+        <span className="font-semibold text-gray-200">
+          {results[0]?.location_analysis?.gap_minutes ?? 180} minutes
+        </span>.
+      </p>
+
+      <div className="overflow-x-auto">
+        <table className="min-w-full border border-gray-600 rounded-lg overflow-hidden">
+          <thead className="bg-gray-700">
+            <tr>
+              <th className="text-left text-sm font-semibold text-gray-200 p-3 border-b border-gray-600">
+                Main Number
+              </th>
+              <th className="text-left text-sm font-semibold text-gray-200 p-3 border-b border-gray-600">
+                #
+              </th>
+              <th className="text-left text-sm font-semibold text-gray-200 p-3 border-b border-gray-600">
+                Location
+              </th>
+              <th className="text-left text-sm font-semibold text-gray-200 p-3 border-b border-gray-600">
+                Time Period
+              </th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {results.map((r, idx) => {
+              const locs = r.location_analysis?.locations ?? [];
+
+              return (
+                <React.Fragment key={`pdf-${idx}`}>
+                  {/* PDF/Main Number Header Row */}
+                  <tr className="bg-gray-700/50 border-b border-gray-600">
+                    <td className="p-3 text-sm font-bold text-gray-100" colSpan={4}>
+                      {r.main_number}{" "}
+                      <span className="text-gray-400 font-normal">
+                        ({r.pdf_filename})
+                      </span>
+                    </td>
+                  </tr>
+
+                  {/* If no location data */}
+                  {locs.length === 0 ? (
+                    <tr className="border-b border-gray-600">
+                      <td className="p-3 text-sm text-gray-400" colSpan={4}>
+                        No location data found in this PDF
+                      </td>
+                    </tr>
+                  ) : (
+                    /* Location session rows */
+                    locs.map((l, j) => (
+                      <tr key={`row-${idx}-${j}`} className="border-b border-gray-600 hover:bg-gray-700/30">
+                        {/* indent column under main number */}
+                        <td className="p-3 text-sm text-gray-500 font-mono"></td>
+
+                        {/* Session number per PDF */}
+                        <td className="p-3 text-sm text-gray-300 font-semibold">
+                          {j + 1}
+                        </td>
+
+                        <td className="p-3 text-sm text-gray-200">{l.location}</td>
+
+                        <td className="p-3 text-sm text-gray-300">
+                          {l.start} - {l.end}
+                          <span className="text-gray-400"> ({l.count} records)</span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+
+                  {/* Optional spacer between PDFs */}
+                  <tr>
+                    <td colSpan={4} className="h-2 bg-gray-800"></td>
+                  </tr>
+                </React.Fragment>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
