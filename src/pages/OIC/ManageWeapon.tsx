@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   addWeapon,
   updateWeapon,
@@ -8,7 +9,7 @@ import {
   ArrowLeft,
   PlusCircle,
   RefreshCcw,
-  ChevronDown,
+
   CheckCircle,
 } from "lucide-react";
 
@@ -35,6 +36,7 @@ type Bullet = {
 /* ================= COMPONENT ================= */
 
 export default function ManageWeapon({ onBack }: Props) {
+  const navigate = useNavigate();
   const [weaponMode, setWeaponMode] = useState<"add" | "update">("add");
   const [bulletMode, setBulletMode] = useState<"add" | "update">("add");
 
@@ -45,6 +47,9 @@ export default function ManageWeapon({ onBack }: Props) {
   const [serialNumber, setSerialNumber] = useState("");
   const [remarks, setRemarks] = useState("");
   const [status, setStatus] = useState("AVAILABLE");
+  const [weaponRegisterDate, setWeaponRegisterDate] = useState<string>(
+    new Date().toISOString().split("T")[0]
+  );
 
   // Bullet states
   const [bullets, setBullets] = useState<Bullet[]>([]);
@@ -52,6 +57,9 @@ export default function ManageWeapon({ onBack }: Props) {
   const [bulletType, setBulletType] = useState("");
   const [numberOfMagazines, setNumberOfMagazines] = useState("");
   const [bulletRemarks, setBulletRemarks] = useState("");
+  const [bulletRegisterDate, setBulletRegisterDate] = useState<string>(
+    new Date().toISOString().split("T")[0]
+  );
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formMessage, setFormMessage] = useState("");
@@ -81,6 +89,66 @@ export default function ManageWeapon({ onBack }: Props) {
     setStatus(weapon.status);
     setErrors({});
     setFormMessage("");
+  };
+
+  /* ================= BULLET HANDLERS (UI-only) ================= */
+
+  const handleAddBullet = async () => {
+    const newErrors: Record<string, string> = {};
+    if (!bulletType.trim()) newErrors.bulletType = "Bullet type is required";
+    if (!numberOfMagazines.toString().trim() || isNaN(Number(numberOfMagazines)))
+      newErrors.numberOfMagazines = "Number of magazines is required and must be a number";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setFormMessage("Please complete all required fields before saving.");
+      return;
+    }
+
+    setErrors({});
+    setFormMessage("");
+
+    const newBullet: Bullet = {
+      id: Date.now().toString(),
+      bulletType,
+      numberOfMagazines: Number(numberOfMagazines),
+      remarks: bulletRemarks,
+    };
+
+    setBullets((b) => [newBullet, ...b]);
+    alert("Bullets added successfully");
+    setBulletType("");
+    setNumberOfMagazines("");
+    setBulletRemarks("");
+    setBulletRegisterDate(new Date().toISOString().split("T")[0]);
+  };
+
+  const handleUpdateBullet = async () => {
+    if (!selectedBullet) {
+      alert("Please select bullets to update");
+      return;
+    }
+
+    const newErrors: Record<string, string> = {};
+    if (!bulletType.trim()) newErrors.bulletType = "Bullet type is required";
+    if (!numberOfMagazines.toString().trim() || isNaN(Number(numberOfMagazines)))
+      newErrors.numberOfMagazines = "Number of magazines is required and must be a number";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setFormMessage("Please complete all required fields before updating.");
+      return;
+    }
+
+    setErrors({});
+    setFormMessage("");
+
+    setBullets((prev) =>
+      prev.map((b) => (b.id === selectedBullet.id ? { ...b, bulletType, numberOfMagazines: Number(numberOfMagazines), remarks: bulletRemarks } : b))
+    );
+
+    alert("Bullets updated successfully");
+    setSelectedBullet(null);
   };
 
   /* ================= ADD WEAPON ================= */
@@ -170,6 +238,19 @@ export default function ManageWeapon({ onBack }: Props) {
 
   return (
     <div className="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 min-h-screen p-6 text-white">
+      {/* BACK BUTTON */}
+      <div className="mb-4">
+        <button
+          onClick={() => {
+            handleBack();
+            navigate('/oic/weapon-handover');
+          }}
+          className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition text-sm font-medium"
+        >
+          <ArrowLeft size={16} />
+          Back
+        </button>
+      </div>
       {/* WEAPON MANAGEMENT SECTION */}
       <div className="bg-slate-800/80 rounded-2xl p-8 mb-8 border border-slate-700/50">
         <div className="mb-6">
@@ -186,14 +267,14 @@ export default function ManageWeapon({ onBack }: Props) {
               setFormMessage("");
               setErrors({});
             }}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-semibold transition ${
+            className={`flex items-center gap-2 px-7 py-2.5 rounded-full font-semibold transition ${
               weaponMode === "add"
-                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/40 hover:bg-blue-700"
-                : "bg-slate-700 text-slate-300 hover:bg-slate-600 border border-slate-600"
+                ? "bg-[#0b0f16] text-blue-400 ring-1 ring-blue-700/30"
+                : "bg-[#1c2333] text-white border border-blue-600/40 hover:border-blue-500"
             }`}
           >
             <PlusCircle size={18} />
-            +Add Weapon
+            Register Weapon
           </button>
 
           <button
@@ -202,10 +283,10 @@ export default function ManageWeapon({ onBack }: Props) {
               setFormMessage("");
               setErrors({});
             }}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-semibold transition border ${
+            className={`flex items-center gap-2 px-7 py-2.5 rounded-full font-semibold transition ${
               weaponMode === "update"
-                ? "bg-slate-700 text-white border-blue-500 shadow-lg shadow-blue-600/20"
-                : "bg-transparent text-slate-300 border-slate-600 hover:border-slate-500"
+                ? "bg-[#0b0f16] text-blue-400 ring-1 ring-blue-700/30"
+                : "bg-[#1c2333] text-white border border-blue-600/40 hover:border-blue-500"
             }`}
           >
             <RefreshCcw size={18} />
@@ -243,11 +324,20 @@ export default function ManageWeapon({ onBack }: Props) {
                   <input
                     type="date"
                     className="w-full bg-white text-slate-900 border border-slate-400 rounded-lg px-4 py-2.5 font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                    defaultValue={new Date().toISOString().split('T')[0]}
+                    value={weaponRegisterDate}
+                    onChange={(e) => setWeaponRegisterDate(e.target.value)}
                   />
                   <span className="absolute right-3 top-3 text-slate-900">📅</span>
                 </div>
               </div>
+            </div>
+            <div className="flex justify-start mt-6">
+              <button
+                onClick={handleAdd}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-2.5 rounded-lg transition shadow-lg shadow-blue-600/30 flex items-center gap-2"
+              >
+                Register Weapon
+              </button>
             </div>
           </div>
         )}
@@ -302,7 +392,7 @@ export default function ManageWeapon({ onBack }: Props) {
                       type="date"
                       disabled
                       className="w-full bg-slate-600 text-slate-300 border border-slate-500 rounded-lg px-4 py-2.5 font-medium opacity-60 cursor-not-allowed"
-                      defaultValue={new Date().toISOString().split('T')[0]}
+                      value={weaponRegisterDate}
                     />
                   </div>
                 </div>
@@ -360,14 +450,14 @@ export default function ManageWeapon({ onBack }: Props) {
               setFormMessage("");
               setErrors({});
             }}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-semibold transition ${
-              bulletMode === "add"
-                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/40 hover:bg-blue-700"
-                : "bg-slate-700 text-slate-300 hover:bg-slate-600 border border-slate-600"
-            }`}
+            className={`flex items-center gap-2 px-7 py-2.5 rounded-full font-semibold transition ${
+                bulletMode === "add"
+                  ? "bg-[#0b0f16] text-blue-400 ring-1 ring-blue-700/30"
+                  : "bg-[#1c2333] text-white border border-blue-600/40 hover:border-blue-500"
+              }`}
           >
             <PlusCircle size={18} />
-            +Add Weapon
+            Add Bullets
           </button>
 
           <button
@@ -376,10 +466,10 @@ export default function ManageWeapon({ onBack }: Props) {
               setFormMessage("");
               setErrors({});
             }}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-semibold transition border ${
+            className={`flex items-center gap-2 px-7 py-2.5 rounded-full font-semibold transition ${
               bulletMode === "update"
-                ? "bg-slate-700 text-white border-blue-500 shadow-lg shadow-blue-600/20"
-                : "bg-transparent text-slate-300 border-slate-600 hover:border-slate-500"
+                ? "bg-[#0b0f16] text-blue-400 ring-1 ring-blue-700/30"
+                : "bg-[#1c2333] text-white border border-blue-600/40 hover:border-blue-500"
             }`}
           >
             <RefreshCcw size={18} />
@@ -416,12 +506,22 @@ export default function ManageWeapon({ onBack }: Props) {
                 <div className="relative">
                   <input
                     type="date"
-                    className="w-full bg-white text-slate-900 border border-slate-400 rounded-lg px-4 py-2.5 font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                    defaultValue={new Date().toISOString().split('T')[0]}
+                        className="w-full bg-white text-slate-900 border border-slate-400 rounded-lg px-4 py-2.5 font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                        value={bulletRegisterDate}
+                        onChange={(e) => setBulletRegisterDate(e.target.value)}
                   />
                   <span className="absolute right-3 top-3 text-slate-900">📅</span>
                 </div>
               </div>
+            </div>
+            <div className="flex justify-start mt-6">
+              <button
+                onClick={handleAddBullet}
+                className="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-8 py-2.5 rounded-lg transition shadow-lg shadow-purple-600/30 flex items-center gap-2"
+              >
+                
+                Add Bullets
+              </button>
             </div>
           </div>
         )}
@@ -474,14 +574,14 @@ export default function ManageWeapon({ onBack }: Props) {
                       type="date"
                       disabled
                       className="w-full bg-slate-600 text-slate-300 border border-slate-500 rounded-lg px-4 py-2.5 font-medium opacity-60 cursor-not-allowed"
-                      defaultValue={new Date().toISOString().split('T')[0]}
+                      value={bulletRegisterDate}
                     />
                   </div>
                 </div>
 
                 <div className="flex justify-start">
                   <button
-                    onClick={handleUpdate}
+                    onClick={handleUpdateBullet}
                     className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-2.5 rounded-lg transition shadow-lg shadow-blue-600/30 flex items-center gap-2"
                   >
                     <CheckCircle size={18} />
