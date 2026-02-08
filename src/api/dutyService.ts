@@ -94,7 +94,7 @@ export async function downloadDutyScheduleReportPdf(
 ): Promise<Blob> {
   const response = await api.get<Blob>("/duty-schedules/report/pdf", {
     params: {
-      start: fromDate, // must match backend param name
+      start: fromDate, 
       end: toDate,
     },
     responseType: "blob", //  important for pdf
