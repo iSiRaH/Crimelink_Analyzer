@@ -137,11 +137,8 @@
 
 .bottom-text {
   @apply text-white text-center;
+  @apply text-xs mt-5;
   font-size: 10px;
   margin-top: 24px;
   max-width: 400px;
-}
-
-.bottom-text {
-  @apply text-xs mt-5;
 }

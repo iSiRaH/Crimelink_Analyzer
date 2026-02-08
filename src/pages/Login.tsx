@@ -39,7 +39,7 @@ function Login() {
         {error && <div className="error-message">{error}</div>}
 
         <div className="input-group">
-          <label className="input-label">Username</label>
+          <label className="input-label">E mail</label>
           <input
             type="email"
             placeholder="Enter your email"
