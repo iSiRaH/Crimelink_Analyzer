@@ -334,7 +334,7 @@ export default function ManageWeapon({ onBack }: Props) {
             <div className="flex justify-start mt-6">
               <button
                 onClick={handleAdd}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-2.5 rounded-lg transition shadow-lg shadow-blue-600/30 flex items-center gap-2"
+                className="bg-blue-800 hover:bg-blue-900 text-white font-semibold px-8 py-2.5 rounded-lg transition shadow-lg shadow-blue-800/30 flex items-center gap-2"
               >
                 Register Weapon
               </button>
@@ -422,7 +422,7 @@ export default function ManageWeapon({ onBack }: Props) {
                 <div className="flex justify-start">
                   <button
                     onClick={handleUpdate}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-2.5 rounded-lg transition shadow-lg shadow-blue-600/30 flex items-center gap-2"
+                    className="bg-blue-800 hover:bg-blue-900 text-white font-semibold px-8 py-2.5 rounded-lg transition shadow-lg shadow-blue-800/30 flex items-center gap-2"
                   >
                     <CheckCircle size={18} />
                     Update Weapon
@@ -517,7 +517,7 @@ export default function ManageWeapon({ onBack }: Props) {
             <div className="flex justify-start mt-6">
               <button
                 onClick={handleAddBullet}
-                className="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-8 py-2.5 rounded-lg transition shadow-lg shadow-purple-600/30 flex items-center gap-2"
+                className="bg-blue-800 hover:bg-blue-900 text-white font-semibold px-8 py-2.5 rounded-lg transition shadow-lg shadow-blue-800/30 flex items-center gap-2"
               >
                 
                 Add Bullets

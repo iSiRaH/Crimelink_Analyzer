@@ -113,12 +113,12 @@ export default function WeaponHandover() {
     <div className="min-h-screen bg-[#0d1117] text-white p-8">
 
       {!showManageWeapon && (
-        <div className="bg-[#1c2333] rounded-2xl pl-8 pr-8 pt-3 pb-3 shadow-2xl rounded-3xl">
+        <div className="bg-[#1c2333]  pl-8 pr-8 pt-3 pb-3 shadow-2xl rounded-3xl">
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-2xl font-semibold text-white">Weapon Management</h1>
             <button
               onClick={() => setShowManageWeapon(true)}
-              className="bg-[#4c7ce5] hover:bg-[#5a8aef] px-6 py-2.5 rounded-lg font-medium transition-all duration-200 text-sm text-white"
+              className="bg-[#4c7ce5] hover:bg-[#5a8aef] px-6 py-2.5 rounded-lg font-medium transition-all duration-200 text-md text-white"
             >
               Weapon operator
             </button>
@@ -162,7 +162,7 @@ export default function WeaponHandover() {
             <div className="flex gap-3">
               {(["ALL", "Available", "Issued"] as const).map((s) => {
                 const isActive = statusFilter === s;
-                const base = 'px-7 py-2.5 rounded-full font-medium transition-all duration-200 text-sm';
+                const base = 'px-7 py-2.5 rounded-full font-medium transition-all duration-200 text-md';
                 const active = 'bg-[#0b0f16] text-blue-400 ring-1 ring-blue-700/30';
                 const inactive = 'bg-[#1c2333] text-white border border-blue-600/40 hover:border-blue-500';
 
@@ -187,7 +187,7 @@ export default function WeaponHandover() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search weapon or serial"
-                className="pl-11 pr-4 py-3 w-full bg-[#0b0f16] rounded-md ring-1 ring-blue-700/30rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-600 transition-all text-sm"
+                className="pl-11 pr-4 py-3 w-full bg-[#0b0f16] rounded-md ring-1 ring-blue-700/30rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-600 transition-all text-md"
               />
             </div>
           </div>
@@ -196,10 +196,10 @@ export default function WeaponHandover() {
           {error && (
             <div className="bg-red-500/10 border border-red-500 text-red-400 px-4 py-3 rounded-lg mb-4">
               <p className="font-semibold">Error</p>
-              <p className="text-sm">{error}</p>
+              <p className="text-md">{error}</p>
               <button
                 onClick={loadWeapons}
-                className="mt-2 text-sm underline hover:text-red-300"
+                className="mt-2 text-md underline hover:text-red-300"
               >
                 Retry
               </button>
@@ -219,12 +219,12 @@ export default function WeaponHandover() {
                 <table className="w-full">
                   <thead>
                     <tr className="bg-[#0d1117] ml-1  mr-0">
-                      <th className="py-4 px-10 text-left text-white font-medium text-sm">Weapon</th>
-                      <th className="py-4 px-8 text-left text-white font-medium text-sm">Serial</th>
-                      <th className="py-4 px-8 text-left text-white font-medium text-sm">Status</th>
-                      <th className="py-4 px-8 text-left text-white font-medium text-sm">Assigned</th>
-                      <th className="py-4 px-8 text-left text-white font-medium text-sm">Due Back</th>
-                      <th className="py-4 px-10 text-left text-white font-medium text-sm">Action</th>
+                      <th className="py-3 px-10 text-left text-white font-medium text-md">Weapon</th>
+                      <th className="py-3 px-8 text-left text-white font-medium text-md">Serial</th>
+                      <th className="py-3 px-8 text-left text-white font-medium text-md">Status</th>
+                      <th className="py-3 px-8 text-left text-white font-medium text-md">Assigned</th>
+                      <th className="py-3 px-8 text-left text-white font-medium text-md">Due Back</th>
+                      <th className="py-3 px-10 text-left text-white font-medium text-md">Action</th>
                     </tr>
                   </thead>
 
@@ -243,34 +243,34 @@ export default function WeaponHandover() {
                           key={i} 
                           className="border-t border-[#2d3748] hover:bg-[#252d3d] transition-colors"
                         >
-                          <td className="py-4 px-10 text-left font-medium text-white text-sm">{w.type}</td>
-                          <td className="py-4 px-8 text-left text-slate-300 text-sm">{w.serial}</td>
-                          <td className="py-4 px-8 text-left">
-                            <span className={`font-medium text-sm ${
+                          <td className="py-2 px-10 text-left font-medium text-white text-md">{w.type}</td>
+                          <td className="py-2 px-8 text-left text-slate-300 text-md">{w.serial}</td>
+                          <td className="py-2 px-8 text-left">
+                            <span className={`font-medium text-md ${
                               w.status === "Available" ? "text-green-500" : "text-[#ef4444]"
                             }`}>
                               {w.status}
                             </span>
                           </td>
-                          <td className="py-4 px-8 text-left text-slate-300 text-sm">{w.assignedTo}</td>
-                          <td className="py-4 px-8 text-left">
+                          <td className="py-2 px-8 text-left text-slate-300 text-md">{w.assignedTo}</td>
+                          <td className="py-2 px-8 text-left">
                             <span className={
                               isWeaponOverdue(w.dueBack) 
-                                ? "text-[#ef4444] font-semibold text-sm" 
-                                : "text-slate-300 text-sm"
+                                ? "text-[#ef4444] font-semibold text-md" 
+                                : "text-slate-300 text-md"
                             }>
                               {w.dueBack}
                               {isWeaponOverdue(w.dueBack) && " ⚠️"}
                             </span>
                           </td>
-                          <td className="py-4 px-8 text-left">
+                          <td className="py-2 px-8 text-left">
                             {w.status === "Available" ? (
                               <button
                                 onClick={() => {
                                   setSelectedWeapon(w);
                                   setIsIssueOpen(true);
                                 }}
-                                className="bg-transparent border-2 border-green-600 text-green-500 px-6 py-1.5 rounded-full font-medium hover:bg-green-600/10 transition-all duration-200 text-xs"
+                                className="bg-transparent border-2 border-green-600 text-green-500 px-6 py-1.5 rounded-full font-medium hover:bg-green-600/10 transition-all duration-200 text-md"
                               >
                                 Issue
                               </button>
@@ -286,7 +286,7 @@ export default function WeaponHandover() {
                                   });
                                   setIsReturnOpen(true);
                                 }}
-                                className="bg-transparent border-2 border-[#ef4444] text-[#ef4444] px-6 py-1.5 rounded-full font-medium hover:bg-[#ef4444]/10 transition-all duration-200 text-xs"
+                                className="bg-transparent border-2 border-[#ef4444] text-[#ef4444] px-6 py-1.5 rounded-full font-medium hover:bg-[#ef4444]/10 transition-all duration-200 text-md"
                               >
                                 Issued
                               </button>
