@@ -118,16 +118,18 @@ function UserManagement() {
   };
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-slate-500">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">User Management</h1>
+        <h1 className="text-3xl font-semibold">User Management</h1>
         <button
           onClick={handleCreate}
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
@@ -173,9 +175,11 @@ function UserManagement() {
 
       {/* Users Table */}
       {loading ? (
-        <p>Loading users...</p>
+        <div className="h-screen">
+          <p>Loading users...</p>
+        </div>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto h-screen">
           <table className="w-full border-collapse border">
             <thead className="bg-gray-200">
               <tr>
@@ -289,7 +293,9 @@ function UserManagement() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">Gender</label>
+                  <label className="block text-sm font-medium mb-1">
+                    Gender
+                  </label>
                   <select
                     name="gender"
                     value={formData.gender}
@@ -304,7 +310,9 @@ function UserManagement() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">Badge No</label>
+                  <label className="block text-sm font-medium mb-1">
+                    Badge No
+                  </label>
                   <input
                     type="text"
                     name="badgeNo"
@@ -369,7 +377,9 @@ function UserManagement() {
                 )}
 
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium mb-1">Address</label>
+                  <label className="block text-sm font-medium mb-1">
+                    Address
+                  </label>
                   <textarea
                     name="address"
                     value={formData.address}

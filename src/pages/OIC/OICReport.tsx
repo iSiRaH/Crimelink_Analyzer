@@ -62,7 +62,7 @@ function OICReport(){
 
 
     return (
-        <div className="p-6 bg-slate-500">
+        <div className="p-6 bg-slate-500 h-full">
             <h1 className="text-3xl font-bold mb-6">OIC Reports</h1>
 
             <div className="bg-slate-300 border rounded-lg p-6 shadow">

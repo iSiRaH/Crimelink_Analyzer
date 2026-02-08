@@ -159,7 +159,7 @@ function PlateRegistry() {
     };
 
     return (
-        <div className="bg-slate-500 w-full h-full p-5">
+        <div className="bg-slate-500 w-full h-full p-6">
             <div className="bg-slate-800 p-5 rounded-lg">
                 <h1 className="font-semibold text-3xl text-white">Plate Registry</h1>
 

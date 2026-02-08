@@ -30,9 +30,9 @@ function SystemHealth() {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-slate-500 h-full">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">System Health</h1>
+        <h1 className="text-3xl font-semibold">System Health</h1>
         <button
           onClick={checkHealth}
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
