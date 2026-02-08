@@ -1,0 +1,537 @@
+import { useState, useEffect, useCallback } from "react";
+import type { FunctionComponent } from "react";
+import styles from "./PlateRegistry.new.module.css";
+import AddVehicleModal from "./AddVehicleModal";
+import type { Vehicle, VehicleType, VehicleStatus } from "../types/vehicle";
+import {
+  getVehicles,
+  addVehicle,
+  updateVehicle,
+  deleteVehicle,
+} from "../services/vehicleService";
+
+const vehicleTypes: VehicleType[] = [
+  "Car",
+  "Motorcycle",
+  "Truck",
+  "Van",
+  "Bus",
+  "SUV",
+  "Other",
+];
+const vehicleStatuses: VehicleStatus[] = [
+  "Active",
+  "Lost",
+  "Stolen",
+  "Found",
+  "Pending",
+];
+
+const PlateRegistry: FunctionComponent = () => {
+  // State management
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
+
+  // Filter states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<VehicleStatus | "All">(
+    "All",
+  );
+  const [vehicleTypeFilter, setVehicleTypeFilter] = useState<
+    VehicleType | "All"
+  >("All");
+  const [dateFilter, setDateFilter] = useState("");
+
+  // Dropdown states
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+  const [showTypeDropdown, setShowTypeDropdown] = useState(false);
+
+  // Fetch vehicles
+  const fetchVehicles = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getVehicles({
+        search: searchQuery,
+        status: statusFilter,
+        vehicleType: vehicleTypeFilter,
+        date: dateFilter,
+      });
+      setVehicles(data);
+    } catch (err) {
+      setError("Failed to fetch vehicles. Make sure backend is running");
+      console.error("Fetch error:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [searchQuery, statusFilter, vehicleTypeFilter, dateFilter]);
+
+  // Initial load
+  useEffect(() => {
+    fetchVehicles();
+  }, [fetchVehicles]);
+
+  // Handle add/edit vehicle
+  const handleSubmitVehicle = async (
+    vehicleData: Omit<Vehicle, "id" | "createdAt" | "updatedAt">,
+  ) => {
+    try {
+      if (editingVehicle) {
+        await updateVehicle(editingVehicle.id, vehicleData);
+      } else {
+        await addVehicle(vehicleData);
+      }
+      setIsModalOpen(false);
+      setEditingVehicle(null);
+      await fetchVehicles();
+    } catch (err) {
+      setError("Failed to save vehicle");
+      console.error("Save error:", err);
+    }
+  };
+
+  // Handle delete vehicle
+  const handleDeleteVehicle = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this vehicle?")) return;
+    try {
+      await deleteVehicle(id);
+      await fetchVehicles();
+    } catch (err) {
+      setError("Failed to delete vehicle");
+      console.error("Delete error:", err);
+    }
+  };
+
+  // Handle edit click
+  const handleEditClick = (vehicle: Vehicle) => {
+    setEditingVehicle(vehicle);
+    setIsModalOpen(true);
+  };
+
+  // Clear all filters
+  const handleClearFilters = () => {
+    setSearchQuery("");
+    setStatusFilter("All");
+    setVehicleTypeFilter("All");
+    setDateFilter("");
+  };
+
+  // Get status class
+  const getStatusClass = (status: VehicleStatus): string => {
+    switch (status) {
+      case "Active":
+        return styles.statusActive;
+      case "Lost":
+        return styles.statusLost;
+      case "Stolen":
+        return styles.statusStolen;
+      case "Found":
+        return styles.statusFound;
+      case "Pending":
+        return styles.statusPending;
+      default:
+        return "";
+    }
+  };
+
+  // Format date for display
+  const formatDate = (dateStr: string | null): string => {
+    if (!dateStr) return "-";
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("en-US", {
+      month: "2-digit",
+      day: "2-digit",
+      year: "numeric",
+    });
+  };
+
+  return (
+    <div className={styles.plateRegistry}>
+      {/* Left Navigation Sidebar */}
+      <nav className={styles.leftNav}>
+        <div className={`${styles.navItem}`}>
+          <span className={styles.navIcon}>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <rect x="3" y="3" width="7" height="7" />
+              <rect x="14" y="3" width="7" height="7" />
+              <rect x="14" y="14" width="7" height="7" />
+              <rect x="3" y="14" width="7" height="7" />
+            </svg>
+          </span>
+          Dashboard
+        </div>
+
+        <div className={styles.navItem}>
+          <span className={styles.navIcon}>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+          </span>
+          Duty management
+        </div>
+
+        <div className={styles.navItem}>
+          <span className={styles.navIcon}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M7 5h10a2 2 0 0 1 2 2v2h-4v2h4v2h-4v2h4v2a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z" />
+            </svg>
+          </span>
+          Weapon handover
+        </div>
+
+        <div className={`${styles.navItem} ${styles.navItemActive}`}>
+          <span className={styles.navIcon}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <rect x="2" y="6" width="20" height="12" rx="2" />
+            </svg>
+          </span>
+          Plate registry
+        </div>
+
+        <div className={styles.navItem}>
+          <span className={styles.navIcon}>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+          </span>
+          Report Crimes
+        </div>
+
+        <div className={styles.navItem}>
+          <span className={styles.navIcon}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M6 2h12a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm1 4v2h10V6H7zm0 4v2h10v-2H7zm0 4v2h7v-2H7z" />
+            </svg>
+          </span>
+          OIC report
+        </div>
+
+        <div className={styles.navItem}>
+          <span className={styles.navIcon}>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10z" />
+              <path d="M21 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
+            </svg>
+          </span>
+          Manage Profile
+        </div>
+
+        <div className={`${styles.navItem} ${styles.logout}`}>
+          <span className={styles.navIcon}>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16,17 21,12 16,7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+          </span>
+          Logout
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <div className={styles.mainContent}>
+        {/* Header Bar */}
+        <header className={styles.header}>
+          <div className={styles.headerLeft}>
+            <div className={styles.logo}>
+              <span className={styles.logoText}>C</span>
+            </div>
+            <span className={styles.appTitle}>CRIME LINK ANALYZER</span>
+          </div>
+          <div className={styles.headerRight}>
+            <span className={styles.userName}>Jineth Bosilu</span>
+            <span className={styles.userRole}>OIC</span>
+            <div className={styles.userAvatar}>
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                strokeWidth="2"
+              >
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </div>
+          </div>
+        </header>
+
+        {/* Content Panel */}
+        <div className={styles.contentPanel}>
+          <h1 className={styles.pageTitle}>Plate Registry</h1>
+
+          {/* Filters Row */}
+          <div className={styles.filtersRow}>
+            <div className={styles.searchBox}>
+              <svg
+                className={styles.searchIcon}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
+              </svg>
+              <input
+                type="text"
+                className={styles.searchInput}
+                placeholder="Search weapon or serial"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+
+            {/* Status Filter */}
+            <div className={styles.filterDropdown}>
+              <button
+                className={styles.filterButton}
+                onClick={() => {
+                  setShowStatusDropdown(!showStatusDropdown);
+                  setShowTypeDropdown(false);
+                }}
+              >
+                {statusFilter === "All" ? "All Status" : statusFilter}
+              </button>
+              {showStatusDropdown && (
+                <div className={styles.dropdownMenu}>
+                  <div
+                    className={styles.dropdownItem}
+                    onClick={() => {
+                      setStatusFilter("All");
+                      setShowStatusDropdown(false);
+                    }}
+                  >
+                    All Status
+                  </div>
+                  {vehicleStatuses.map((status) => (
+                    <div
+                      key={status}
+                      className={styles.dropdownItem}
+                      onClick={() => {
+                        setStatusFilter(status);
+                        setShowStatusDropdown(false);
+                      }}
+                    >
+                      {status}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Vehicle Type Filter */}
+            <div className={styles.filterDropdown}>
+              <button
+                className={styles.filterButton}
+                onClick={() => {
+                  setShowTypeDropdown(!showTypeDropdown);
+                  setShowStatusDropdown(false);
+                }}
+              >
+                {vehicleTypeFilter === "All"
+                  ? "All Vehicle Types"
+                  : vehicleTypeFilter}
+              </button>
+              {showTypeDropdown && (
+                <div className={styles.dropdownMenu}>
+                  <div
+                    className={styles.dropdownItem}
+                    onClick={() => {
+                      setVehicleTypeFilter("All");
+                      setShowTypeDropdown(false);
+                    }}
+                  >
+                    All Vehicle Types
+                  </div>
+                  {vehicleTypes.map((type) => (
+                    <div
+                      key={type}
+                      className={styles.dropdownItem}
+                      onClick={() => {
+                        setVehicleTypeFilter(type);
+                        setShowTypeDropdown(false);
+                      }}
+                    >
+                      {type}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Date Filter */}
+            <input
+              type="date"
+              className={styles.dateInput}
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+            />
+          </div>
+
+          {/* Actions Row */}
+          <div className={styles.actionsRow}>
+            <button
+              className={`${styles.actionButton} ${styles.addButton}`}
+              onClick={() => {
+                setEditingVehicle(null);
+                setIsModalOpen(true);
+              }}
+            >
+              +Add Vehicle
+            </button>
+            <button
+              className={`${styles.actionButton} ${styles.refreshButton}`}
+              onClick={fetchVehicles}
+            >
+              ↻ Refresh
+            </button>
+            <button
+              className={`${styles.actionButton} ${styles.clearButton}`}
+              onClick={handleClearFilters}
+            >
+              Clear All Filter
+            </button>
+          </div>
+
+          {/* Error Banner */}
+          {error && (
+            <div className={styles.errorBanner}>
+              <span className={styles.errorText}>{error}</span>
+              <button
+                className={styles.errorClose}
+                onClick={() => setError(null)}
+              >
+                ×
+              </button>
+            </div>
+          )}
+
+          {/* Table */}
+          <div className={styles.tableContainer}>
+            <table className={styles.table}>
+              <thead className={styles.tableHeader}>
+                <tr>
+                  <th>Plate Number</th>
+                  <th>Owner Name</th>
+                  <th>Vehicle Type</th>
+                  <th>Status</th>
+                  <th>Lost Date</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody className={styles.tableBody}>
+                {loading ? (
+                  <tr>
+                    <td colSpan={6}>
+                      <div className={styles.loadingState}>
+                        Loading vehicles...
+                      </div>
+                    </td>
+                  </tr>
+                ) : vehicles.length === 0 ? (
+                  <tr>
+                    <td colSpan={6}>
+                      <div className={styles.emptyState}>No vehicles found</div>
+                    </td>
+                  </tr>
+                ) : (
+                  vehicles.map((vehicle) => (
+                    <tr key={vehicle.id}>
+                      <td className={styles.plateNumber}>
+                        {vehicle.plateNumber}
+                      </td>
+                      <td>{vehicle.ownerName}</td>
+                      <td>{vehicle.vehicleType}</td>
+                      <td>
+                        <span
+                          className={`${styles.statusBadge} ${getStatusClass(vehicle.status)}`}
+                        >
+                          {vehicle.status}
+                        </span>
+                      </td>
+                      <td>{formatDate(vehicle.lostDate)}</td>
+                      <td>
+                        <div className={styles.tableActions}>
+                          <button
+                            className={styles.editButton}
+                            onClick={() => handleEditClick(vehicle)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className={styles.deleteButton}
+                            onClick={() => handleDeleteVehicle(vehicle.id)}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Add/Edit Vehicle Modal */}
+      <AddVehicleModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingVehicle(null);
+        }}
+        onSubmit={handleSubmitVehicle}
+        editVehicle={editingVehicle}
+      />
+    </div>
+  );
+};
+
+export default PlateRegistry;

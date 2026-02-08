@@ -1,0 +1,207 @@
+import { useState } from "react";
+import type { FunctionComponent } from "react";
+import type { Vehicle, VehicleType, VehicleStatus } from "../types/vehicle";
+import styles from "./AddVehicleModal.module.css";
+
+interface AddVehicleModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (vehicle: Omit<Vehicle, "id" | "createdAt" | "updatedAt">) => void;
+  editVehicle?: Vehicle | null;
+}
+
+const vehicleTypes: VehicleType[] = [
+  "Car",
+  "Motorcycle",
+  "Truck",
+  "Van",
+  "Bus",
+  "SUV",
+  "Other",
+];
+const vehicleStatuses: VehicleStatus[] = [
+  "Active",
+  "Lost",
+  "Stolen",
+  "Found",
+  "Pending",
+];
+
+const AddVehicleModal: FunctionComponent<AddVehicleModalProps> = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  editVehicle,
+}) => {
+  const [plateNumber, setPlateNumber] = useState(
+    editVehicle?.plateNumber || "",
+  );
+  const [ownerName, setOwnerName] = useState(editVehicle?.ownerName || "");
+  const [vehicleType, setVehicleType] = useState<VehicleType>(
+    editVehicle?.vehicleType || "Car",
+  );
+  const [status, setStatus] = useState<VehicleStatus>(
+    editVehicle?.status || "Active",
+  );
+  const [lostDate, setLostDate] = useState(editVehicle?.lostDate || "");
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validate = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!plateNumber.trim()) {
+      newErrors.plateNumber = "Plate number is required";
+    }
+
+    if (!ownerName.trim()) {
+      newErrors.ownerName = "Owner name is required";
+    }
+
+    if ((status === "Lost" || status === "Stolen") && !lostDate) {
+      newErrors.lostDate = "Lost date is required for Lost/Stolen status";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validate()) return;
+
+    onSubmit({
+      plateNumber: plateNumber.trim().toUpperCase(),
+      ownerName: ownerName.trim(),
+      vehicleType,
+      status,
+      lostDate: lostDate || null,
+    });
+
+    // Reset form
+    setPlateNumber("");
+    setOwnerName("");
+    setVehicleType("Car");
+    setStatus("Active");
+    setLostDate("");
+    setErrors({});
+  };
+
+  const handleClose = () => {
+    setPlateNumber("");
+    setOwnerName("");
+    setVehicleType("Car");
+    setStatus("Active");
+    setLostDate("");
+    setErrors({});
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className={styles.modalOverlay} onClick={handleClose}>
+      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalHeader}>
+          <h2>{editVehicle ? "Edit Vehicle" : "Add New Vehicle"}</h2>
+          <button className={styles.closeBtn} onClick={handleClose}>
+            ×
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <div className={styles.formGroup}>
+            <label htmlFor="plateNumber">Plate Number *</label>
+            <input
+              type="text"
+              id="plateNumber"
+              value={plateNumber}
+              onChange={(e) => setPlateNumber(e.target.value)}
+              placeholder="e.g., ABC-1234"
+              className={errors.plateNumber ? styles.inputError : ""}
+            />
+            {errors.plateNumber && (
+              <span className={styles.error}>{errors.plateNumber}</span>
+            )}
+          </div>
+
+          <div className={styles.formGroup}>
+            <label htmlFor="ownerName">Owner Name *</label>
+            <input
+              type="text"
+              id="ownerName"
+              value={ownerName}
+              onChange={(e) => setOwnerName(e.target.value)}
+              placeholder="e.g., John Doe"
+              className={errors.ownerName ? styles.inputError : ""}
+            />
+            {errors.ownerName && (
+              <span className={styles.error}>{errors.ownerName}</span>
+            )}
+          </div>
+
+          <div className={styles.formGroup}>
+            <label htmlFor="vehicleType">Vehicle Type</label>
+            <select
+              id="vehicleType"
+              value={vehicleType}
+              onChange={(e) => setVehicleType(e.target.value as VehicleType)}
+            >
+              {vehicleTypes.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className={styles.formGroup}>
+            <label htmlFor="status">Status</label>
+            <select
+              id="status"
+              value={status}
+              onChange={(e) => setStatus(e.target.value as VehicleStatus)}
+            >
+              {vehicleStatuses.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className={styles.formGroup}>
+            <label htmlFor="lostDate">
+              Lost Date {(status === "Lost" || status === "Stolen") && "*"}
+            </label>
+            <input
+              type="date"
+              id="lostDate"
+              value={lostDate}
+              onChange={(e) => setLostDate(e.target.value)}
+              className={errors.lostDate ? styles.inputError : ""}
+            />
+            {errors.lostDate && (
+              <span className={styles.error}>{errors.lostDate}</span>
+            )}
+          </div>
+
+          <div className={styles.formActions}>
+            <button
+              type="button"
+              className={styles.cancelBtn}
+              onClick={handleClose}
+            >
+              Cancel
+            </button>
+            <button type="submit" className={styles.submitBtn}>
+              {editVehicle ? "Update Vehicle" : "Add Vehicle"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default AddVehicleModal;
