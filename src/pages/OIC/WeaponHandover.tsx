@@ -270,7 +270,7 @@ export default function WeaponHandover() {
                                   setSelectedWeapon(w);
                                   setIsIssueOpen(true);
                                 }}
-                                className="bg-transparent border-2 border-green-600 text-green-500 px-6 py-1.5 rounded-full font-medium hover:bg-green-600/10 transition-all duration-200 text-md"
+                                className="bg-transparent border-2 border-green-600 text-green-500 px-6 py-1 rounded-full font-medium hover:bg-green-600/10 transition-all duration-200 text-md"
                               >
                                 Issue
                               </button>
@@ -286,9 +286,9 @@ export default function WeaponHandover() {
                                   });
                                   setIsReturnOpen(true);
                                 }}
-                                className="bg-transparent border-2 border-[#ef4444] text-[#ef4444] px-6 py-1.5 rounded-full font-medium hover:bg-[#ef4444]/10 transition-all duration-200 text-md"
+                                className="bg-transparent border-2 border-[#ef4444] text-[#ef4444] px-6 py-1 rounded-full font-medium hover:bg-[#ef4444]/10 transition-all duration-200 text-md"
                               >
-                                Issued
+                                Return
                               </button>
                             )}
                           </td>
