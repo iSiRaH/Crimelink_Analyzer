@@ -99,15 +99,7 @@ const IssueWeaponModal: React.FC<Props> = ({ weapon, onClose }) => {
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="w-full max-w-4xl max-h-[95vh] overflow-y-auto scrollbar-hide bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl shadow-2xl border border-slate-700">
-        <style jsx>{`
-          .scrollbar-hide::-webkit-scrollbar {
-            display: none;
-          }
-          .scrollbar-hide {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-          }
-        `}</style>
+      
 
         {/* HEADER */}
         <div className="sticky top-0 z-10 bg-gradient-to-r from-blue-900/90 to-slate-900/90 backdrop-blur-xl border-b border-slate-700 px-6 py-4">
