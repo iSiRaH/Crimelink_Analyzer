@@ -112,7 +112,7 @@ function ReportCrimes() {
       <div className="bg-slate-500 w-full h-full p-6">
         <div className="bg-slate-800 p-5 rounded-lg">
           <div className="flex flex-row justify-between items-start">
-            <h1 className="font-semibold text-3xl text-white mb-5 pl-4">
+            <h1 className="font-semibold text-3xl text-white sm:text-[28px] mb-5 pl-4">
               Report Crimes
             </h1>
             <NavLink to={"reports"}>
