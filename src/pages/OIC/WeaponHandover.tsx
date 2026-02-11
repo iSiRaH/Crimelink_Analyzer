@@ -27,8 +27,9 @@ type ApiWeapon = {
 export default function WeaponHandover() {
   const [weapons, setWeapons] = useState<WeaponRow[]>([]);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] =
-    useState<"ALL" | "Available" | "Issued">("ALL");
+  const [statusFilter, setStatusFilter] = useState<
+    "ALL" | "Available" | "Issued"
+  >("ALL");
 
   const [isIssueOpen, setIsIssueOpen] = useState(false);
   const [isReturnOpen, setIsReturnOpen] = useState(false);
@@ -66,12 +67,8 @@ export default function WeaponHandover() {
   /* ================= COUNTS (FROM DB) ================= */
 
   const totalCount = weapons.length;
-  const availableCount = weapons.filter(
-    (w) => w.status === "Available"
-  ).length;
-  const issuedCount = weapons.filter(
-    (w) => w.status === "Issued"
-  ).length;
+  const availableCount = weapons.filter((w) => w.status === "Available").length;
+  const issuedCount = weapons.filter((w) => w.status === "Issued").length;
 
   /* ================= FILTER ================= */
 
@@ -80,8 +77,7 @@ export default function WeaponHandover() {
       w.type.toLowerCase().includes(search.toLowerCase()) ||
       w.serial.toLowerCase().includes(search.toLowerCase());
 
-    const matchesStatus =
-      statusFilter === "ALL" || w.status === statusFilter;
+    const matchesStatus = statusFilter === "ALL" || w.status === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
@@ -89,10 +85,9 @@ export default function WeaponHandover() {
   /* ================= UI ================= */
 
   return (
-    <div className="min-h-screen bg-[#3b4a5f] text-white p-3">
-
+    <div className="min-h-screen bg-dark-bg text-white p-3">
       {!showManageWeapon && (
-        <div className="bg-[#111827] rounded-xl p-4">
+        <div className="bg-dark-panel rounded-xl p-4">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-semibold">Weapon Management</h1>
             <button
@@ -134,8 +129,7 @@ export default function WeaponHandover() {
 
       {/* TABLE */}
       {!showManageWeapon && (
-        <div className="bg-[#111827] rounded-xl mt-4 p-3">
-
+        <div className="bg-dark-panel rounded-xl mt-4 p-3">
           {/* FILTER BAR */}
           <div className="flex justify-between mb-3">
             <div className="flex gap-2">
@@ -186,7 +180,13 @@ export default function WeaponHandover() {
                 <tr key={i} className="border-b border-gray-700">
                   <td className="pl-4 py-2">{w.type}</td>
                   <td>{w.serial}</td>
-                  <td className={w.status === "Available" ? "text-green-400" : "text-red-400"}>
+                  <td
+                    className={
+                      w.status === "Available"
+                        ? "text-green-400"
+                        : "text-red-400"
+                    }
+                  >
                     • {w.status}
                   </td>
                   <td>{w.assignedTo}</td>
@@ -224,7 +224,6 @@ export default function WeaponHandover() {
               ))}
             </tbody>
           </table>
-
         </div>
       )}
 
@@ -247,7 +246,6 @@ export default function WeaponHandover() {
           }}
         />
       )}
-
     </div>
   );
 }
