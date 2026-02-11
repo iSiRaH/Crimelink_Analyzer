@@ -4,6 +4,10 @@ export default {
   theme: {
     extend: {
       colors: {
+        "dark-bg": "#0b0c1a",
+        "dark-panel": "#181d30",
+        "dark-border": "#2a3148",
+        "dark-border-light": "#3a4158",
         "dark-primary": "#0b0c1a",
         "dark-secondary": "#181d30",
         "purple-primary": "#572aff",

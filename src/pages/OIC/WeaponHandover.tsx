@@ -85,11 +85,11 @@ export default function WeaponHandover() {
   /* ================= UI ================= */
 
   return (
-    <div className="min-h-screen bg-[#3b4a5f] text-white p-3">
+    <div className="min-h-screen bg-dark-bg text-white p-3">
       {!showManageWeapon && (
-        <div className="bg-[#111827] rounded-xl p-4">
-          <div className="flex justify-between items-center mb-2.5">
-            <h1 className="text-2xl font-semibold m-0">Weapon Management</h1>
+        <div className="bg-dark-panel rounded-xl p-4">
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-semibold">Weapon Management</h1>
             <button
               onClick={() => setShowManageWeapon(true)}
               className="bg-purple-primary text-white border-none px-6 py-2.5 rounded-[25px] text-base font-medium cursor-pointer transition-colors duration-300 hover:bg-purple-hover"
@@ -129,7 +129,7 @@ export default function WeaponHandover() {
 
       {/* TABLE */}
       {!showManageWeapon && (
-        <div className="bg-[#111827] rounded-xl mt-4 p-3">
+        <div className="bg-dark-panel rounded-xl mt-4 p-3">
           {/* FILTER BAR */}
           <div className="flex justify-between gap-4 mb-3">
             <div className="flex gap-2">
