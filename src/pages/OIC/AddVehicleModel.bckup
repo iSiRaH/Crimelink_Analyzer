@@ -1,7 +1,6 @@
 import { useState } from "react";
 import type { FunctionComponent } from "react";
 import type { Vehicle, VehicleType, VehicleStatus } from "../types/vehicle";
-import styles from "./AddVehicleModal.module.css";
 
 interface AddVehicleModalProps {
   isOpen: boolean;
@@ -26,6 +25,10 @@ const vehicleStatuses: VehicleStatus[] = [
   "Found",
   "Pending",
 ];
+
+const inputBase =
+  "w-full px-4 py-3 bg-dark-bg border border-dark-border rounded-lg text-white text-sm outline-none transition-colors duration-200 focus:border-blue-500 box-border";
+const inputError = "!border-red-500";
 
 const AddVehicleModal: FunctionComponent<AddVehicleModalProps> = ({
   isOpen,
@@ -100,78 +103,122 @@ const AddVehicleModal: FunctionComponent<AddVehicleModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className={styles.modalOverlay} onClick={handleClose}>
-      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-        <div className={styles.modalHeader}>
-          <h2>{editVehicle ? "Edit Vehicle" : "Add New Vehicle"}</h2>
-          <button className={styles.closeBtn} onClick={handleClose}>
+    <div
+      className="fixed inset-0 bg-black/70 flex justify-center items-center z-[1000] p-4"
+      onClick={handleClose}
+    >
+      <div
+        className="bg-dark-panel rounded-xl w-full max-w-[480px] shadow-[0_4px_24px_rgba(0,0,0,0.4)] border border-dark-border max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-between items-center px-5 py-4 sm:px-6 sm:py-5 border-b border-dark-border">
+          <h2 className="m-0 text-white text-lg sm:text-xl font-semibold">
+            {editVehicle ? "Edit Vehicle" : "Add New Vehicle"}
+          </h2>
+          <button
+            className="bg-transparent border-none text-gray-400 text-[28px] cursor-pointer p-0 leading-none transition-colors duration-200 hover:text-white"
+            onClick={handleClose}
+          >
             ×
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <div className={styles.formGroup}>
-            <label htmlFor="plateNumber">Plate Number *</label>
+        <form onSubmit={handleSubmit} className="p-5 sm:p-6">
+          <div className="mb-5">
+            <label
+              htmlFor="plateNumber"
+              className="block text-gray-400 text-sm mb-2 font-medium"
+            >
+              Plate Number *
+            </label>
             <input
               type="text"
               id="plateNumber"
               value={plateNumber}
               onChange={(e) => setPlateNumber(e.target.value)}
               placeholder="e.g., ABC-1234"
-              className={errors.plateNumber ? styles.inputError : ""}
+              className={`${inputBase} placeholder:text-gray-500 ${errors.plateNumber ? inputError : ""}`}
             />
             {errors.plateNumber && (
-              <span className={styles.error}>{errors.plateNumber}</span>
+              <span className="text-red-500 text-xs mt-1.5 block">
+                {errors.plateNumber}
+              </span>
             )}
           </div>
 
-          <div className={styles.formGroup}>
-            <label htmlFor="ownerName">Owner Name *</label>
+          <div className="mb-5">
+            <label
+              htmlFor="ownerName"
+              className="block text-gray-400 text-sm mb-2 font-medium"
+            >
+              Owner Name *
+            </label>
             <input
               type="text"
               id="ownerName"
               value={ownerName}
               onChange={(e) => setOwnerName(e.target.value)}
               placeholder="e.g., John Doe"
-              className={errors.ownerName ? styles.inputError : ""}
+              className={`${inputBase} placeholder:text-gray-500 ${errors.ownerName ? inputError : ""}`}
             />
             {errors.ownerName && (
-              <span className={styles.error}>{errors.ownerName}</span>
+              <span className="text-red-500 text-xs mt-1.5 block">
+                {errors.ownerName}
+              </span>
             )}
           </div>
 
-          <div className={styles.formGroup}>
-            <label htmlFor="vehicleType">Vehicle Type</label>
+          <div className="mb-5">
+            <label
+              htmlFor="vehicleType"
+              className="block text-gray-400 text-sm mb-2 font-medium"
+            >
+              Vehicle Type
+            </label>
             <select
               id="vehicleType"
               value={vehicleType}
               onChange={(e) => setVehicleType(e.target.value as VehicleType)}
+              className={inputBase}
             >
               {vehicleTypes.map((type) => (
-                <option key={type} value={type}>
+                <option
+                  key={type}
+                  value={type}
+                  className="bg-dark-bg text-white"
+                >
                   {type}
                 </option>
               ))}
             </select>
           </div>
 
-          <div className={styles.formGroup}>
-            <label htmlFor="status">Status</label>
+          <div className="mb-5">
+            <label
+              htmlFor="status"
+              className="block text-gray-400 text-sm mb-2 font-medium"
+            >
+              Status
+            </label>
             <select
               id="status"
               value={status}
               onChange={(e) => setStatus(e.target.value as VehicleStatus)}
+              className={inputBase}
             >
               {vehicleStatuses.map((s) => (
-                <option key={s} value={s}>
+                <option key={s} value={s} className="bg-dark-bg text-white">
                   {s}
                 </option>
               ))}
             </select>
           </div>
 
-          <div className={styles.formGroup}>
-            <label htmlFor="lostDate">
+          <div className="mb-5">
+            <label
+              htmlFor="lostDate"
+              className="block text-gray-400 text-sm mb-2 font-medium"
+            >
               Lost Date {(status === "Lost" || status === "Stolen") && "*"}
             </label>
             <input
@@ -179,22 +226,27 @@ const AddVehicleModal: FunctionComponent<AddVehicleModalProps> = ({
               id="lostDate"
               value={lostDate}
               onChange={(e) => setLostDate(e.target.value)}
-              className={errors.lostDate ? styles.inputError : ""}
+              className={`${inputBase} ${errors.lostDate ? inputError : ""}`}
             />
             {errors.lostDate && (
-              <span className={styles.error}>{errors.lostDate}</span>
+              <span className="text-red-500 text-xs mt-1.5 block">
+                {errors.lostDate}
+              </span>
             )}
           </div>
 
-          <div className={styles.formActions}>
+          <div className="flex flex-col sm:flex-row gap-3 mt-7">
             <button
               type="button"
-              className={styles.cancelBtn}
+              className="flex-1 px-5 py-3 bg-transparent border border-dark-border rounded-lg text-gray-400 text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-dark-border hover:text-white"
               onClick={handleClose}
             >
               Cancel
             </button>
-            <button type="submit" className={styles.submitBtn}>
+            <button
+              type="submit"
+              className="flex-1 px-5 py-3 bg-green-500 border-none rounded-lg text-white text-sm font-semibold cursor-pointer transition-colors duration-200 hover:bg-green-600"
+            >
               {editVehicle ? "Update Vehicle" : "Add Vehicle"}
             </button>
           </div>
@@ -205,3 +257,256 @@ const AddVehicleModal: FunctionComponent<AddVehicleModalProps> = ({
 };
 
 export default AddVehicleModal;
+
+// Vehicle/Plate Registry Types
+
+export type VehicleStatus = "Active" | "Lost" | "Stolen" | "Found" | "Pending";
+
+export type VehicleType =
+  | "Car"
+  | "Motorcycle"
+  | "Truck"
+  | "Van"
+  | "Bus"
+  | "SUV"
+  | "Other";
+
+export interface Vehicle {
+  id: string;
+  plateNumber: string;
+  ownerName: string;
+  vehicleType: VehicleType;
+  status: VehicleStatus;
+  lostDate: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface VehicleFilters {
+  search: string;
+  status: VehicleStatus | "All";
+  vehicleType: VehicleType | "All";
+  date: string;
+}
+
+export interface ApiResponse<T> {
+  data: T;
+  message?: string;
+  success: boolean;
+}
+
+
+import type { Vehicle, VehicleFilters, ApiResponse } from "../types/vehicle";
+
+// Configure your backend API URL here
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:3001/api";
+
+// Mock data for development when backend is not available
+const mockVehicles: Vehicle[] = [
+  {
+    id: "1",
+    plateNumber: "ABC-1234",
+    ownerName: "John Doe",
+    vehicleType: "Car",
+    status: "Active",
+    lostDate: null,
+    createdAt: "2025-01-15",
+  },
+  {
+    id: "2",
+    plateNumber: "XYZ-5678",
+    ownerName: "Jane Smith",
+    vehicleType: "Motorcycle",
+    status: "Lost",
+    lostDate: "2025-01-20",
+    createdAt: "2025-01-10",
+  },
+  {
+    id: "3",
+    plateNumber: "DEF-9012",
+    ownerName: "Bob Wilson",
+    vehicleType: "Truck",
+    status: "Stolen",
+    lostDate: "2025-01-25",
+    createdAt: "2025-01-05",
+  },
+  {
+    id: "4",
+    plateNumber: "GHI-3456",
+    ownerName: "Alice Brown",
+    vehicleType: "SUV",
+    status: "Found",
+    lostDate: "2025-01-18",
+    createdAt: "2025-01-12",
+  },
+  {
+    id: "5",
+    plateNumber: "JKL-7890",
+    ownerName: "Charlie Davis",
+    vehicleType: "Van",
+    status: "Pending",
+    lostDate: null,
+    createdAt: "2025-01-22",
+  },
+];
+
+// Flag to use mock data (set to false when backend is ready)
+const USE_MOCK_DATA = true;
+
+// Helper function to simulate network delay
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Get all vehicles with optional filters
+export async function getVehicles(
+  filters?: Partial<VehicleFilters>,
+): Promise<Vehicle[]> {
+  if (USE_MOCK_DATA) {
+    await delay(500); // Simulate network delay
+
+    let filtered = [...mockVehicles];
+
+    if (filters?.search) {
+      const searchLower = filters.search.toLowerCase();
+      filtered = filtered.filter(
+        (v) =>
+          v.plateNumber.toLowerCase().includes(searchLower) ||
+          v.ownerName.toLowerCase().includes(searchLower),
+      );
+    }
+
+    if (filters?.status && filters.status !== "All") {
+      filtered = filtered.filter((v) => v.status === filters.status);
+    }
+
+    if (filters?.vehicleType && filters.vehicleType !== "All") {
+      filtered = filtered.filter((v) => v.vehicleType === filters.vehicleType);
+    }
+
+    if (filters?.date) {
+      filtered = filtered.filter((v) => v.lostDate === filters.date);
+    }
+
+    return filtered;
+  }
+
+  const queryParams = new URLSearchParams();
+  if (filters?.search) queryParams.append("search", filters.search);
+  if (filters?.status && filters.status !== "All")
+    queryParams.append("status", filters.status);
+  if (filters?.vehicleType && filters.vehicleType !== "All")
+    queryParams.append("vehicleType", filters.vehicleType);
+  if (filters?.date) queryParams.append("date", filters.date);
+
+  const response = await fetch(`${API_BASE_URL}/vehicles?${queryParams}`);
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch vehicles");
+  }
+
+  const result: ApiResponse<Vehicle[]> = await response.json();
+  return result.data;
+}
+
+// Get a single vehicle by ID
+export async function getVehicleById(id: string): Promise<Vehicle> {
+  if (USE_MOCK_DATA) {
+    await delay(300);
+    const vehicle = mockVehicles.find((v) => v.id === id);
+    if (!vehicle) throw new Error("Vehicle not found");
+    return vehicle;
+  }
+
+  const response = await fetch(`${API_BASE_URL}/vehicles/${id}`);
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch vehicle");
+  }
+
+  const result: ApiResponse<Vehicle> = await response.json();
+  return result.data;
+}
+
+// Add a new vehicle
+export async function addVehicle(
+  vehicle: Omit<Vehicle, "id" | "createdAt" | "updatedAt">,
+): Promise<Vehicle> {
+  if (USE_MOCK_DATA) {
+    await delay(500);
+    const newVehicle: Vehicle = {
+      ...vehicle,
+      id: String(mockVehicles.length + 1),
+      createdAt: new Date().toISOString().split("T")[0],
+    };
+    mockVehicles.push(newVehicle);
+    return newVehicle;
+  }
+
+  const response = await fetch(`${API_BASE_URL}/vehicles`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(vehicle),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to add vehicle");
+  }
+
+  const result: ApiResponse<Vehicle> = await response.json();
+  return result.data;
+}
+
+// Update an existing vehicle
+export async function updateVehicle(
+  id: string,
+  vehicle: Partial<Vehicle>,
+): Promise<Vehicle> {
+  if (USE_MOCK_DATA) {
+    await delay(500);
+    const index = mockVehicles.findIndex((v) => v.id === id);
+    if (index === -1) throw new Error("Vehicle not found");
+    mockVehicles[index] = {
+      ...mockVehicles[index],
+      ...vehicle,
+      updatedAt: new Date().toISOString().split("T")[0],
+    };
+    return mockVehicles[index];
+  }
+
+  const response = await fetch(`${API_BASE_URL}/vehicles/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(vehicle),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to update vehicle");
+  }
+
+  const result: ApiResponse<Vehicle> = await response.json();
+  return result.data;
+}
+
+// Delete a vehicle
+export async function deleteVehicle(id: string): Promise<void> {
+  if (USE_MOCK_DATA) {
+    await delay(500);
+    const index = mockVehicles.findIndex((v) => v.id === id);
+    if (index === -1) throw new Error("Vehicle not found");
+    mockVehicles.splice(index, 1);
+    return;
+  }
+
+  const response = await fetch(`${API_BASE_URL}/vehicles/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to delete vehicle");
+  }
+}
+
