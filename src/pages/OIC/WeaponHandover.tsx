@@ -7,7 +7,7 @@ import { getAllWeaponsWithDetails } from "../../api/weaponApi";
 import type { WeaponResponseDTO } from "../../types/weapon";
 import { formatWeaponDate, isWeaponOverdue } from "../../utils/weaponUtils";
 
-/* ================= TYPES ================= */
+  /* ================= TYPES ================= */
 
 type WeaponRow = {
   type: string;
@@ -16,6 +16,10 @@ type WeaponRow = {
   assignedTo: string;
   dueBack: string;
   issuedDate?: string;
+  
+  // ✅ Added bullet tracking fields
+  issuedBulletType?: string | null;
+  issuedMagazines?: number | null;
 };
 
 /* ================= COMPONENT ================= */
@@ -71,6 +75,10 @@ export default function WeaponHandover() {
         assignedTo: w.issuedTo?.name ?? "--",
         dueBack: formatWeaponDate(w.dueDate),
         issuedDate: w.issuedDate,
+        
+        // ✅ Map bullet info
+        issuedBulletType: w.issuedBulletType,
+        issuedMagazines: w.issuedMagazines,
       }));
 
       setWeapons(mapped);
@@ -283,6 +291,9 @@ export default function WeaponHandover() {
                                     issuedDate: w.issuedDate,
                                     dueBack: w.dueBack,
                                     assignedTo: w.assignedTo,
+                                    // ✅ Pass bullet info to modal
+                                    issuedBulletType: w.issuedBulletType,
+                                    issuedMagazines: w.issuedMagazines,
                                   });
                                   setIsReturnOpen(true);
                                 }}
