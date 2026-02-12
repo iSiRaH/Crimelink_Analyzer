@@ -19,7 +19,7 @@
     "@mui/material": "^7.3.7",
     "@react-google-maps/api": "^2.20.8",
     "@react-pdf/renderer": "^4.3.2",
-    "axios": "^1.13.2",
+    "axios": "^1.13.5",
     "bcryptjs": "^3.0.3",
     "cytoscape": "^3.33.1",
     "lucide-react": "^0.553.0",
