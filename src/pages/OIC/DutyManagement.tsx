@@ -3,7 +3,6 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import type { DateClickArg } from "@fullcalendar/interaction";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 import DutyPopupModel from "../../components/UI/DutyPopupModel";
 import type {
@@ -15,8 +14,9 @@ import * as dutyService from "../../api/dutyService";
 import type { OfficerRecommendation } from "../../types/duty";
 import type { AxiosError } from "axios";
 
+const DEFAULT_DUTY_LOCATIONS = ["Matara", "Hakmana", "Weligama", "Akuressa"];
+
 function DutyManagement() {
-  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   // const [selectedDateKey, setSelectedDateKey] = useState("");//REMOVE
@@ -40,7 +40,8 @@ function DutyManagement() {
     return date.toISOString().split("T")[0];
   };
 
-  const locations = ["Matara", "Hakmana", "Weligama", "Akuressa"];
+  const [locations, setLocations] = useState<string[]>(DEFAULT_DUTY_LOCATIONS);
+  const [loadingLocations, setLoadingLocations] = useState(false);
   const timeRanges = [
     { value: "06:00-21:00", label: "06:00 - 21:00", start: "06:00" },
     { value: "21:00-06:00", label: "21:00 - 06:00", start: "21:00" },
@@ -55,7 +56,7 @@ function DutyManagement() {
     if (!selectedDate) return;
 
     const firstRow = rows[0];
-    const location = firstRow?.location || "Matara";
+    const location = firstRow?.location || locations[0] || DEFAULT_DUTY_LOCATIONS[0];
 
     const req = {
       date: getDateKey(selectedDate),
@@ -90,6 +91,31 @@ function DutyManagement() {
     setOpen(true);
   };
 
+
+  useEffect(() => {
+    let active = true;
+    setLoadingLocations(true);
+
+    dutyService
+      .getDutyLocations()
+      .then((data) => {
+        if (!active) return;
+        setLocations(data.length > 0 ? data : DEFAULT_DUTY_LOCATIONS);
+      })
+      .catch((err) => {
+        console.error("Failed to load duty locations", err);
+        if (active) {
+          setLocations(DEFAULT_DUTY_LOCATIONS);
+        }
+      })
+      .finally(() => {
+        if (active) setLoadingLocations(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
   useEffect(() => {
     if (!open || !selectedDate) return;
 
@@ -302,10 +328,13 @@ function DutyManagement() {
                     <select
                       title="Select Location"
                       className="w-full border rounded px-2 py-1"
+                      disabled={loadingLocations}
                       value={r.location || ""}
                       onChange={(e) => updateRow(i, "location", e.target.value)}
                     >
-                      <option value="">Select Location</option>
+                      <option value="">
+                        {loadingLocations ? "Loading locations..." : "Select Location"}
+                      </option>
                       {locations.map((loc) => (
                         <option key={loc} value={loc}>
                           {loc}

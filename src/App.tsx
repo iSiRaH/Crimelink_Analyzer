@@ -36,6 +36,7 @@ import { MapProvider } from "./contexts/MapContext";
 import ReportCrimes from "./pages/OIC/ReportCrimes";
 import ViewCrimeReports from "./pages/OIC/ViewCrimeReports";
 import LeaveManagement from "./pages/OIC/LeaveManagment";
+import OfficerLocationView from "./pages/OIC/OfficerLocationView";
 
 function AppContent() {
   const navigate = useNavigate();
@@ -93,6 +94,7 @@ function AppContent() {
         <Route path="report-crimes" element={<ReportCrimes />} />
         <Route path="report-crimes/reports" element={<ViewCrimeReports />} />
         <Route path="manage-profiles" element={<ManageProfiles />} />
+        <Route path="officer-locations" element={<OfficerLocationView />} />
       </Route>
 
       {/* investigator page routing */}
