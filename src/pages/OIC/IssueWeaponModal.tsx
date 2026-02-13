@@ -35,24 +35,17 @@ const IssueWeaponModal: React.FC<Props> = ({ weapon, onClose }) => {
   const [confirmed, setConfirmed] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Bullet issue fields
-  const [bulletType, setBulletType] = useState<string>(""); // selected bullet type from DB
-  const [numberOfMagazines, setNumberOfMagazines] = useState<string>(""); // magazines to issue
-  const [bulletRemarks, setBulletRemarks] = useState<string>(""); // note
+  const [bulletType, setBulletType] = useState<string>("");
+  const [numberOfMagazines, setNumberOfMagazines] = useState<string>("");
+  const [bulletRemarks, setBulletRemarks] = useState<string>("");
 
   const selectedIssuedTo = useMemo(
-    () =>
-      officers.find(
-        (o) => o.id === (typeof selectedIssuedToId === "number" ? selectedIssuedToId : -1)
-      ),
+    () => officers.find((o) => o.id === (typeof selectedIssuedToId === "number" ? selectedIssuedToId : -1)),
     [officers, selectedIssuedToId]
   );
 
   const selectedHandedOverBy = useMemo(
-    () =>
-      officers.find(
-        (o) => o.id === (typeof selectedHandedOverById === "number" ? selectedHandedOverById : -1)
-      ),
+    () => officers.find((o) => o.id === (typeof selectedHandedOverById === "number" ? selectedHandedOverById : -1)),
     [officers, selectedHandedOverById]
   );
 
@@ -62,23 +55,10 @@ const IssueWeaponModal: React.FC<Props> = ({ weapon, onClose }) => {
   );
 
   const bulletsWereSelected = Boolean(bulletType);
-
-  // ✅ Real-time qty parse
   const enteredQty = numberOfMagazines ? Number(numberOfMagazines) : 0;
-
-  // ✅ Stock check (THIS FIXES YOUR SCREENSHOT ISSUE)
   const availableStock = selectedBullet?.numberOfMagazines ?? 0;
-
-  const exceedsStock =
-    bulletsWereSelected &&
-    Number.isFinite(enteredQty) &&
-    enteredQty > availableStock;
-
-  const invalidQty =
-    bulletsWereSelected &&
-    (!numberOfMagazines ||
-      Number.isNaN(enteredQty) ||
-      enteredQty <= 0);
+  const exceedsStock = bulletsWereSelected && Number.isFinite(enteredQty) && enteredQty > availableStock;
+  const invalidQty = bulletsWereSelected && (!numberOfMagazines || Number.isNaN(enteredQty) || enteredQty <= 0);
 
   const now = new Date();
   const issuedDate = now.toISOString().split("T")[0];
@@ -91,9 +71,7 @@ const IssueWeaponModal: React.FC<Props> = ({ weapon, onClose }) => {
 
   const loadOfficers = async () => {
     try {
-      // ✅ FIX: Use users endpoint instead of broken weapon endpoint
       const res = await api.get("/users/all-officers");
-      // Map Use entity to OfficerDTO
       const mappedOfficers: OfficerDTO[] = res.data.map((u: any) => ({
         id: u.userId,
         name: u.name,
@@ -128,11 +106,9 @@ const IssueWeaponModal: React.FC<Props> = ({ weapon, onClose }) => {
     setSelectedHandedOverById("");
     setDueDate("");
     setIssueNote("");
-
     setBulletType("");
     setNumberOfMagazines("");
     setBulletRemarks("");
-
     setConfirmed(false);
   };
 
@@ -149,23 +125,10 @@ const IssueWeaponModal: React.FC<Props> = ({ weapon, onClose }) => {
       alert("Please confirm the details");
       return;
     }
-
-    // ✅ Bullet validations (only when bulletType selected)
     if (bulletsWereSelected) {
-      if (!selectedBullet) {
-        alert("Selected bullet type not found");
-        return;
-      }
-
-      if (invalidQty) {
-        alert("Enter a valid number of magazines (must be > 0)");
-        return;
-      }
-
-      if (exceedsStock) {
-        alert(`Cannot issue ${enteredQty}. Only ${availableStock} magazines available.`);
-        return;
-      }
+      if (!selectedBullet) { alert("Selected bullet type not found"); return; }
+      if (invalidQty) { alert("Enter a valid number of magazines (must be > 0)"); return; }
+      if (exceedsStock) { alert(`Cannot issue ${enteredQty}. Only ${availableStock} magazines available.`); return; }
     }
 
     setLoading(true);
@@ -176,16 +139,11 @@ const IssueWeaponModal: React.FC<Props> = ({ weapon, onClose }) => {
         handedOverById: selectedHandedOverById,
         dueDate,
         issueNote,
-
-        // ✅ Bullet payload (only if selected)
         bulletType: bulletsWereSelected ? bulletType : undefined,
         numberOfMagazines: bulletsWereSelected ? enteredQty : undefined,
         bulletRemarks: bulletsWereSelected ? (bulletRemarks.trim() || undefined) : undefined,
       });
-
-      // ✅ refresh stock after issue
       await loadBullets();
-
       alert("Weapon issued successfully");
       onClose();
     } catch (err: any) {
@@ -196,288 +154,396 @@ const IssueWeaponModal: React.FC<Props> = ({ weapon, onClose }) => {
     }
   };
 
-  // ✅ disable button when qty invalid or exceeds stock
   const disableIssueButton =
-    loading ||
-    !confirmed ||
-    selectedIssuedToId === "" ||
-    selectedHandedOverById === "" ||
-    !dueDate ||
+    loading || !confirmed || selectedIssuedToId === "" || selectedHandedOverById === "" || !dueDate ||
     (bulletsWereSelected && (invalidQty || exceedsStock));
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="w-full max-w-4xl max-h-[95vh] overflow-y-auto scrollbar-hide bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl shadow-2xl border border-slate-700">
+    <div style={{
+      position: "fixed", inset: 0, background: "rgba(0,8,20,0.85)",
+      backdropFilter: "blur(4px)", display: "flex", alignItems: "center",
+      justifyContent: "center", zIndex: 50, padding: "16px",
+    }}>
+      <div style={{
+        width: "100%", maxWidth: "900px", maxHeight: "95vh",
+        overflowY: "auto", overflowX: "hidden",
+        /* hide scrollbar cross-browser */
+        scrollbarWidth: "none" as any,
+        msOverflowStyle: "none" as any,
+        background: "#050d1a", borderRadius: "4px",
+        border: "1px solid #0f2744",
+        boxShadow: "0 0 0 1px #0a1f3d, 0 32px 64px rgba(0,0,0,0.8)",
+      }}>
+
         {/* HEADER */}
-        <div className="sticky top-0 z-10 bg-gradient-to-r from-blue-900/90 to-slate-900/90 backdrop-blur-xl border-b border-slate-700 px-6 py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h2 className="text-2xl font-bold text-white">Issue Weapon & Ammunition</h2>
-              <p className="text-sm text-slate-300 mt-1">Bullets are loaded from database</p>
+        <div style={{
+          position: "sticky", top: 0, zIndex: 10,
+          background: "#060f1e", borderBottom: "2px solid #0e3a6e",
+          padding: "20px 28px", display: "flex", justifyContent: "space-between", alignItems: "flex-start",
+        }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}>
+              <div style={{ width: "8px", height: "28px", background: "#1d6fe8", flexShrink: 0 }} />
+              <h2 style={{
+                color: "#e8f0fe", fontSize: "20px", fontWeight: 700,
+                letterSpacing: "0.08em", margin: 0, textTransform: "uppercase",
+              }}>
+                Issue Weapon & Ammunition
+              </h2>
             </div>
-            <button
-              onClick={onClose}
-              className="text-slate-400 hover:text-white transition-colors text-2xl w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/10"
-            >
-              ✕
-            </button>
+            <p style={{
+              color: "#4a6fa5", fontSize: "13px", margin: 0,
+              marginLeft: "18px", letterSpacing: "0.12em", textTransform: "uppercase",
+            }}>
+              Tactical Equipment Issuance Protocol
+            </p>
           </div>
+          <button
+            onClick={onClose}
+            style={{
+              background: "transparent", border: "1px solid #0e3a6e", color: "#4a6fa5",
+              width: "32px", height: "32px", cursor: "pointer", fontSize: "16px",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              borderRadius: "2px", transition: "all 0.15s", flexShrink: 0,
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLButtonElement).style.background = "#0e3a6e";
+              (e.currentTarget as HTMLButtonElement).style.color = "#e8f0fe";
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+              (e.currentTarget as HTMLButtonElement).style.color = "#4a6fa5";
+            }}
+          >✕</button>
         </div>
 
-        <div className="p-6 space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* LEFT */}
-            <div className="space-y-6">
-              <div className="bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
-                <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3">
-                  <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                    <span>🔫</span> Weapon Information
-                  </h3>
+        <div style={{ padding: "24px 28px", display: "flex", flexDirection: "column", gap: "20px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+
+            {/* LEFT COLUMN */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+
+              {/* WEAPON INFO */}
+              <Section label="Weapon Information">
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                  <Field label="Weapon Type" value={weapon.type} />
+                  <Field label="Serial Number" value={weapon.serial} />
                 </div>
 
-                <div className="p-4 space-y-3">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700">
-                      <p className="text-xs text-slate-400 mb-1">Weapon Type</p>
-                      <p className="text-white font-semibold">{weapon.type}</p>
-                    </div>
-                    <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700">
-                      <p className="text-xs text-slate-400 mb-1">Serial Number</p>
-                      <p className="text-white font-semibold">{weapon.serial}</p>
-                    </div>
+                <div style={{ marginTop: "12px" }}>
+                  <SectionLabel>Issue Timestamp</SectionLabel>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "8px" }}>
+                    <ReadonlyInput label="Date" value={issuedDate} />
+                    <ReadonlyInput label="Time" value={issuedTime} />
                   </div>
+                </div>
 
-                  <div className="bg-blue-900/20 border border-blue-700/30 rounded-lg p-3">
-                    <p className="text-xs text-blue-300 mb-2 font-semibold">Issue Date & Time</p>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <p className="text-xs text-slate-400 mb-1">Date</p>
-                        <input
-                          value={issuedDate}
-                          readOnly
-                          className="w-full bg-slate-900 border border-slate-600 px-3 py-2 text-xs rounded text-slate-300"
-                        />
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-400 mb-1">Time</p>
-                        <input
-                          value={issuedTime}
-                          readOnly
-                          className="w-full bg-slate-900 border border-slate-600 px-3 py-2 text-xs rounded text-slate-300"
-                        />
-                      </div>
-                    </div>
-                  </div>
+                <div style={{ marginTop: "12px" }}>
+                  <label style={labelStyle}>Due Date *</label>
+                  <input
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                    style={{ ...inputStyle, marginTop: "6px", colorScheme: "dark" } as React.CSSProperties}
+                  />
+                </div>
 
-                  <div>
-                    <label className="text-sm text-slate-300 block mb-2 font-medium">Due Date *</label>
-                    <input
-                      type="date"
-                      value={dueDate}
-                      onChange={(e) => setDueDate(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-600 px-3 py-2.5 rounded-lg text-sm text-white"
+                <div style={{ marginTop: "12px" }}>
+                  <label style={labelStyle}>Issue Note</label>
+                  <textarea
+                    value={issueNote}
+                    onChange={(e) => setIssueNote(e.target.value)}
+                    placeholder="Enter issue note..."
+                    rows={3}
+                    style={{ ...inputStyle, marginTop: "6px", resize: "vertical", minHeight: "72px" }}
+                  />
+                </div>
+              </Section>
+
+              {/* PERSONNEL */}
+              <Section label="Personnel Assignment">
+                <div style={{ marginBottom: "12px" }}>
+                  <label style={labelStyle}>Issued To *</label>
+                  <select
+                    value={selectedIssuedToId}
+                    onChange={(e) => setSelectedIssuedToId(Number(e.target.value))}
+                    disabled={loadingOfficers}
+                    style={{ ...inputStyle, marginTop: "6px" }}
+                  >
+                    <option value="">{loadingOfficers ? "Loading..." : "— Select Officer —"}</option>
+                    {officers.map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {o.serviceId} — {o.name} ({o.rank ?? o.role})
+                      </option>
+                    ))}
+                  </select>
+                  {selectedIssuedTo && (
+                    <OfficerCard
+                      name={selectedIssuedTo.name}
+                      role={selectedIssuedTo.rank ?? selectedIssuedTo.role ?? "—"}
+                      serviceId={selectedIssuedTo.serviceId ?? "—"}
                     />
-                  </div>
-
-                  <div>
-                    <label className="text-sm text-slate-300 block mb-2 font-medium">Issue Note</label>
-                    <textarea
-                      value={issueNote}
-                      onChange={(e) => setIssueNote(e.target.value)}
-                      placeholder="Issue note..."
-                      rows={3}
-                      className="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-sm text-white"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* OFFICERS */}
-              <div className="bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
-                <div className="bg-gradient-to-r from-blue-700 to-blue-800 px-4 py-3">
-                  <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                    <span>👮</span> Personnel Information
-                  </h3>
-                </div>
-
-                <div className="p-4 space-y-4">
-                  <div>
-                    <label className="text-sm text-slate-300 block mb-2 font-medium">Issued To *</label>
-                    <select
-                      value={selectedIssuedToId}
-                      onChange={(e) => setSelectedIssuedToId(Number(e.target.value))}
-                      disabled={loadingOfficers}
-                      className="w-full bg-slate-900 border border-slate-600 px-3 py-2.5 rounded-lg text-sm text-white"
-                    >
-                      <option value="">{loadingOfficers ? "Loading..." : "-- Select Officer --"}</option>
-                      {officers.map((o) => (
-                        <option key={o.id} value={o.id}>
-                          {o.serviceId} - {o.name} ({o.rank})
-                        </option>
-                      ))}
-                    </select>
-
-                    {selectedIssuedTo && (
-                      <div className="mt-2 bg-slate-900/70 rounded-lg p-3 border border-slate-700">
-                        <p className="text-xs text-slate-400 mb-2">Officer Details</p>
-                        <p className="font-semibold text-white text-sm">{selectedIssuedTo.name}</p>
-                        <p className="text-xs text-slate-400 mt-1">
-                          {selectedIssuedTo.role} • {selectedIssuedTo.badge}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="text-sm text-slate-300 block mb-2 font-medium">Handed Over By *</label>
-                    <select
-                      value={selectedHandedOverById}
-                      onChange={(e) => setSelectedHandedOverById(Number(e.target.value))}
-                      disabled={loadingOfficers}
-                      className="w-full bg-slate-900 border border-slate-600 px-3 py-2.5 rounded-lg text-sm text-white"
-                    >
-                      <option value="">{loadingOfficers ? "Loading..." : "-- Select Officer --"}</option>
-                      {officers.map((o) => (
-                        <option key={o.id} value={o.id}>
-                          {o.serviceId} - {o.name} ({o.rank})
-                        </option>
-                      ))}
-                    </select>
-
-                    {selectedHandedOverBy && (
-                      <div className="mt-2 bg-slate-900/70 rounded-lg p-3 border border-slate-700">
-                        <p className="text-xs text-slate-400 mb-2">Officer Details</p>
-                        <p className="font-semibold text-white text-sm">{selectedHandedOverBy.name}</p>
-                        <p className="text-xs text-slate-400 mt-1">
-                          {selectedHandedOverBy.role} • {selectedHandedOverBy.badge}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* RIGHT - BULLETS */}
-            <div className="space-y-6">
-              <div className="bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
-                <div className="bg-gradient-to-r from-blue-800 to-slate-800 px-4 py-3">
-                  <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                    <span>📦</span> Bullet Issue (DB)
-                  </h3>
-                </div>
-
-                <div className="p-4 space-y-4">
-                  <div>
-                    <label className="text-sm text-slate-300 block mb-2 font-medium">Bullet Type</label>
-                    <select
-                      value={bulletType}
-                      onChange={(e) => {
-                        setBulletType(e.target.value);
-                        setNumberOfMagazines("");
-                        setBulletRemarks("");
-                      }}
-                      disabled={loadingBullets}
-                      className="w-full bg-slate-900 border border-slate-600 px-3 py-2.5 rounded-lg text-sm text-white"
-                    >
-                      <option value="">{loadingBullets ? "Loading..." : "-- No Bullets --"}</option>
-                      {bullets.map((b) => (
-                        <option key={b.bulletId} value={b.bulletType}>
-                          {b.bulletType} (Available: {b.numberOfMagazines})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {bulletType && (
-                    <>
-                      <div className="bg-slate-900/50 border border-slate-700 rounded-lg p-3 text-slate-200 text-sm">
-                        Available magazines: <b>{availableStock}</b>
-                      </div>
-
-                      <div>
-                        <label className="text-sm text-slate-300 block mb-2 font-medium">
-                          Magazines to Issue
-                        </label>
-                        <input
-                          type="number"
-                          value={numberOfMagazines}
-                          onChange={(e) => setNumberOfMagazines(e.target.value)}
-                          min={1}
-                          className={`w-full px-3 py-2.5 rounded-lg text-sm text-white border
-                            ${
-                              exceedsStock
-                                ? "bg-red-900/40 border-red-500"
-                                : "bg-slate-900 border-slate-600"
-                            }`}
-                        />
-
-                        {invalidQty && (
-                          <p className="text-red-400 text-xs mt-1">
-                            Enter a valid number (must be greater than 0).
-                          </p>
-                        )}
-
-                        {exceedsStock && (
-                          <p className="text-red-400 text-xs mt-1">
-                            Cannot issue more than available magazines ({availableStock})
-                          </p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="text-sm text-slate-300 block mb-2 font-medium">Bullet Note</label>
-                        <textarea
-                          value={bulletRemarks}
-                          onChange={(e) => setBulletRemarks(e.target.value)}
-                          rows={4}
-                          placeholder="Ex: training ammo / duty ammo / batch info..."
-                          className="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-sm text-white"
-                        />
-                      </div>
-                    </>
                   )}
                 </div>
-              </div>
+
+                <div>
+                  <label style={labelStyle}>Handed Over By *</label>
+                  <select
+                    value={selectedHandedOverById}
+                    onChange={(e) => setSelectedHandedOverById(Number(e.target.value))}
+                    disabled={loadingOfficers}
+                    style={{ ...inputStyle, marginTop: "6px" }}
+                  >
+                    <option value="">{loadingOfficers ? "Loading..." : "— Select Officer —"}</option>
+                    {officers.map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {o.serviceId} — {o.name} ({o.rank ?? o.role})
+                      </option>
+                    ))}
+                  </select>
+                  {selectedHandedOverBy && (
+                    <OfficerCard
+                      name={selectedHandedOverBy.name}
+                      role={selectedHandedOverBy.rank ?? selectedHandedOverBy.role ?? "—"}
+                      serviceId={selectedHandedOverBy.serviceId ?? "—"}
+                    />
+                  )}
+                </div>
+              </Section>
+            </div>
+
+            {/* RIGHT COLUMN — AMMUNITION */}
+            <div>
+              <Section label="Ammunition Issuance">
+                <div>
+                  <label style={labelStyle}>Bullet Type</label>
+                  <select
+                    value={bulletType}
+                    onChange={(e) => {
+                      setBulletType(e.target.value);
+                      setNumberOfMagazines("");
+                      setBulletRemarks("");
+                    }}
+                    disabled={loadingBullets}
+                    style={{ ...inputStyle, marginTop: "6px" }}
+                  >
+                    <option value="">{loadingBullets ? "Loading..." : "— No Bullets —"}</option>
+                    {bullets.map((b) => (
+                      <option key={b.bulletId} value={b.bulletType}>
+                        {b.bulletType}  [Stock: {b.numberOfMagazines}]
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {bulletType && (
+                  <>
+                    <div style={{
+                      marginTop: "12px", padding: "10px 14px",
+                      background: "#0a1f3d", border: "1px solid #0e3a6e",
+                      borderLeft: "3px solid #1d6fe8",
+                      display: "flex", justifyContent: "space-between", alignItems: "center",
+                    }}>
+                      <span style={{ color: "#4a6fa5", fontSize: "13px", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                        Available Stock
+                      </span>
+                      <span style={{ color: "#1d6fe8", fontSize: "20px", fontWeight: 700 }}>{availableStock}</span>
+                    </div>
+
+                    <div style={{ marginTop: "12px" }}>
+                      <label style={labelStyle}>Magazines to Issue</label>
+                      <input
+                        type="number"
+                        value={numberOfMagazines}
+                        onChange={(e) => setNumberOfMagazines(e.target.value)}
+                        min={1}
+                        placeholder="0"
+                        style={{
+                          ...inputStyle,
+                          marginTop: "6px",
+                          borderColor: exceedsStock ? "#dc2626" : "#0e3a6e",
+                          background: exceedsStock ? "rgba(220,38,38,0.08)" : "#070f1c",
+                        }}
+                      />
+                      {invalidQty && <p style={errorStyle}>Must be greater than 0</p>}
+                      {exceedsStock && <p style={errorStyle}>Exceeds stock — only {availableStock} available</p>}
+                    </div>
+
+                    <div style={{ marginTop: "12px" }}>
+                      <label style={labelStyle}>Bullet Note</label>
+                      <textarea
+                        value={bulletRemarks}
+                        onChange={(e) => setBulletRemarks(e.target.value)}
+                        rows={4}
+                        placeholder="Training / duty / batch info..."
+                        style={{ ...inputStyle, marginTop: "6px", resize: "vertical", minHeight: "88px" }}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {!bulletType && (
+                  <div style={{
+                    marginTop: "12px", padding: "32px 16px", textAlign: "center",
+                    border: "1px dashed #0e3a6e", borderRadius: "2px",
+                  }}>
+                    <p style={{ color: "#253d5c", fontSize: "14px", letterSpacing: "0.1em", textTransform: "uppercase", margin: 0 }}>
+                      No ammunition selected
+                    </p>
+                  </div>
+                )}
+              </Section>
             </div>
           </div>
 
-          {/* ACTIONS */}
-          <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-5">
-            <div className="flex items-start gap-3 mb-5">
-              <input
-                type="checkbox"
-                id="confirmIssue"
-                checked={confirmed}
-                onChange={(e) => setConfirmed(e.target.checked)}
-                className="mt-1 w-4 h-4 rounded border-slate-600 bg-slate-900"
-              />
-              <label htmlFor="confirmIssue" className="text-sm text-slate-300 cursor-pointer">
-                I confirm that all information provided above is accurate.
+          {/* CONFIRMATION */}
+          <div style={{ background: "#060f1e", border: "1px solid #0e3a6e", padding: "20px 24px" }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginBottom: "20px" }}>
+              <div
+                onClick={() => setConfirmed(!confirmed)}
+                style={{
+                  width: "18px", height: "18px",
+                  border: `2px solid ${confirmed ? "#1d6fe8" : "#1a3a5c"}`,
+                  background: confirmed ? "#1d6fe8" : "transparent",
+                  cursor: "pointer", flexShrink: 0, marginTop: "1px",
+                  display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "2px",
+                }}
+              >
+                {confirmed && <span style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>✓</span>}
+              </div>
+              <label
+                onClick={() => setConfirmed(!confirmed)}
+                style={{ color: "#7a9cc8", fontSize: "14px", cursor: "pointer", lineHeight: "1.6", letterSpacing: "0.04em" }}
+              >
+                I confirm all information is accurate. I authorize the issuance of this weapon and ammunition in accordance with departmental protocols.
               </label>
             </div>
 
-            <div className="flex gap-4">
+            <div style={{ display: "flex", gap: "12px" }}>
               <button
                 onClick={handleReset}
-                className="flex-1 px-6 py-3 border-2 border-slate-600 text-slate-300 rounded-lg hover:bg-slate-700/50 transition-all font-semibold"
+                style={{
+                  flex: 1, padding: "12px 24px", background: "transparent",
+                  border: "1px solid #0e3a6e", color: "#4a6fa5", cursor: "pointer",
+                  fontSize: "14px", fontWeight: 700, letterSpacing: "0.12em",
+                  textTransform: "uppercase", borderRadius: "2px", transition: "all 0.15s",
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "#0a1f3d"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
               >
                 Reset
               </button>
-
               <button
                 onClick={handleIssue}
                 disabled={disableIssueButton}
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all font-semibold"
+                style={{
+                  flex: 1, padding: "12px 24px",
+                  background: disableIssueButton ? "#0a1f3d" : "#0d3d8c",
+                  border: `1px solid ${disableIssueButton ? "#0e3a6e" : "#1d6fe8"}`,
+                  color: disableIssueButton ? "#253d5c" : "#e8f0fe",
+                  cursor: disableIssueButton ? "not-allowed" : "pointer",
+                  fontSize: "14px", fontWeight: 700, letterSpacing: "0.12em",
+                  textTransform: "uppercase", borderRadius: "2px", transition: "all 0.15s",
+                }}
               >
-                {loading ? "Processing..." : "Issue Weapon"}
+                {loading ? "Processing..." : "Authorize Issue"}
               </button>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Hide scrollbar for webkit browsers */}
+      <style>{`
+        div::-webkit-scrollbar { display: none; }
+      `}</style>
     </div>
   );
 };
+
+/* ─── Shared styles ──────────────────────────────────────────── */
+
+const labelStyle: React.CSSProperties = {
+  color: "#4a6fa5", fontSize: "12px", letterSpacing: "0.14em",
+  textTransform: "uppercase", display: "block", fontWeight: 600,
+};
+
+const inputStyle: React.CSSProperties = {
+  width: "100%", background: "#070f1c", border: "1px solid #0e3a6e",
+  color: "#c8d8ee", padding: "9px 12px", fontSize: "15px",
+  borderRadius: "2px", outline: "none", boxSizing: "border-box",
+};
+
+const errorStyle: React.CSSProperties = {
+  color: "#f87171", fontSize: "13px", marginTop: "4px", letterSpacing: "0.04em",
+};
+
+/* ─── Sub-components ─────────────────────────────────────────── */
+
+function Section({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div style={{ border: "1px solid #0e3a6e", background: "#060f1e" }}>
+      <div style={{
+        padding: "10px 16px", background: "#0a1e38",
+        borderBottom: "1px solid #0e3a6e",
+      }}>
+        <span style={{ color: "#c8d8ee", fontSize: "13px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase" }}>
+          {label}
+        </span>
+      </div>
+      <div style={{ padding: "16px" }}>{children}</div>
+    </div>
+  );
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{
+      color: "#2d5a8e", fontSize: "12px", letterSpacing: "0.14em",
+      textTransform: "uppercase", fontWeight: 600,
+      borderBottom: "1px solid #0a1e38", paddingBottom: "4px",
+    }}>{children}</div>
+  );
+}
+
+function Field({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ background: "#070f1c", border: "1px solid #0a1e38", padding: "10px 12px" }}>
+      <p style={{ color: "#2d5a8e", fontSize: "12px", letterSpacing: "0.12em", textTransform: "uppercase", margin: 0, marginBottom: "4px" }}>
+        {label}
+      </p>
+      <p style={{ color: "#c8d8ee", fontSize: "15px", fontWeight: 600, margin: 0 }}>{value}</p>
+    </div>
+  );
+}
+
+function ReadonlyInput({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p style={{ color: "#2d5a8e", fontSize: "12px", letterSpacing: "0.12em", textTransform: "uppercase", margin: 0, marginBottom: "4px" }}>
+        {label}
+      </p>
+      <input
+        value={value}
+        readOnly
+        style={{ ...inputStyle, background: "#040a14", color: "#3d6899" }}
+      />
+    </div>
+  );
+}
+
+function OfficerCard({ name, role, serviceId }: { name: string; role: string; serviceId: string }) {
+  return (
+    <div style={{
+      marginTop: "8px", padding: "10px 14px",
+      background: "#070f1c", border: "1px solid #0e3a6e",
+      borderLeft: "3px solid #0d3d8c",
+    }}>
+      <p style={{ color: "#c8d8ee", fontSize: "15px", fontWeight: 600, margin: 0 }}>{name}</p>
+      <p style={{ color: "#4a6fa5", fontSize: "13px", margin: "4px 0 0 0" }}>{role}</p>
+      <p style={{ color: "#2d5a8e", fontSize: "13px", margin: "2px 0 0 0", letterSpacing: "0.06em" }}>{serviceId}</p>
+    </div>
+  );
+}
 
 export default IssueWeaponModal;
