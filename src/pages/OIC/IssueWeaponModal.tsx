@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { issueWeapon, getAllOfficers } from "../../api/weaponApi";
+import { issueWeapon } from "../../api/weaponApi";
+import api from "../../services/api";
 import { getAllBulletsWithDetails } from "../../api/BulletApi";
 import type { OfficerDTO } from "../../types/weapon";
 
@@ -90,8 +91,18 @@ const IssueWeaponModal: React.FC<Props> = ({ weapon, onClose }) => {
 
   const loadOfficers = async () => {
     try {
-      const res = await getAllOfficers();
-      setOfficers(res.data);
+      // ✅ FIX: Use users endpoint instead of broken weapon endpoint
+      const res = await api.get("/users/all-officers");
+      // Map Use entity to OfficerDTO
+      const mappedOfficers: OfficerDTO[] = res.data.map((u: any) => ({
+        id: u.userId,
+        name: u.name,
+        serviceId: u.badgeNo,
+        rank: u.role,
+        role: u.role,
+        status: u.status,
+      }));
+      setOfficers(mappedOfficers);
     } catch (e) {
       console.error(e);
       alert("Failed to load officers");

@@ -136,8 +136,8 @@ export default function WeaponHandover() {
           <div className="grid grid-cols-3 gap-52 rounded-full mx-5">
             {[
               { label: "Total Weapons", value: totalCount },
-              { label: "Total Weapons", value: availableCount },
-              { label: "Total Weapons", value: issuedCount },
+              { label: "Available Weapons", value: availableCount },
+              { label: "Issued Weapons", value: issuedCount },
             ].map((card, idx) => (
               <div
                 key={idx}

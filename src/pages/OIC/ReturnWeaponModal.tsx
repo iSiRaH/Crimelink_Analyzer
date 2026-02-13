@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
-import { returnWeapon, getAllOfficers } from "../../api/weaponApi";
+import { returnWeapon } from "../../api/weaponApi";
+import api from "../../services/api";
 import type { OfficerDTO } from "../../types/weapon";
 
 type Officer = {
@@ -63,8 +64,18 @@ export default function ReturnWeaponModal({ weapon, onClose }: Props) {
 
   const loadOfficers = async () => {
     try {
-      const response = await getAllOfficers();
-      setOfficers(response.data);
+      // ✅ FIX: Use users endpoint instead of broken weapon endpoint
+      const res = await api.get("/users/all-officers");
+      // Map User entity to OfficerDTO
+      const mappedOfficers: OfficerDTO[] = res.data.map((u: any) => ({
+        id: u.userId,
+        name: u.name,
+        serviceId: u.badgeNo, // Mapping badgeNo to serviceId for display
+        rank: u.role,         // Mapping role to rank
+        role: u.role,
+        status: u.status,
+      }));
+      setOfficers(mappedOfficers);
     } catch (err) {
       console.error("Failed to load officers:", err);
       alert("Failed to load officers. Please try again.");
@@ -142,19 +153,27 @@ export default function ReturnWeaponModal({ weapon, onClose }: Props) {
     setLoading(true);
 
     try {
+      // ✅ CRITICAL FIX: Build payload conditionally
       const payload: any = {
         weaponSerial: weapon.serial,
         receivedByUserId: selectedReceivedById,
         returnNote: returnNote || "Returned",
       };
 
-      // ✅ only send bullet fields if bullets were issued
+      // ✅ ONLY send bullet fields if bullets were ACTUALLY issued
+      // This prevents backend validation errors when bulletType is null
       if (bulletsWereIssued) {
+        // Only include these fields if bullets were issued
         payload.returnedMagazines = returnedCount;
         payload.usedBullets = bulletsUsed ? usedCount : 0;
         payload.bulletCondition = bulletCondition || "good";
-        payload.bulletRemarks = bulletUsageReason?.trim() || "";
+        
+        // Only send bulletRemarks if there's actually content
+        if (bulletUsageReason?.trim()) {
+          payload.bulletRemarks = bulletUsageReason.trim();
+        }
       }
+      // If bullets were NOT issued, don't send ANY bullet-related fields
 
       console.log("Returning weapon payload:", payload);
 
@@ -175,149 +194,170 @@ export default function ReturnWeaponModal({ weapon, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="w-full max-w-4xl max-h-[95vh] overflow-y-auto scrollbar-hide bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl shadow-2xl border border-slate-700">
+      <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl shadow-2xl border border-slate-700 max-w-6xl w-full max-h-[95vh] overflow-y-auto">
         {/* HEADER */}
-        <div className="sticky top-0 z-10 bg-gradient-to-r from-blue-900/90 to-slate-900/90 backdrop-blur-xl border-b border-slate-700 px-6 py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h2 className="text-2xl font-bold text-white">Return Weapon & Ammunition</h2>
-              <p className="text-sm text-slate-300 mt-1">Complete return process for issued equipment</p>
-            </div>
-            <button
-              onClick={onClose}
-              className="text-slate-400 hover:text-white transition-colors text-2xl w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/10"
-            >
-              ✕
-            </button>
+        <div className="sticky top-0 bg-gradient-to-r from-blue-900 to-slate-900 px-6 py-4 border-b border-slate-700 flex items-center justify-between z-10">
+          <div>
+            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+              <span>🔙</span> Return Weapon
+            </h2>
+            <p className="text-sm text-slate-300 mt-1">Serial: {weapon.serial}</p>
           </div>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-white transition-colors text-2xl"
+          >
+            ✕
+          </button>
         </div>
 
         <div className="p-6 space-y-6">
-          {/* OVERDUE WARNING */}
-          {overdueDays > 0 && (
-            <div className="bg-gradient-to-r from-yellow-900/40 to-orange-900/40 border-l-4 border-yellow-500 text-yellow-200 px-4 py-3 rounded-lg flex items-center gap-3">
-              <span className="text-2xl">⚠️</span>
-              <div>
-                <p className="font-semibold">Overdue Return</p>
-                <p className="text-sm">
-                  This weapon is overdue by <span className="font-bold">{overdueDays}</span> day(s)
+          {/* WEAPON INFO */}
+          <div className="bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-800 to-slate-800 px-4 py-3">
+              <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                <span>🔫</span> Weapon Details
+              </h3>
+            </div>
+
+            <div className="p-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="bg-slate-900/50 rounded p-3 border border-slate-700">
+                <p className="text-xs text-slate-400 mb-1">Type</p>
+                <p className="text-white font-semibold text-sm">{weapon.type}</p>
+              </div>
+              <div className="bg-slate-900/50 rounded p-3 border border-slate-700">
+                <p className="text-xs text-slate-400 mb-1">Serial Number</p>
+                <p className="text-white font-semibold text-sm">{weapon.serial}</p>
+              </div>
+              <div className="bg-slate-900/50 rounded p-3 border border-slate-700">
+                <p className="text-xs text-slate-400 mb-1">Issued Date</p>
+                <p className="text-white font-semibold text-sm">{weapon.issuedDate}</p>
+              </div>
+              <div className="bg-slate-900/50 rounded p-3 border border-slate-700">
+                <p className="text-xs text-slate-400 mb-1">Due Date</p>
+                <p className={`font-semibold text-sm ${overdueDays > 0 ? 'text-red-400' : 'text-white'}`}>
+                  {weapon.dueBack}
+                  {overdueDays > 0 && (
+                    <span className="block text-xs text-red-300 mt-1">
+                      {overdueDays} day(s) overdue
+                    </span>
+                  )}
                 </p>
               </div>
             </div>
-          )}
+          </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* LEFT */}
+          {/* OFFICERS & RETURN INFO */}
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* LEFT - OFFICERS */}
             <div className="space-y-6">
-              {/* WEAPON INFO */}
               <div className="bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
-                <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3">
+                <div className="bg-gradient-to-r from-blue-800 to-slate-800 px-4 py-3">
                   <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                    <span>🔫</span> Weapon Information
+                    <span>👤</span> Personnel Information
                   </h3>
                 </div>
 
-                <div className="p-4 space-y-3">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700">
-                      <p className="text-xs text-slate-400 mb-1">Weapon Type</p>
-                      <p className="text-white font-semibold">{weapon.type}</p>
-                    </div>
-
-                    <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700">
-                      <p className="text-xs text-slate-400 mb-1">Serial Number</p>
-                      <p className="text-white font-semibold">{weapon.serial}</p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700">
-                      <p className="text-xs text-slate-400 mb-1">Issued Date</p>
-                      <p className="text-slate-200 text-sm">{weapon.issuedDate}</p>
-                    </div>
-
-                    <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700">
-                      <p className="text-xs text-slate-400 mb-1">Due Back Date</p>
-                      <p className="text-slate-200 text-sm">{weapon.dueBack}</p>
+                <div className="p-4 space-y-4">
+                  {/* Issued To (Display-only) */}
+                  <div className="bg-slate-900/50 border border-slate-700 rounded-lg p-4">
+                    <p className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
+                      <span>📤</span> Issued To
+                    </p>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-400">Name:</span>
+                        <span className="text-white font-semibold">{issuedTo.name}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-400">Service No:</span>
+                        <span className="text-white">{issuedTo.serviceNo}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-400">Rank:</span>
+                        <span className="text-white">{issuedTo.rank}</span>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="bg-blue-900/20 border border-blue-700/30 rounded-lg p-3">
-                    <p className="text-xs text-blue-300 mb-2 font-semibold">Return Date & Time</p>
+                  {/* Received By (Editable) */}
+                  <div className="bg-blue-900/20 border-2 border-blue-600/50 rounded-lg p-4">
+                    <p className="text-sm font-semibold text-blue-300 mb-3 flex items-center gap-2">
+                      <span>📥</span> Received By *
+                    </p>
+
+                    <div className="mb-3">
+                      <select
+                        value={selectedReceivedById || ""}
+                        onChange={(e) => setSelectedReceivedById(Number(e.target.value))}
+                        className="w-full bg-slate-900 border border-blue-600/50 px-3 py-2.5 rounded-lg text-sm text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                      >
+                        <option value="">Select Officer</option>
+                        {officers.map((officer) => (
+                          <option key={officer.id} value={officer.id}>
+                            {officer.name} ({officer.serviceId}) - {officer.rank}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {selectedReceivedBy && (
+                      <div className="space-y-2 pt-3 border-t border-blue-700/30">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-blue-300">Name:</span>
+                          <span className="text-white font-semibold">{returnedBy.name}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-blue-300">Service No:</span>
+                          <span className="text-white">{returnedBy.serviceNo}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-blue-300">Rank:</span>
+                          <span className="text-white">{returnedBy.rank}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Return Date & Time */}
+                  <div className="bg-slate-900/50 border border-slate-700 rounded-lg p-4">
+                    <p className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
+                      <span>📅</span> Return Date & Time
+                    </p>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <p className="text-xs text-slate-400 mb-1">Date</p>
                         <input
+                          type="text"
                           value={returnDate}
                           readOnly
-                          className="w-full bg-slate-900 border border-slate-600 px-3 py-2 text-xs rounded text-slate-300"
+                          className="w-full bg-slate-800 border border-slate-600 px-3 py-2 rounded text-sm text-white"
                         />
                       </div>
                       <div>
                         <p className="text-xs text-slate-400 mb-1">Time</p>
                         <input
+                          type="text"
                           value={returnTime}
                           readOnly
-                          className="w-full bg-slate-900 border border-slate-600 px-3 py-2 text-xs rounded text-slate-300"
+                          className="w-full bg-slate-800 border border-slate-600 px-3 py-2 rounded text-sm text-white"
                         />
                       </div>
                     </div>
                   </div>
 
+                  {/* Return Note */}
                   <div>
-                    <label className="text-sm text-slate-300 block mb-2 font-medium">Weapon Return Notes</label>
+                    <label className="text-sm text-slate-300 block mb-2 font-medium">
+                      Return Note
+                    </label>
                     <textarea
                       value={returnNote}
                       onChange={(e) => setReturnNote(e.target.value)}
-                      placeholder="Enter any observations about weapon condition, damage, or issues..."
-                      className="w-full h-24 bg-slate-900 border border-slate-600 rounded-lg p-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                      placeholder="Any remarks about the weapon return..."
+                      rows={3}
+                      className="w-full bg-slate-900 border border-slate-600 px-3 py-2.5 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                     />
-                  </div>
-                </div>
-              </div>
-
-              {/* OFFICERS */}
-              <div className="bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
-                <div className="bg-gradient-to-r from-blue-700 to-blue-800 px-4 py-3">
-                  <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                    <span>👮</span> Personnel Information
-                  </h3>
-                </div>
-
-                <div className="p-4 space-y-4">
-                  <div>
-                    <label className="text-sm text-slate-300 block mb-2 font-medium">Receiving Officer *</label>
-                    <select
-                      value={selectedReceivedById || ""}
-                      onChange={(e) => setSelectedReceivedById(Number(e.target.value))}
-                      className="w-full bg-slate-900 border border-slate-600 px-3 py-2.5 rounded-lg text-sm text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                      disabled={loadingOfficers}
-                    >
-                      <option value="">{loadingOfficers ? "Loading..." : "-- Select Officer --"}</option>
-                      {officers.map((o) => (
-                        <option key={o.id} value={o.id}>
-                          {o.serviceId} - {o.name} ({o.rank})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-slate-900/70 rounded-lg p-3 border border-slate-700">
-                      <p className="text-xs text-slate-400 mb-2">Issued To</p>
-                      <p className="font-semibold text-white text-sm">{issuedTo.name}</p>
-                      <p className="text-xs text-slate-400 mt-1">
-                        {issuedTo.rank} • {issuedTo.serviceNo}
-                      </p>
-                    </div>
-
-                    <div className="bg-slate-900/70 rounded-lg p-3 border border-slate-700">
-                      <p className="text-xs text-slate-400 mb-2">Received By</p>
-                      <p className="font-semibold text-white text-sm">{returnedBy.name}</p>
-                      <p className="text-xs text-slate-400 mt-1">
-                        {returnedBy.rank} • {returnedBy.serviceNo}
-                      </p>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -444,7 +484,7 @@ export default function ReturnWeaponModal({ weapon, onClose }: Props) {
 
                       {bulletsUsed && (
                         <div className="bg-blue-900/10 border-2 border-blue-600/50 rounded-lg p-4">
-                          <label className="text-sm text-blue-300 block mb-2 font-semibold flex items-center gap-2">
+                          <label className="text-sm text-blue-300 mb-2 font-semibold flex items-center gap-2">
                             <span>⚠️</span> Bullet Usage Justification *
                           </label>
                           <textarea
