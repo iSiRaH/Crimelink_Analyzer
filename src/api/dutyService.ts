@@ -102,6 +102,14 @@ export async function downloadDutyScheduleReportPdf(
 
   return response.data;
 }
+export async function getDutyLocations(): Promise<string[]> {
+  const res = await api.get<string[]>("/duty-schedules/locations");
+
+  if (!Array.isArray(res.data)) return [];
+  return res.data.filter(
+    (loc): loc is string => typeof loc === "string" && loc.trim().length > 0,
+  );
+}
 // service
 export async function getRecommendations(req: DutyRecommendationRequest) {
   const res = await api.post<OfficerRecommendation[]>("/duty-recommendations", req);
