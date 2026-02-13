@@ -10,3 +10,9 @@ export type LocationPoint = {
   officerBadgeNo?: string | null;
   meta?: any;
 };
+
+export type MapLocationPoint = {
+  latitude: number;
+  longitude: number;
+  ts: string;
+};

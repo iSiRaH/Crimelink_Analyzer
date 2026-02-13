@@ -1,13 +1,17 @@
-import { GoogleMap, Marker, useLoadScript } from "@react-google-maps/api";
+import {
+  GoogleMap,
+  Marker,
+  Polyline,
+  useLoadScript,
+} from "@react-google-maps/api";
 import type { OfficerLocationPopupProps } from "../../types/officers";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMapContext } from "../../contexts/useMapContext";
-import { useAuth } from "../../contexts/useAuth";
 import {
   fetchOfficerLastLocation,
   fetchOfficerLocations,
 } from "../../services/officerLocation";
-import api from "../../services/api";
+import type { MapLocationPoint } from "../../types/location";
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 const SRI_LANKA_BOUNDS = {
@@ -22,7 +26,6 @@ const OfficerLocationPopup: React.FC<OfficerLocationPopupProps> = ({
   onClose,
   officer,
 }) => {
-  // const { user } = useAuth();
   const [lastLocation, setLastLocation] = useState<{
     latitude: number;
     longitude: number;
@@ -34,14 +37,13 @@ const OfficerLocationPopup: React.FC<OfficerLocationPopupProps> = ({
     new Date().toISOString().split("T")[0],
   );
   const [loading, setLoading] = useState(false);
+  const [locations, setLocations] = useState<MapLocationPoint[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { setMap } = useMapContext();
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
   });
   const mapRef = useRef<google.maps.Map | null>(null);
-
-  // const hasPermission = user?.role === "Admin" || user?.role === "OIC";
 
   const onLoad = (map: google.maps.Map) => {
     mapRef.current = map;
@@ -56,93 +58,42 @@ const OfficerLocationPopup: React.FC<OfficerLocationPopupProps> = ({
     [lastLocation],
   );
 
-  // useEffect(() => {
-    // async function fetchRole() {
-    //   const res = await api.get("debug/whoami");
-    //   console.log("Whoami response:", res.data);
-    // }
-    // fetchRole();
-    // fetchLocations();
-  // }, []);
+  const path = useMemo(
+    () =>
+      (locations ?? []).map((l) => ({
+        lat: l.latitude,
+        lng: l.longitude,
+      })),
+    [locations],
+  );
 
   async function fetchLocations() {
     if (!officer) return;
-    // console.log("Role", user?.role);
-
-    // const token = localStorage.getItem("accessToken");
-    // console.log("Token exists:", !!token);
-    // if (token) {
-    //   try {
-    //     const parts = token.split(".");
-    //     if (parts.length === 3) {
-    //       const payload = JSON.parse(atob(parts[1]));
-    //       console.log("JWT Payload:", payload);
-    //     }
-    //   } catch (e) {
-    //     console.log("Could not decode JWT:", e);
-    //   }
-    // }
 
     if (!fromDate || !toDate) {
       setError("Please select both From and To dates.");
       return;
     }
-    // if (!hasPermission) {
-    //   setError(
-    //     `Only Admin and OIC roles can view officer location history. Your current role: ${user?.role}`,
-    //   );
-    //   return;
-    // }
 
     setLoading(true);
     setError(null);
     try {
-      // Convert date strings to ISO DateTime format required by backend
       const fromDateTime = new Date(fromDate + "T00:00:00Z").toISOString();
       const toDateTime = new Date(toDate + "T23:59:59Z").toISOString();
 
       console.log(
         `Fetching locations for ${officer.badgeNo} from ${fromDateTime} to ${toDateTime}`,
-      );
-      const locations = await fetchOfficerLocations({
+      ); //REMOVE : for debugging
+      const loc = await fetchOfficerLocations({
         badgeNo: officer.badgeNo,
         from: fromDateTime,
         to: toDateTime,
       });
-      console.log("Locations fetched successfully:", locations);
+      await setLocations(loc);
+      console.log("Locations fetched successfully:", locations); //REMOVE : for debugging
       setError(null);
     } catch (error: unknown) {
       console.error("Error fetching locations:", error);
-
-      // const axiosError = error as {
-      //   response?: {
-      //     status: number;
-      //     statusText: string;
-      //     data?: { message?: string };
-      //   };
-      //   config?: any;
-      // } & Error;
-
-      
-      // console.error("Response status:", axiosError.response?.status);
-      // console.error("Response data:", axiosError.response?.data);
-      // console.error("Request config:", axiosError.config);
-
-      // if (axiosError.response?.status === 403) {
-      //   setError(
-      //     `Access Denied (403): ${axiosError.response?.data?.message || "You don't have permission to view officer location history. Only Admin and OIC users can access this data."}`,
-      //   );
-      // } else if (axiosError.response?.status === 401) {
-      //   setError("Session expired (401). Please log in again.");
-      // } else if (axiosError.response?.status === 400) {
-      //   setError(
-      //     `Bad Request (400): ${axiosError.response?.data?.message || axiosError.message}`,
-      //   );
-      // } else if (axiosError.message) {
-      //   setError(`Error: ${axiosError.message}`);
-      // } else {
-      //   setError("Failed to fetch location history. Please try again.");
-      // }
     } finally {
       setLoading(false);
     }
@@ -161,26 +112,13 @@ const OfficerLocationPopup: React.FC<OfficerLocationPopupProps> = ({
         "Last Location:",
         lastLocation.latitude,
         lastLocation.longitude,
-      );
+      ); //REMOVE : for debugging
       setLastLocation({
         latitude: lastLocation.latitude,
         longitude: lastLocation.longitude,
       });
     } catch (err: unknown) {
       console.error("Error fetching last location:", err);
-
-      // const axiosError = err as { response?: { status: number } } & Error;
-      // if (axiosError.response?.status === 403) {
-      //   setError(
-      //     "Access Denied: You don't have permission to view officer locations.",
-      //   );
-      // } else if (axiosError.response?.status === 401) {
-      //   setError("Session expired. Please log in again.");
-      // } else {
-      //   console.warn(
-      //     "Failed to fetch last location, continuing with default map view",
-      //   );
-      // }
     } finally {
       setLoading(false);
     }
@@ -206,31 +144,7 @@ const OfficerLocationPopup: React.FC<OfficerLocationPopupProps> = ({
         <h2 className="text-2xl font-bold mb-4">
           {officer?.name} Location Details
         </h2>
-        {/* <div className="mb-3 p-3 bg-gray-100 rounded text-xs border border-gray-300">
-          <p className="font-semibold text-gray-800">🔍 Debug Info:</p>
-          <p>User: {user?.name || "Unknown"}</p>
-          <p>User ID: {user?.userId || "N/A"}</p>
-          <p>
-            Role:{" "}
-            <span
-              className={`font-bold ${hasPermission ? "text-green-600" : "text-red-600"}`}
-            >
-              {user?.role || "Not Set"}
-            </span>
-          </p>
-          <p>
-            Permission:{" "}
-            {hasPermission ? "✓ Can Access" : "✗ Denied (Admin/OIC only)"}
-          </p>
-          <p className="mt-1 text-blue-700">
-            Check Firefox/Chrome DevTools (F12) Network tab to see API response
-          </p>
-          <p className="text-gray-600 mt-1">
-            If 403 error: Backend rejecting the request. Make sure logged in as
-            OIC.
-          </p>
-        </div> */}
-        {/*REMOVE : for debugging*/}
+
         {error && (
           <div className="mb-4 p-3 bg-red-100 border border-red-400 rounded text-red-700 text-sm">
             <p className="font-semibold">⚠️ Error:</p>
@@ -306,6 +220,17 @@ const OfficerLocationPopup: React.FC<OfficerLocationPopupProps> = ({
                     lng: lastLocation?.longitude || center.lng,
                   }}
                 />
+                {path.length > 1 && (
+                  <Polyline
+                    path={path}
+                    options={{
+                      strokeColor: "#0000ff",
+                      strokeOpacity: 0.9,
+                      strokeWeight: 4,
+                      geodesic: true,
+                    }}
+                  />
+                )}
               </GoogleMap>
             </div>
           ) : (

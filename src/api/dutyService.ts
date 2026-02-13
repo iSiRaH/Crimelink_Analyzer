@@ -1,6 +1,11 @@
 import api from "../services/api";
 import type { DutyStatus } from "../types/duty";
-import type { OfficerDutyRow, DutyCreatePayload, OfficerRecommendation, DutyRecommendationRequest } from "../types/duty";
+import type {
+  OfficerDutyRow,
+  DutyCreatePayload,
+  OfficerRecommendation,
+  DutyRecommendationRequest,
+} from "../types/duty";
 
 /**
  * GET officer rows for a selected date
@@ -35,19 +40,14 @@ export async function getOfficerRowsByDate(dateStr: string) {
       null;
 
     const officerName =
-      r.officerName ??
-      r.name ??
-      r.officer_name ??
-      r.officer?.name ??
-      "";
+      r.officerName ?? r.name ?? r.officer_name ?? r.officer?.name ?? "";
     const timeRange = r.timeRange ?? r.time ?? "";
 
-    
     const datetime = r.datetime
       ? r.datetime
       : r.time
-      ? `${dateStr}T${r.time}:00`
-      : "";
+        ? `${dateStr}T${r.time}:00`
+        : "";
 
     return {
       officerId,
@@ -83,18 +83,18 @@ export async function saveDutiesBulk(payloads: DutyCreatePayload[]) {
   } catch (bulkErr) {
     //  fallback: save one-by-one if bulk not supported
     const results = await Promise.all(
-      payloads.map((p) => api.post(`/duty-schedules`, p))
+      payloads.map((p) => api.post(`/duty-schedules`, p)),
     );
     return results.map((r) => r.data);
   }
 }
 export async function downloadDutyScheduleReportPdf(
   fromDate: string,
-  toDate: string
+  toDate: string,
 ): Promise<Blob> {
   const response = await api.get<Blob>("/duty-schedules/report/pdf", {
     params: {
-      start: fromDate, 
+      start: fromDate,
       end: toDate,
     },
     responseType: "blob", //  important for pdf
@@ -112,6 +112,9 @@ export async function getDutyLocations(): Promise<string[]> {
 }
 // service
 export async function getRecommendations(req: DutyRecommendationRequest) {
-  const res = await api.post<OfficerRecommendation[]>("/duty-recommendations", req);
+  const res = await api.post<OfficerRecommendation[]>(
+    "/duty-recommendations",
+    req,
+  );
   return res.data;
 }
