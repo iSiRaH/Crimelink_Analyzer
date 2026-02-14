@@ -7,7 +7,7 @@ import { getAllWeaponsWithDetails } from "../../api/weaponApi";
 import type { WeaponResponseDTO } from "../../types/weapon";
 import { formatWeaponDate, isWeaponOverdue } from "../../utils/weaponUtils";
 
-/* ================= TYPES ================= */
+  /* ================= TYPES ================= */
 
 type WeaponRow = {
   type: string;
@@ -16,6 +16,10 @@ type WeaponRow = {
   assignedTo: string;
   dueBack: string;
   issuedDate?: string;
+  
+  // ✅ Added bullet tracking fields
+  issuedBulletType?: string | null;
+  issuedMagazines?: number | null;
 };
 
 /* ================= COMPONENT ================= */
@@ -71,6 +75,10 @@ export default function WeaponHandover() {
         assignedTo: w.issuedTo?.name ?? "--",
         dueBack: formatWeaponDate(w.dueDate),
         issuedDate: w.issuedDate,
+        
+        // ✅ Map bullet info
+        issuedBulletType: w.issuedBulletType,
+        issuedMagazines: w.issuedMagazines,
       }));
 
       setWeapons(mapped);
@@ -128,8 +136,8 @@ export default function WeaponHandover() {
           <div className="grid grid-cols-3 gap-52 rounded-full mx-5">
             {[
               { label: "Total Weapons", value: totalCount },
-              { label: "Total Weapons", value: availableCount },
-              { label: "Total Weapons", value: issuedCount },
+              { label: "Available Weapons", value: availableCount },
+              { label: "Issued Weapons", value: issuedCount },
             ].map((card, idx) => (
               <div
                 key={idx}
@@ -270,7 +278,7 @@ export default function WeaponHandover() {
                                   setSelectedWeapon(w);
                                   setIsIssueOpen(true);
                                 }}
-                                className="bg-transparent border-2 border-green-600 text-green-500 px-6 py-1.5 rounded-full font-medium hover:bg-green-600/10 transition-all duration-200 text-md"
+                                className="bg-transparent border-2 border-green-600 text-green-500 px-6 py-1 rounded-full font-medium hover:bg-green-600/10 transition-all duration-200 text-md"
                               >
                                 Issue
                               </button>
@@ -283,12 +291,15 @@ export default function WeaponHandover() {
                                     issuedDate: w.issuedDate,
                                     dueBack: w.dueBack,
                                     assignedTo: w.assignedTo,
+                                    // ✅ Pass bullet info to modal
+                                    issuedBulletType: w.issuedBulletType,
+                                    issuedMagazines: w.issuedMagazines,
                                   });
                                   setIsReturnOpen(true);
                                 }}
-                                className="bg-transparent border-2 border-[#ef4444] text-[#ef4444] px-6 py-1.5 rounded-full font-medium hover:bg-[#ef4444]/10 transition-all duration-200 text-md"
+                                className="bg-transparent border-2 border-[#ef4444] text-[#ef4444] px-6 py-1 rounded-full font-medium hover:bg-[#ef4444]/10 transition-all duration-200 text-md"
                               >
-                                Issued
+                                Return
                               </button>
                             )}
                           </td>

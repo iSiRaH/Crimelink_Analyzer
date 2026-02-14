@@ -6,10 +6,14 @@ import {
   getAllWeapons,
 } from "../../api/weaponApi";
 import {
+  addBullet,
+  updateBullet,
+  getAllBullets,
+} from "../../api/BulletApi";
+import {
   ArrowLeft,
   PlusCircle,
   RefreshCcw,
-
   CheckCircle,
 } from "lucide-react";
 
@@ -27,7 +31,7 @@ type Weapon = {
 };
 
 type Bullet = {
-  id?: string;
+  bulletId?: number;
   bulletType: string;
   numberOfMagazines: number;
   remarks?: string;
@@ -64,10 +68,11 @@ export default function ManageWeapon({ onBack }: Props) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formMessage, setFormMessage] = useState("");
 
-  /* ================= LOAD WEAPONS ================= */
+  /* ================= LOAD DATA ================= */
 
   useEffect(() => {
     loadWeapons();
+    loadBullets();
   }, []);
 
   const loadWeapons = async () => {
@@ -76,6 +81,15 @@ export default function ManageWeapon({ onBack }: Props) {
       setWeapons(res.data);
     } catch {
       alert("Failed to load weapons");
+    }
+  };
+
+  const loadBullets = async () => {
+    try {
+      const res = await getAllBullets();
+      setBullets(res.data);
+    } catch {
+      alert("Failed to load bullets");
     }
   };
 
@@ -91,7 +105,18 @@ export default function ManageWeapon({ onBack }: Props) {
     setFormMessage("");
   };
 
-  /* ================= BULLET HANDLERS (UI-only) ================= */
+  /* ================= SELECT BULLET ================= */
+
+  const selectBullet = (bullet: Bullet) => {
+    setSelectedBullet(bullet);
+    setBulletType(bullet.bulletType);
+    setNumberOfMagazines(bullet.numberOfMagazines.toString());
+    setBulletRemarks(bullet.remarks || "");
+    setErrors({});
+    setFormMessage("");
+  };
+
+  /* ================= BULLET HANDLERS ================= */
 
   const handleAddBullet = async () => {
     const newErrors: Record<string, string> = {};
@@ -108,23 +133,26 @@ export default function ManageWeapon({ onBack }: Props) {
     setErrors({});
     setFormMessage("");
 
-    const newBullet: Bullet = {
-      id: Date.now().toString(),
-      bulletType,
-      numberOfMagazines: Number(numberOfMagazines),
-      remarks: bulletRemarks,
-    };
-
-    setBullets((b) => [newBullet, ...b]);
-    alert("Bullets added successfully");
-    setBulletType("");
-    setNumberOfMagazines("");
-    setBulletRemarks("");
-    setBulletRegisterDate(new Date().toISOString().split("T")[0]);
+    try {
+      await addBullet({ 
+        bulletType, 
+        numberOfMagazines: Number(numberOfMagazines), 
+        remarks: bulletRemarks 
+      });
+      alert("Bullets added successfully");
+      
+      setBulletType("");
+      setNumberOfMagazines("");
+      setBulletRemarks("");
+      setBulletRegisterDate(new Date().toISOString().split("T")[0]);
+      await loadBullets();
+    } catch (err: any) {
+      alert(err?.response?.data?.error || "Failed to add bullets");
+    }
   };
 
   const handleUpdateBullet = async () => {
-    if (!selectedBullet) {
+    if (!selectedBullet || !selectedBullet.bulletId) {
       alert("Please select bullets to update");
       return;
     }
@@ -143,12 +171,22 @@ export default function ManageWeapon({ onBack }: Props) {
     setErrors({});
     setFormMessage("");
 
-    setBullets((prev) =>
-      prev.map((b) => (b.id === selectedBullet.id ? { ...b, bulletType, numberOfMagazines: Number(numberOfMagazines), remarks: bulletRemarks } : b))
-    );
+    try {
+      await updateBullet(selectedBullet.bulletId, {
+        bulletType,
+        numberOfMagazines: Number(numberOfMagazines),
+        remarks: bulletRemarks
+      });
 
-    alert("Bullets updated successfully");
-    setSelectedBullet(null);
+      alert("Bullets updated successfully");
+      setSelectedBullet(null);
+      setBulletType("");
+      setNumberOfMagazines("");
+      setBulletRemarks("");
+      await loadBullets();
+    } catch (err: any) {
+      alert(err?.response?.data?.error || "Failed to update bullets");
+    }
   };
 
   /* ================= ADD WEAPON ================= */
@@ -251,6 +289,7 @@ export default function ManageWeapon({ onBack }: Props) {
           Back
         </button>
       </div>
+
       {/* WEAPON MANAGEMENT SECTION */}
       <div className="bg-slate-800/80 rounded-2xl p-8 mb-8 border border-slate-700/50">
         <div className="mb-6">
@@ -437,8 +476,8 @@ export default function ManageWeapon({ onBack }: Props) {
       {/* BULLETS MANAGEMENT SECTION */}
       <div className="bg-slate-800/80 rounded-2xl p-8 border border-slate-700/50">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold mb-2">Bullets Management</h2>
-          <p className="text-slate-400 text-sm">Add new bullets or update existing records</p>
+          <h2 className="text-2xl font-bold mb-2">Bullets Inventory Management</h2>
+          <p className="text-slate-400 text-sm">Add new bullet inventory or update existing records</p>
         </div>
 
         {/* MODE SWITCH BUTTONS */}
@@ -447,6 +486,9 @@ export default function ManageWeapon({ onBack }: Props) {
             onClick={() => {
               setBulletMode("add");
               setSelectedBullet(null);
+              setBulletType("");
+              setNumberOfMagazines("");
+              setBulletRemarks("");
               setFormMessage("");
               setErrors({});
             }}
@@ -484,7 +526,7 @@ export default function ManageWeapon({ onBack }: Props) {
               <p className="mb-4 text-red-400 font-medium text-sm">{formMessage}</p>
             )}
 
-            <p className="text-white font-semibold mb-6">Add New Weapon</p>
+            <p className="text-white font-semibold mb-6">Add New Bullet Inventory</p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Input
@@ -506,20 +548,28 @@ export default function ManageWeapon({ onBack }: Props) {
                 <div className="relative">
                   <input
                     type="date"
-                        className="w-full bg-white text-slate-900 border border-slate-400 rounded-lg px-4 py-2.5 font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                        value={bulletRegisterDate}
-                        onChange={(e) => setBulletRegisterDate(e.target.value)}
+                    className="w-full bg-white text-slate-900 border border-slate-400 rounded-lg px-4 py-2.5 font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                    value={bulletRegisterDate}
+                    onChange={(e) => setBulletRegisterDate(e.target.value)}
                   />
                   <span className="absolute right-3 top-3 text-slate-900">📅</span>
                 </div>
               </div>
             </div>
+
+            <div className="mt-6">
+              <Input 
+                label="Remarks" 
+                value={bulletRemarks} 
+                onChange={setBulletRemarks} 
+              />
+            </div>
+
             <div className="flex justify-start mt-6">
               <button
                 onClick={handleAddBullet}
                 className="bg-blue-800 hover:bg-blue-900 text-white font-semibold px-8 py-2.5 rounded-lg transition shadow-lg shadow-blue-800/30 flex items-center gap-2"
               >
-                
                 Add Bullets
               </button>
             </div>
@@ -538,14 +588,14 @@ export default function ManageWeapon({ onBack }: Props) {
               <select
                 className="w-full bg-white text-slate-900 border border-slate-400 rounded-lg px-4 py-2.5 font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                 onChange={(e) => {
-                  const bullet = bullets.find((b) => b.id === e.target.value);
-                  if (bullet) setSelectedBullet(bullet);
+                  const bullet = bullets.find((b) => b.bulletId === Number(e.target.value));
+                  if (bullet) selectBullet(bullet);
                 }}
               >
                 <option value="">-- Select bullets --</option>
                 {bullets.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.bulletType}
+                  <option key={b.bulletId} value={b.bulletId}>
+                    {b.bulletType} ({b.numberOfMagazines} magazines)
                   </option>
                 ))}
               </select>
@@ -579,10 +629,18 @@ export default function ManageWeapon({ onBack }: Props) {
                   </div>
                 </div>
 
+                <div className="mb-6">
+                  <Input 
+                    label="Remarks" 
+                    value={bulletRemarks} 
+                    onChange={setBulletRemarks} 
+                  />
+                </div>
+
                 <div className="flex justify-start">
                   <button
                     onClick={handleUpdateBullet}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-2.5 rounded-lg transition shadow-lg shadow-blue-600/30 flex items-center gap-2"
+                    className="bg-blue-800 hover:bg-blue-900 text-white font-semibold px-8 py-2.5 rounded-lg transition shadow-lg shadow-blue-800/30 flex items-center gap-2"
                   >
                     <CheckCircle size={18} />
                     Update Bullets
@@ -625,6 +683,3 @@ function Input({
     </div>
   );
 }
-
-/* ================= BUTTON ================= */
-// ActionButton component removed - buttons are now inline in the JSX
