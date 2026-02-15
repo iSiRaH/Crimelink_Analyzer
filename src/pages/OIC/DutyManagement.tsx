@@ -13,10 +13,12 @@ import type {
 import * as dutyService from "../../api/dutyService";
 import type { OfficerRecommendation } from "../../types/duty";
 import type { AxiosError } from "axios";
+import { useNavigate } from "react-router-dom";
 
 const DEFAULT_DUTY_LOCATIONS = ["Matara", "Hakmana", "Weligama", "Akuressa"];
 
 function DutyManagement() {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   // const [selectedDateKey, setSelectedDateKey] = useState("");//REMOVE
@@ -56,7 +58,8 @@ function DutyManagement() {
     if (!selectedDate) return;
 
     const firstRow = rows[0];
-    const location = firstRow?.location || locations[0] || DEFAULT_DUTY_LOCATIONS[0];
+    const location =
+      firstRow?.location || locations[0] || DEFAULT_DUTY_LOCATIONS[0];
 
     const req = {
       date: getDateKey(selectedDate),
@@ -90,7 +93,6 @@ function DutyManagement() {
     // setSelectedDateKey(getDateKey(date)); //REMOVE
     setOpen(true);
   };
-
 
   useEffect(() => {
     let active = true;
@@ -267,9 +269,18 @@ function DutyManagement() {
   /*lal-------------------------------------------------*/
 
   return (
-    <div className="w-full h-screen bg-[#0b0c1a] text-white font-[Inter] flex items-center justify-center">
+    <div className="w-full h-screen bg-dark-bg text-white font-[Inter] flex flex-col items-center justify-start p-6">
+      <div className="mb-6 flex flex-row justify-between items-center w-full">
+        <h1 className="text-3xl font-bold">Duty Management</h1>
+        <button
+          onClick={() => navigate("/oic/leave-management")}
+          className="bg-purple-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-purple-700 transition-colors"
+        >
+          Manage Leave Requests
+        </button>
+      </div>
       {/* Calendar Container */}
-      <div className="w-[1111px] h-[575px] rounded-[32px] bg-[#181d30] p-6">
+      <div className="w-9/12 h-4/5 rounded-[32px] bg-[#181d30] p-6">
         <FullCalendar
           plugins={[dayGridPlugin, interactionPlugin]}
           initialView="dayGridMonth"
@@ -301,13 +312,13 @@ function DutyManagement() {
         date={selectedDate}
         onClose={() => setOpen(false)}
       >
-        <h2 className="text-xl font-semibold mb-4">
+        <h2 className="text-xl font-semibold mb-4 text-white">
           Details for {selectedDate?.toLocaleDateString()}
         </h2>
 
         {loadingRows && <p className="mb-3">Loading officers...</p>}
 
-        <div className="max-h-96 overflow-y-auto block bg-slate-50">
+        <div className="max-h-96 overflow-y-auto block bg-slate-50 w-full">
           <table className="w-full border mb-5 text-sm">
             <thead>
               <tr className="bg-gray-200">
@@ -333,7 +344,9 @@ function DutyManagement() {
                       onChange={(e) => updateRow(i, "location", e.target.value)}
                     >
                       <option value="">
-                        {loadingLocations ? "Loading locations..." : "Select Location"}
+                        {loadingLocations
+                          ? "Loading locations..."
+                          : "Select Location"}
                       </option>
                       {locations.map((loc) => (
                         <option key={loc} value={loc}>
@@ -412,9 +425,9 @@ function DutyManagement() {
           </table>
         </div>
 
-        <div className="mt-4 flex justify-between items-center">
+        <div className="mt-4 flex flex-row w-full justify-between items-center">
           {/* Left side buttons */}
-          <div className="flex gap-5">
+          <div className="flex gap-3">
             <button
               onClick={handleAddDuties}
               disabled={saving || loadingRows}
@@ -448,7 +461,7 @@ function DutyManagement() {
         date={selectedDate}
         onClose={() => setRecommendOpen(false)}
       >
-        <h2 className="text-xl font-semibold mb-4">
+        <h2 className="text-xl text-white font-semibold mb-4">
           AI Recommended Officers for {selectedDate?.toLocaleDateString()}
         </h2>
 
@@ -461,10 +474,10 @@ function DutyManagement() {
         )}
 
         {recommendations.length > 0 && (
-          <div className="max-h-80 overflow-y-auto">
+          <div className="max-h-80 text-white w-full overflow-y-auto">
             <table className="w-full border text-sm">
-              <thead>
-                <tr className="bg-gray-200">
+              <thead className="bg-gray-200 text-dark-primary">
+                <tr>
                   <th className="p-2 border">Name</th>
                   <th className="p-2 border">Score</th>
                   <th className="p-2 border">Reason</th>

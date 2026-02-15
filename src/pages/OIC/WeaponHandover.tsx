@@ -85,11 +85,11 @@ export default function WeaponHandover() {
   /* ================= UI ================= */
 
   return (
-    <div className="min-h-screen bg-dark-bg text-white p-3">
+    <div className="min-h-screen bg-dark-bg text-white p-3 font-[Inter,system-ui,sans-serif]">
       {!showManageWeapon && (
         <div className="bg-dark-panel rounded-xl p-4">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-semibold">Weapon Management</h1>
+            <h1 className="text-3xl font-semibold">Weapon Management</h1>
             <button
               onClick={() => setShowManageWeapon(true)}
               className="bg-purple-primary text-white border-none px-6 py-2.5 rounded-[25px] text-base font-medium cursor-pointer transition-colors duration-300 hover:bg-purple-hover"
