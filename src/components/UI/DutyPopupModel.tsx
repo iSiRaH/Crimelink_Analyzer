@@ -26,7 +26,7 @@ const DutyPopupModel: React.FC<DutyPopupModelProps> = ({
       onClick={onClose}
     >
       <div
-        className="bg-[#181d30] rounded-3xl p-7 w-[700px] max-w-[90%] shadow-[0_8px_32px_rgba(0,0,0,0.4)] animate-[slideIn_0.2s_ease-out] font-[Inter]"
+        className="bg-[#181d30] rounded-3xl p-7 w-1/2 max-w-[90%] shadow-[0_8px_32px_rgba(0,0,0,0.4)] animate-[slideIn_0.2s_ease-out] font-[Inter]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex flex-col justify-between items-center mb-4">
