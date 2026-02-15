@@ -37,9 +37,16 @@ const OfficerLocationView = () => {
     setShowPopup(true);
   }
 
-  const handleSearch = () => {
-    console.log("Searching for:", searchTerm);
-  };
+  // const handleSearch = () => {
+  //   console.log("Searching for:", searchTerm);
+  // }; //REMOVE: serach button removed
+
+  const filteredOfficers = officers.filter((officer) => {
+    const searchMatch =
+      officer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      officer.badgeNo.toLocaleLowerCase().includes(searchTerm.toLowerCase());
+    return searchMatch;
+  });
 
   if (error) {
     return <div className="p-4 text-red-500">Error: {error}</div>;
@@ -63,34 +70,33 @@ const OfficerLocationView = () => {
             </div>
             <button
               className="h-10 sm:h-11 px-5 sm:px-6 rounded-lg border-none text-sm font-semibold cursor-pointer flex items-center gap-2 transition-opacity hover:opacity-90 bg-green-500 text-white"
-              onClick={() => handleSearch()}
-              disabled={loading}
-            >
-              Search
-            </button>
-            <button
-              className="h-10 sm:h-11 px-5 sm:px-6 rounded-lg border-none text-sm font-semibold cursor-pointer flex items-center gap-2 transition-opacity hover:opacity-90 bg-green-500 text-white"
               onClick={() => fetchOfficers()}
               disabled={loading}
             >
-              Refresh
+              ↻ Refresh
             </button>
             <button className="bg-blue-200 border-blue-400 border-2 text-blue-600 px-3 py-1 rounded-full">
               On Duty
             </button>
-            <button className="bg-blue-200 border-blue-400 border-2 text-blue-600 px-3 py-1 rounded-full">
+            <button className="bg-red-200 border-red-400 border-2 text-red-600 px-3 py-1 rounded-full">
               Off Duty
             </button>
+            {/*IMPLEMENT : filter by duty status */}
           </div>
         </div>
         <div className="w-full flex flex-col gap-6 overflow-x-auto p-6 bg-dark-panel rounded-xl sm:px-5">
+          {filteredOfficers.length === 0 && !loading && (
+            <p className="text-center text-gray-400 text-xl">
+              No officers found.
+            </p>
+          )}
           {loading ? (
-            <div>
+            <div className="flex flex-row gap-4 justify-center items-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white" />{" "}
-              <p>loading ...</p>
+              <p className="text-gray-400 text-xl">Loading ...</p>
             </div>
           ) : (
-            officers.map((officer) => (
+            filteredOfficers.map((officer) => (
               <FieldOfficerCard
                 id={officer.badgeNo}
                 name={officer.name}
