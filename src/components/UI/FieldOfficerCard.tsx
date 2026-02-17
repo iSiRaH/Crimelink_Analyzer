@@ -19,7 +19,13 @@ const FieldOfficerCard: React.FC<FieldOfficerCardProps> = ({
       </div>
       <div>
         <p
-          className={`border-2 px-3 py-1 rounded-full ${status === "Active" ? "bg-green-200 border-green-400 text-green-600" : "bg-red-200 border-red-400 text-red-600"}`} //FIX: change duty status
+          className={`border-2 px-3 py-1 rounded-full ${
+            status === "Active"
+              ? "bg-green-200 border-green-400 text-green-600"
+              : status === "Inactive"
+              ? "bg-red-200 border-red-400 text-red-600"
+              : "bg-gray-200 border-gray-400 text-gray-600"
+          }`} //FIX: change duty status
         >
           • {status || "Inactive"}
         </p>
