@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import type { OfficerInfo } from "../../types/officers";
 import { fetchFieldOfficers } from "../../services/officerLocation";
 import OfficerLocationPopup from "../../components/UI/OfficerLocationPopup";
+import { getOfficerRowsByDate } from "../../api/dutyService";
+
+// const TODAY = new Date().toISOString().split("T")[0]; //IMPLEMENT: use current date to get duty status of the day
 
 const OfficerLocationView = () => {
   const [officers, setOfficers] = useState<OfficerInfo[]>([]);
@@ -14,6 +17,7 @@ const OfficerLocationView = () => {
     null,
   );
   const [searchTerm, setSearchTerm] = useState("");
+  const [officerStatus, setOfficerStatus] = useState<string>("All");
 
   const fetchOfficers = async () => {
     try {
@@ -41,12 +45,26 @@ const OfficerLocationView = () => {
   //   console.log("Searching for:", searchTerm);
   // }; //REMOVE: serach button removed
 
-  const filteredOfficers = officers.filter((officer) => {
-    const searchMatch =
-      officer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      officer.badgeNo.toLocaleLowerCase().includes(searchTerm.toLowerCase());
-    return searchMatch;
-  });
+  const getStatus = async (date: string) => {
+    try {
+      const data = await getOfficerRowsByDate(date);
+      return data;
+    } catch (e) {
+      console.error("Error fetching duty status: ", e);
+    }
+  }; //IMPLEMENT: Show duty status in the card and filter by duty status
+
+  const filteredOfficers = officers
+    .filter((officer) => {
+      const searchMatch =
+        officer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        officer.badgeNo.toLocaleLowerCase().includes(searchTerm.toLowerCase());
+
+      const filterOfficerStatus =
+        officerStatus === "All" || officer.status === officerStatus;
+      return searchMatch && filterOfficerStatus;
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   if (error) {
     return <div className="p-4 text-red-500">Error: {error}</div>;
@@ -75,12 +93,16 @@ const OfficerLocationView = () => {
             >
               ↻ Refresh
             </button>
-            <button className="bg-blue-200 border-blue-400 border-2 text-blue-600 px-3 py-1 rounded-full">
-              On Duty
-            </button>
-            <button className="bg-red-200 border-red-400 border-2 text-red-600 px-3 py-1 rounded-full">
-              Off Duty
-            </button>
+            <select
+              title="Duty-status"
+              value={officerStatus}
+              onChange={(e) => setOfficerStatus(e.target.value)}
+              className="h-10 sm:h-11 w-full sm:w-auto px-4 sm:px-5 rounded-xl border border-dark-border bg-white text-dark-bg text-sm font-semibold cursor-pointer flex items-center gap-2 min-w-[120px] justify-center hover:bg-gray-100 transition-colors"
+            >
+              <option value={"All"}>All</option>
+              <option value={"Active"}>Active</option>
+              <option value={"Inactive"}>Inactive</option>
+            </select>
             {/*IMPLEMENT : filter by duty status */}
           </div>
         </div>
@@ -101,6 +123,7 @@ const OfficerLocationView = () => {
                 id={officer.badgeNo}
                 name={officer.name}
                 onPress={() => onOfficerClick(officer)}
+                status={officer.status || "Off Duty"} //FIX: change duty status
               />
             ))
           )}

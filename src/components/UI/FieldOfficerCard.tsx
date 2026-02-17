@@ -5,6 +5,7 @@ import type { FieldOfficerCardProps } from "../../types/officers";
 const FieldOfficerCard: React.FC<FieldOfficerCardProps> = ({
   id,
   name,
+  status,
   onPress,
 }) => {
   return (
@@ -17,8 +18,10 @@ const FieldOfficerCard: React.FC<FieldOfficerCardProps> = ({
         <p className="text-dark-primary font-bold text-lg">{name}</p>
       </div>
       <div>
-        <p className="bg-blue-200 border-blue-400 border-2 text-blue-600 px-3 py-1 rounded-full">
-          On Duty
+        <p
+          className={`border-2 px-3 py-1 rounded-full ${status === "Active" ? "bg-green-200 border-green-400 text-green-600" : "bg-red-200 border-red-400 text-red-600"}`} //FIX: change duty status
+        >
+          • {status || "Inactive"}
         </p>
       </div>
       <IoIosArrowForward className="text-dark-primary text-2xl" />
