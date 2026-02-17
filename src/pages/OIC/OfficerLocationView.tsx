@@ -123,7 +123,7 @@ const OfficerLocationView = () => {
                 id={officer.badgeNo}
                 name={officer.name}
                 onPress={() => onOfficerClick(officer)}
-                status={officer.status || "Off Duty"} //FIX: change duty status
+                status={officer.status || "Inactive"} //FIX: change duty status
               />
             ))
           )}
