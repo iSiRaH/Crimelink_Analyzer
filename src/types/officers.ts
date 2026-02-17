@@ -1,6 +1,7 @@
 export type FieldOfficerCardProps = {
   id: string;
   name: string;
+  status?: string;
   onPress?: () => void;
 };
 
