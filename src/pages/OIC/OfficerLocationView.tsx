@@ -58,7 +58,7 @@ const OfficerLocationView = () => {
     .filter((officer) => {
       const searchMatch =
         officer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        officer.badgeNo.toLocaleLowerCase().includes(searchTerm.toLowerCase());
+        officer.badgeNo.toLowerCase().includes(searchTerm.toLowerCase());
 
       const filterOfficerStatus =
         officerStatus === "All" || officer.status === officerStatus;
