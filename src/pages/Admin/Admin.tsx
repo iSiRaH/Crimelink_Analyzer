@@ -27,7 +27,7 @@ function Admin() {
 
   return (
     <>
-      <div className="flex flex-col h-screen">
+      <div className="flex flex-col h-screen bg-dark-bg">
         <Topbar
           name={user?.name ?? "Not Defined"}
           role={user?.role ?? "Not defined"}

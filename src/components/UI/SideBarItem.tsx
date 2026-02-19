@@ -14,8 +14,10 @@ function SidebarItem({ icon: Icon, name, path }: SidebarItemProps) {
         to={path}
         end
         className={({ isActive }) =>
-          `flex flex-row py-2 px-2 items-center w-full rounded-md cursor-pointer ${
-            isActive ? "bg-[#f61010]" : "hover:bg-[#1e2a3d]"
+          `flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer text-[17px] transition-colors duration-200 ${
+            isActive
+              ? "bg-gradient-to-r from-[#0b0c1a] to-[#161926] text-[#22c55e] font-bold"
+              : "hover:bg-white/5 text-white"
           }`
         }
       >
