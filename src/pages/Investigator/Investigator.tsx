@@ -11,10 +11,14 @@ function Investigator() {
   const { user, logout } = useAuth();
 
   const menuItems = [
-    {name:"Dashboard", icon: FaChartBar, path:"dashboard"},
-    {name:"Call Analysis", icon: MdWifiCalling3, path:"call-analysis"},
-    {name:"Facial Recognition", icon: ScanSearch, path:"facial-recognition"},
-    {name:"Safety Zone", icon: FaMapLocationDot, path:"safety-zone"},
+    { name: "Dashboard", icon: FaChartBar, path: "dashboard" },
+    { name: "Call Analysis", icon: MdWifiCalling3, path: "call-analysis" },
+    {
+      name: "Facial Recognition",
+      icon: ScanSearch,
+      path: "facial-recognition",
+    },
+    { name: "Safety Zone", icon: FaMapLocationDot, path: "safety-zone" },
   ];
 
   return (
@@ -25,7 +29,7 @@ function Investigator() {
           role={user?.role ?? "Not defined"}
         />
 
-        <div className="flex flex-1 overflow-hidden">
+        <div className="relative flex flex-1 overflow-hidden">
           <Sidebar items={menuItems} logoutFunc={logout} />
           <div className="flex-1 overflow-y-auto">
             <Outlet />
