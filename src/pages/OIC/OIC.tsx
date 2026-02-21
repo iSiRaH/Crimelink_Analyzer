@@ -42,7 +42,7 @@ function OIC() {
           role={user?.role ?? "Not defined"}
         />
 
-        <div className="flex flex-1">
+        <div className="relative flex flex-1 bg-dark-bg overflow-hidden">
           <Sidebar items={menuItems} logoutFunc={logout} />
           <div className="flex-1 p-0 overflow-auto">
             <Outlet />
