@@ -31,7 +31,6 @@ function OIC() {
     { name: "Report", icon: FaFileAlt, path: "report" },
     { name: "Report Crimes", icon: MdOutlineBugReport, path: "report-crimes" },
     { name: "Manage Profiles", icon: FaUserGear, path: "manage-profiles" },
-    { name: "Officer Locations", icon: FaUserGear, path: "officer-locations" },
   ];
 
   return (

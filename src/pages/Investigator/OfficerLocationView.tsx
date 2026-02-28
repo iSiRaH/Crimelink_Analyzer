@@ -120,6 +120,7 @@ const OfficerLocationView = () => {
           ) : (
             filteredOfficers.map((officer) => (
               <FieldOfficerCard
+                key={officer.badgeNo}
                 id={officer.badgeNo}
                 name={officer.name}
                 onPress={() => onOfficerClick(officer)}

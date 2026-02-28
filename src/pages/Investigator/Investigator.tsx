@@ -3,6 +3,7 @@ import Sidebar from "../../components/Sidebar";
 import Topbar from "../../components/Topbar";
 import { useAuth } from "../../contexts/useAuth";
 import { FaChartBar } from "react-icons/fa6";
+import { FaMapMarkerAlt } from "react-icons/fa";
 import { MdWifiCalling3 } from "react-icons/md";
 import { FaMapLocationDot } from "react-icons/fa6";
 import { ScanSearch } from "lucide-react";
@@ -19,6 +20,7 @@ function Investigator() {
       path: "facial-recognition",
     },
     { name: "Safety Zone", icon: FaMapLocationDot, path: "safety-zone" },
+    { name: "Officer Locations", icon: FaMapMarkerAlt, path: "officer-locations" },
   ];
 
   return (
