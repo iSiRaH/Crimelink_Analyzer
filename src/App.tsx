@@ -36,6 +36,7 @@ import { MapProvider } from "./contexts/MapContext";
 import ReportCrimes from "./pages/OIC/ReportCrimes";
 import ViewCrimeReports from "./pages/OIC/ViewCrimeReports";
 import LeaveManagement from "./pages/OIC/LeaveManagment";
+import ManageCriminals from "./pages/OIC/ManageCriminals";
 import OfficerLocationView from "./pages/Investigator/OfficerLocationView";
 
 function AppContent() {
@@ -94,6 +95,7 @@ function AppContent() {
         <Route path="report-crimes" element={<ReportCrimes />} />
         <Route path="report-crimes/reports" element={<ViewCrimeReports />} />
         <Route path="manage-profiles" element={<ManageProfiles />} />
+        <Route path="manage-criminals" element={<ManageCriminals />} />
       </Route>
 
       {/* investigator page routing */}
