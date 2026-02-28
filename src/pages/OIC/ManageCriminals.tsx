@@ -15,6 +15,14 @@ import {
   FaArrowLeft,
   FaEdit,
   FaTrash,
+  FaUser,
+  FaShieldAlt,
+  FaCamera,
+  FaIdCard,
+  FaPhone,
+  FaMapMarkerAlt,
+  FaCalendarAlt,
+  FaSave,
 } from "react-icons/fa";
 import api from "../../services/api";
 
@@ -248,12 +256,14 @@ function CriminalsListView({ onAdd, onEdit }: { onAdd: () => void; onEdit: (id: 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [riskFilter, setRiskFilter] = useState("All");
+  const [deleteTarget, setDeleteTarget] = useState<CriminalRecord | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchCriminals = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get("/facial/criminals");
+      const res = await api.get("/criminals");
       setCriminals(res.data as CriminalRecord[]);
     } catch {
       setError("Failed to load criminals. Ensure services are running.");
@@ -265,6 +275,20 @@ function CriminalsListView({ onAdd, onEdit }: { onAdd: () => void; onEdit: (id: 
   useEffect(() => {
     fetchCriminals();
   }, [fetchCriminals]);
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await api.delete(`/criminals/${deleteTarget.id}`);
+      setCriminals((prev) => prev.filter((c) => c.id !== deleteTarget.id));
+      setDeleteTarget(null);
+    } catch {
+      setError("Failed to delete criminal. Please try again.");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const filtered = criminals
     .filter((c) => {
@@ -462,7 +486,7 @@ function CriminalsListView({ onAdd, onEdit }: { onAdd: () => void; onEdit: (id: 
                         </span>
                       )}
                     </td>
-                    <td className="px-5 py-3 text-center">
+                    <td className="px-5 py-3 text-center flex items-center justify-center gap-2">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -473,6 +497,16 @@ function CriminalsListView({ onAdd, onEdit }: { onAdd: () => void; onEdit: (id: 
                       >
                         <FaEdit className="w-4 h-4" />
                       </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteTarget(c);
+                        }}
+                        className="text-red-400 hover:text-red-300 transition-colors p-1"
+                        title="Delete criminal"
+                      >
+                        <FaTrash className="w-4 h-4" />
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -481,6 +515,63 @@ function CriminalsListView({ onAdd, onEdit }: { onAdd: () => void; onEdit: (id: 
           </div>
         )}
       </div>
+
+      {/* ── Delete Confirmation Modal ── */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#141829] border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+            <h3 className="text-lg font-semibold text-white mb-3">Delete Criminal</h3>
+            <p className="text-gray-300 text-sm mb-1">
+              Are you sure you want to permanently delete this criminal?
+            </p>
+            <div className="flex items-center gap-3 my-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+              {deleteTarget.primary_photo_url ? (
+                <img
+                  src={deleteTarget.primary_photo_url}
+                  alt={deleteTarget.name}
+                  className="w-10 h-10 rounded-full object-cover border border-white/20"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-gray-500 text-xs">
+                  N/A
+                </div>
+              )}
+              <div>
+                <p className="text-white font-medium text-sm">{deleteTarget.name}</p>
+                <p className="text-gray-400 text-xs font-mono">{deleteTarget.nic}</p>
+              </div>
+            </div>
+            <p className="text-red-400 text-xs mb-4">
+              This action cannot be undone. All associated photos and face data will be removed.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleting}
+                className="px-4 py-2 rounded-lg text-sm text-gray-300 hover:text-white border border-white/10 hover:border-white/30 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="px-4 py-2 rounded-lg text-sm font-semibold bg-red-600 hover:bg-red-700 text-white transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {deleting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <FaTrash className="w-3 h-3" /> Delete
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -584,10 +675,6 @@ function AddCriminalForm({ onBack }: { onBack: () => void }) {
       setError("NIC is required.");
       return false;
     }
-    if (!photo) {
-      setError("A photo is required for facial recognition.");
-      return false;
-    }
     return true;
   };
 
@@ -599,7 +686,7 @@ function AddCriminalForm({ onBack }: { onBack: () => void }) {
     setLoading(true);
     try {
       const fd = new FormData();
-      fd.append("photo", photo!);
+      if (photo) fd.append("photo", photo);
       fd.append("name", name.trim());
       fd.append("nic", nic.trim());
       fd.append("risk_level", riskLevel);
@@ -614,10 +701,10 @@ function AddCriminalForm({ onBack }: { onBack: () => void }) {
       if (gender) fd.append("gender", gender);
       if (alias.trim()) fd.append("alias", alias.trim());
 
-      const res = await api.post("/facial/register", fd);
+      const res = await api.post("/criminals", fd);
       const data = res.data;
       setSuccess(
-        `Criminal registered! ID: ${data.criminal_id ?? "N/A"} — ${data.photos_stored ?? 1} photo(s) stored.`
+        `Criminal registered! ID: ${data.criminal_id ?? "N/A"} — ${data.photos_stored ?? 0} photo(s) stored.`
       );
       resetForm();
     } catch (err: unknown) {
@@ -947,6 +1034,11 @@ function EditCriminalForm({
   const [riskLevel, setRiskLevel] = useState("medium");
   const [status, setStatus] = useState("active");
 
+  /* --- tabs --- */
+  const [activeTab, setActiveTab] = useState<"personal" | "crime" | "photo">(
+    "personal"
+  );
+
   /* --- photo state --- */
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -1038,10 +1130,12 @@ function EditCriminalForm({
 
     if (!name.trim()) {
       setError("Full Name is required.");
+      setActiveTab("personal");
       return;
     }
     if (!nic.trim()) {
       setError("NIC is required.");
+      setActiveTab("personal");
       return;
     }
 
@@ -1083,213 +1177,440 @@ function EditCriminalForm({
     }
   };
 
+  /* --- style helpers --- */
   const inputClass =
-    "rounded-[13px] bg-white h-[40px] px-4 text-[#0b0c1a] text-sm outline-none w-full";
-  const labelClass = "text-base sm:text-lg font-medium";
+    "rounded-xl bg-[#0b0c1a]/80 border border-white/10 h-[42px] px-4 text-white text-sm outline-none w-full focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/30 transition-all placeholder:text-gray-500";
+  const labelClass = "text-sm font-medium text-gray-300 flex items-center gap-2";
+  const sectionTitle = "text-lg font-semibold text-white flex items-center gap-2.5";
 
+  const riskColors: Record<string, string> = {
+    low: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+    medium: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+    high: "bg-orange-500/20 text-orange-400 border-orange-500/30",
+    critical: "bg-red-500/20 text-red-400 border-red-500/30",
+  };
+  const statusColors: Record<string, string> = {
+    active: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+    inactive: "bg-gray-500/20 text-gray-400 border-gray-500/30",
+    archived: "bg-purple-500/20 text-purple-400 border-purple-500/30",
+  };
+
+  const displayPreview = photoPreview ?? existingPhotoUrl;
+
+  const tabBtn = (
+    tab: "personal" | "crime" | "photo",
+    icon: React.ReactNode,
+    label: string
+  ) => (
+    <button
+      type="button"
+      onClick={() => setActiveTab(tab)}
+      className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+        activeTab === tab
+          ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25"
+          : "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-gray-200"
+      }`}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+
+  /* --- loading --- */
   if (fetchLoading) {
     return (
       <div className="w-full min-h-screen bg-[#0b0c1a] text-white flex items-center justify-center">
-        <div className="flex items-center gap-3">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white" />
-          <span className="text-gray-400 text-lg">Loading criminal data...</span>
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative">
+            <div className="animate-spin rounded-full h-12 w-12 border-2 border-blue-500/20 border-t-blue-500" />
+            <FaUser className="absolute inset-0 m-auto text-blue-400 text-sm" />
+          </div>
+          <span className="text-gray-400">Loading criminal record...</span>
         </div>
       </div>
     );
   }
 
-  const displayPreview = photoPreview ?? existingPhotoUrl;
-
   return (
-    <div className="w-full min-h-screen bg-[#0b0c1a] text-white flex flex-col">
-      <div className="bg-slate-800 p-5 rounded-lg m-4 sm:m-6">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-5">
+    <div className="w-full min-h-screen bg-[#0b0c1a] text-white">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+        {/* ── Top Bar ── */}
+        <div className="flex items-center justify-between mb-6">
           <button
             onClick={onBack}
-            className="rounded-lg bg-white/10 hover:bg-white/20 p-2.5 transition-colors"
+            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm"
           >
-            <FaArrowLeft />
+            <FaArrowLeft className="text-xs" /> Back to List
           </button>
-          <div>
-            <h1 className="font-semibold text-3xl">Edit Criminal</h1>
-            <p className="text-gray-400 text-sm mt-0.5">ID: {criminalId}</p>
+          <div className="flex items-center gap-2">
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-semibold border ${riskColors[riskLevel] ?? riskColors.medium}`}
+            >
+              {riskLevel.toUpperCase()} RISK
+            </span>
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-semibold border ${statusColors[status] ?? statusColors.active}`}
+            >
+              {status.toUpperCase()}
+            </span>
           </div>
         </div>
 
-        {/* Alerts */}
+        {/* ── Profile Header Card ── */}
+        <div className="bg-gradient-to-r from-[#141829] to-[#1a1f38] rounded-2xl border border-white/5 p-6 mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+            {/* Photo thumbnail */}
+            <div className="relative shrink-0">
+              {displayPreview ? (
+                <img
+                  src={displayPreview}
+                  alt={name}
+                  className="w-20 h-20 rounded-2xl object-cover border-2 border-white/10"
+                />
+              ) : (
+                <div className="w-20 h-20 rounded-2xl bg-white/5 border-2 border-white/10 flex items-center justify-center">
+                  <FaUser className="text-gray-600 text-2xl" />
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => setActiveTab("photo")}
+                className="absolute -bottom-1.5 -right-1.5 bg-blue-600 hover:bg-blue-500 rounded-lg p-1.5 transition-colors"
+                title="Change photo"
+              >
+                <FaCamera className="text-[10px] text-white" />
+              </button>
+            </div>
+
+            {/* Info */}
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-bold truncate">
+                {name || "Unnamed Criminal"}
+              </h1>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-sm text-gray-400">
+                {nic && (
+                  <span className="flex items-center gap-1.5">
+                    <FaIdCard className="text-xs text-gray-500" /> {nic}
+                  </span>
+                )}
+                {alias && (
+                  <span className="flex items-center gap-1.5">
+                    aka <span className="text-gray-300 italic">{alias}</span>
+                  </span>
+                )}
+                {gender && <span>{gender}</span>}
+                {dateOfBirth && (
+                  <span className="flex items-center gap-1.5">
+                    <FaCalendarAlt className="text-xs text-gray-500" />{" "}
+                    {dateOfBirth}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-gray-600 mt-1.5 font-mono">
+                ID: {criminalId}
+              </p>
+            </div>
+
+            {/* Save button (desktop) */}
+            <button
+              onClick={onSubmit}
+              disabled={loading}
+              className="hidden sm:flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 px-6 py-2.5 font-semibold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-600/20"
+            >
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <FaSave className="text-xs" /> Save Changes
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* ── Alerts ── */}
         {error && (
-          <div className="mb-4 p-3 rounded-lg bg-red-500/20 border border-red-500/50 text-red-300 text-sm flex items-center gap-2">
-            <FaTimes className="shrink-0" /> {error}
+          <div className="mb-5 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-sm flex items-start gap-3">
+            <div className="mt-0.5 shrink-0 bg-red-500/20 rounded-lg p-1.5">
+              <FaTimes className="text-xs" />
+            </div>
+            <span>{error}</span>
           </div>
         )}
         {success && (
-          <div className="mb-4 p-3 rounded-lg bg-green-500/20 border border-green-500/50 text-green-300 text-sm flex items-center gap-2">
-            <FaCheckCircle className="shrink-0" /> {success}
+          <div className="mb-5 p-4 rounded-xl bg-green-500/10 border border-green-500/30 text-green-300 text-sm flex items-start gap-3">
+            <div className="mt-0.5 shrink-0 bg-green-500/20 rounded-lg p-1.5">
+              <FaCheckCircle className="text-xs" />
+            </div>
+            <span>{success}</span>
           </div>
         )}
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-          {/* Left: Personal Details */}
-          <div className="bg-[#181d30] rounded-[40px] sm:rounded-[54px] shadow p-6 sm:p-8 flex flex-col gap-4">
-            <h2 className="font-medium text-2xl sm:text-[28px] mb-1">
-              Personal Details
-            </h2>
+        {/* ── Tabs ── */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          {tabBtn("personal", <FaUser className="text-xs" />, "Personal Info")}
+          {tabBtn(
+            "crime",
+            <FaShieldAlt className="text-xs" />,
+            "Crime Details"
+          )}
+          {tabBtn("photo", <FaCamera className="text-xs" />, "Photo")}
+        </div>
 
-            <div className="flex flex-col gap-1">
-              <label className={labelClass}>
-                Full Name <span className="text-red-400">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="Enter full name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className={inputClass}
-              />
-            </div>
+        {/* ══════════ PERSONAL TAB ══════════ */}
+        {activeTab === "personal" && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {/* Identity */}
+            <div className="bg-[#141829] rounded-2xl border border-white/5 p-6 flex flex-col gap-5">
+              <h3 className={sectionTitle}>
+                <span className="bg-blue-600/20 rounded-lg p-1.5">
+                  <FaIdCard className="text-blue-400 text-xs" />
+                </span>
+                Identity
+              </h3>
 
-            <div className="flex flex-col gap-1">
-              <label className={labelClass}>
-                NIC / National ID <span className="text-red-400">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="Enter NIC number"
-                value={nic}
-                onChange={(e) => setNic(e.target.value)}
-                className={inputClass}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1">
-                <label className={labelClass}>Phone Number</label>
+              <div className="flex flex-col gap-1.5">
+                <label className={labelClass}>
+                  Full Name <span className="text-red-400">*</span>
+                </label>
                 <input
                   type="text"
-                  placeholder="Contact number"
-                  value={contactNumber}
-                  onChange={(e) => setContactNumber(e.target.value)}
+                  placeholder="Enter full name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   className={inputClass}
                 />
               </div>
-              <div className="flex flex-col gap-1">
-                <label className={labelClass}>Secondary Contact</label>
+
+              <div className="flex flex-col gap-1.5">
+                <label className={labelClass}>
+                  NIC / National ID <span className="text-red-400">*</span>
+                </label>
                 <input
                   type="text"
-                  placeholder="Secondary number"
-                  value={secondaryContact}
-                  onChange={(e) => setSecondaryContact(e.target.value)}
+                  placeholder="Enter NIC number"
+                  value={nic}
+                  onChange={(e) => setNic(e.target.value)}
                   className={inputClass}
                 />
               </div>
-            </div>
 
-            <div className="flex flex-col gap-1">
-              <label className={labelClass}>Address</label>
-              <textarea
-                placeholder="Enter address"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                className="rounded-[13px] bg-white min-h-[53px] px-4 py-3 text-[#0b0c1a] text-sm outline-none resize-none w-full"
-                rows={2}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1">
-                <label className={labelClass}>Date of Birth</label>
+              <div className="flex flex-col gap-1.5">
+                <label className={labelClass}>Alias / Known As</label>
                 <input
-                  type="date"
-                  value={dateOfBirth}
-                  onChange={(e) => setDateOfBirth(e.target.value)}
+                  type="text"
+                  placeholder="Known alias"
+                  value={alias}
+                  onChange={(e) => setAlias(e.target.value)}
                   className={inputClass}
                 />
               </div>
-              <div className="flex flex-col gap-1">
-                <label className={labelClass}>Gender</label>
-                <select
-                  title="gender"
-                  value={gender}
-                  onChange={(e) => setGender(e.target.value)}
-                  className={inputClass}
-                >
-                  <option value="" disabled hidden>
-                    Select Gender
-                  </option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className={labelClass}>
+                    <FaCalendarAlt className="text-xs text-gray-500" /> Date of
+                    Birth
+                  </label>
+                  <input
+                    type="date"
+                    value={dateOfBirth}
+                    onChange={(e) => setDateOfBirth(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className={labelClass}>Gender</label>
+                  <select
+                    title="gender"
+                    value={gender}
+                    onChange={(e) => setGender(e.target.value)}
+                    className={inputClass}
+                  >
+                    <option value="" disabled hidden>
+                      Select
+                    </option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
               </div>
             </div>
 
-            <div className="flex flex-col gap-1">
-              <label className={labelClass}>Alias / Known As</label>
-              <input
-                type="text"
-                placeholder="Known alias"
-                value={alias}
-                onChange={(e) => setAlias(e.target.value)}
-                className={inputClass}
-              />
+            {/* Contact & Address */}
+            <div className="bg-[#141829] rounded-2xl border border-white/5 p-6 flex flex-col gap-5">
+              <h3 className={sectionTitle}>
+                <span className="bg-emerald-600/20 rounded-lg p-1.5">
+                  <FaPhone className="text-emerald-400 text-xs" />
+                </span>
+                Contact & Address
+              </h3>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className={labelClass}>
+                    <FaPhone className="text-xs text-gray-500" /> Phone Number
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Contact number"
+                    value={contactNumber}
+                    onChange={(e) => setContactNumber(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className={labelClass}>Secondary Contact</label>
+                  <input
+                    type="text"
+                    placeholder="Secondary number"
+                    value={secondaryContact}
+                    onChange={(e) => setSecondaryContact(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className={labelClass}>
+                  <FaMapMarkerAlt className="text-xs text-gray-500" /> Address
+                </label>
+                <textarea
+                  placeholder="Enter address"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  className="rounded-xl bg-[#0b0c1a]/80 border border-white/10 px-4 py-3 text-white text-sm outline-none resize-none w-full focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/30 transition-all placeholder:text-gray-500"
+                  rows={3}
+                />
+              </div>
             </div>
           </div>
+        )}
 
-          {/* Right: Crime Details + Photo */}
-          <div className="flex flex-col gap-5">
-            {/* Crime Details */}
-            <div className="bg-[#181d30] rounded-[40px] sm:rounded-[54px] shadow p-6 sm:p-8 flex flex-col gap-4">
-              <h2 className="font-medium text-2xl sm:text-[28px] mb-1">
-                Crime Details
-              </h2>
+        {/* ══════════ CRIME TAB ══════════ */}
+        {activeTab === "crime" && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            {/* Crime History — takes 2 cols */}
+            <div className="lg:col-span-2 bg-[#141829] rounded-2xl border border-white/5 p-6 flex flex-col gap-4">
+              <h3 className={sectionTitle}>
+                <span className="bg-red-600/20 rounded-lg p-1.5">
+                  <FaShieldAlt className="text-red-400 text-xs" />
+                </span>
+                Crime History
+              </h3>
+              <CrimeRecordEditor
+                value={crimeHistory}
+                onChange={setCrimeHistory}
+              />
+            </div>
 
-              <div className="flex flex-col gap-1">
-                <label className={labelClass}>Crime History</label>
-                <CrimeRecordEditor
-                  value={crimeHistory}
-                  onChange={setCrimeHistory}
-                />
+            {/* Status & Risk */}
+            <div className="bg-[#141829] rounded-2xl border border-white/5 p-6 flex flex-col gap-5">
+              <h3 className={sectionTitle}>
+                <span className="bg-yellow-600/20 rounded-lg p-1.5">
+                  <FaShieldAlt className="text-yellow-400 text-xs" />
+                </span>
+                Classification
+              </h3>
+
+              <div className="flex flex-col gap-1.5">
+                <label className={labelClass}>Risk Level</label>
+                <select
+                  title="risk_level"
+                  value={riskLevel}
+                  onChange={(e) => setRiskLevel(e.target.value)}
+                  className={inputClass}
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="critical">Critical</option>
+                </select>
+                {/* visual risk indicator */}
+                <div className="flex items-center gap-1.5 mt-2">
+                  {["low", "medium", "high", "critical"].map((lvl) => (
+                    <div
+                      key={lvl}
+                      className={`h-2 flex-1 rounded-full transition-all ${
+                        ["low", "medium", "high", "critical"].indexOf(
+                          riskLevel
+                        ) >=
+                        ["low", "medium", "high", "critical"].indexOf(lvl)
+                          ? lvl === "critical"
+                            ? "bg-red-500"
+                            : lvl === "high"
+                              ? "bg-orange-500"
+                              : lvl === "medium"
+                                ? "bg-yellow-500"
+                                : "bg-emerald-500"
+                          : "bg-white/10"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="text-xs text-gray-500 mt-0.5">
+                  {riskLevel === "critical"
+                    ? "Extremely dangerous — top priority"
+                    : riskLevel === "high"
+                      ? "Significant threat level"
+                      : riskLevel === "medium"
+                        ? "Moderate risk — monitor closely"
+                        : "Low risk — routine monitoring"}
+                </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1">
-                  <label className={labelClass}>Risk Level</label>
-                  <select
-                    title="risk_level"
-                    value={riskLevel}
-                    onChange={(e) => setRiskLevel(e.target.value)}
-                    className={inputClass}
-                  >
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                    <option value="critical">Critical</option>
-                  </select>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className={labelClass}>Status</label>
-                  <select
-                    title="status"
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value)}
-                    className={inputClass}
-                  >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                    <option value="archived">Archived</option>
-                  </select>
+              <div className="flex flex-col gap-1.5">
+                <label className={labelClass}>Status</label>
+                <select
+                  title="status"
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className={inputClass}
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                  <option value="archived">Archived</option>
+                </select>
+                <div className="mt-2 flex items-center gap-2">
+                  <div
+                    className={`w-2.5 h-2.5 rounded-full ${
+                      status === "active"
+                        ? "bg-emerald-400 shadow shadow-emerald-400/50"
+                        : status === "inactive"
+                          ? "bg-gray-400"
+                          : "bg-purple-400"
+                    }`}
+                  />
+                  <span className="text-xs text-gray-500 capitalize">
+                    {status === "active"
+                      ? "Currently active in system"
+                      : status === "inactive"
+                        ? "Marked inactive"
+                        : "Archived — read only"}
+                  </span>
                 </div>
               </div>
             </div>
+          </div>
+        )}
 
-            {/* Photo */}
-            <div className="bg-[#181d30] rounded-[40px] sm:rounded-[54px] shadow p-6 sm:p-8 flex flex-col gap-4">
-              <h2 className="font-medium text-2xl sm:text-[28px] mb-1">
-                Photo
-              </h2>
-              <p className="text-gray-400 text-xs -mt-3">
-                Upload a new photo to replace the existing one (optional).
+        {/* ══════════ PHOTO TAB ══════════ */}
+        {activeTab === "photo" && (
+          <div className="max-w-xl mx-auto">
+            <div className="bg-[#141829] rounded-2xl border border-white/5 p-6 flex flex-col gap-4">
+              <h3 className={sectionTitle}>
+                <span className="bg-violet-600/20 rounded-lg p-1.5">
+                  <FaCamera className="text-violet-400 text-xs" />
+                </span>
+                Criminal Photo
+              </h3>
+              <p className="text-gray-500 text-xs -mt-2">
+                Upload a new photo to replace the existing one. Accepted
+                formats: JPG, PNG (max 5 MB).
               </p>
 
               {!photo && !displayPreview ? (
@@ -1298,27 +1619,34 @@ function EditCriminalForm({
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
                   onClick={() => fileInputRef.current?.click()}
-                  className={`rounded-[13px] border border-dashed border-white/50 min-h-[180px] flex flex-col items-center justify-center gap-3 cursor-pointer transition-colors duration-200
-                    ${isDragActive ? "border-2 border-[#22c55e] bg-[rgba(34,197,94,0.1)]" : ""}`}
+                  className={`rounded-2xl border-2 border-dashed min-h-[240px] flex flex-col items-center justify-center gap-4 cursor-pointer transition-all duration-200 ${
+                    isDragActive
+                      ? "border-blue-500 bg-blue-500/5"
+                      : "border-white/15 hover:border-white/30 hover:bg-white/[0.02]"
+                  }`}
                 >
-                  <FaCloudUploadAlt className="w-16 h-16 sm:w-[75px] sm:h-[75px] text-white/70" />
-                  <span className="text-white/50 text-sm">
-                    {isDragActive
-                      ? "Drop image here!"
-                      : "Drag & Drop a new photo here"}
-                  </span>
-                  <span className="text-white/30 text-xs">
-                    JPG or PNG, max 5 MB
-                  </span>
+                  <div className="bg-white/5 rounded-2xl p-5">
+                    <FaCloudUploadAlt className="w-10 h-10 text-gray-500" />
+                  </div>
+                  <div className="text-center">
+                    <span className="text-gray-400 text-sm block">
+                      {isDragActive
+                        ? "Drop your image here"
+                        : "Drag & drop a photo here"}
+                    </span>
+                    <span className="text-gray-600 text-xs mt-1 block">
+                      or click to browse
+                    </span>
+                  </div>
                   <button
                     type="button"
-                    className="rounded-md bg-[#22c55e] px-5 py-2 text-sm font-bold hover:bg-[#16a34a] transition-colors"
+                    className="rounded-xl bg-blue-600 hover:bg-blue-500 px-6 py-2 text-sm font-semibold transition-colors"
                     onClick={(e) => {
                       e.stopPropagation();
                       fileInputRef.current?.click();
                     }}
                   >
-                    Upload Photo
+                    Choose File
                   </button>
                   <input
                     type="file"
@@ -1329,79 +1657,85 @@ function EditCriminalForm({
                   />
                 </div>
               ) : (
-                <div className="flex flex-col items-center gap-3">
-                  <div className="relative">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="relative group">
                     <img
                       src={displayPreview!}
                       alt="Preview"
-                      className="w-48 h-48 object-cover rounded-xl border-2 border-[#22c55e]/50"
+                      className="w-56 h-56 object-cover rounded-2xl border-2 border-white/10 shadow-xl"
                     />
-                    {photo && (
-                      <button
-                        type="button"
-                        onClick={removeNewPhoto}
-                        className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center transition-colors"
-                      >
-                        <FaTimes className="text-xs" />
-                      </button>
-                    )}
+                    <div className="absolute inset-0 bg-black/50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      {photo ? (
+                        <button
+                          type="button"
+                          onClick={removeNewPhoto}
+                          className="bg-red-500 hover:bg-red-400 text-white rounded-xl px-4 py-2 text-sm font-medium transition-colors"
+                        >
+                          Remove
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl px-4 py-2 text-sm font-medium transition-colors"
+                        >
+                          Replace
+                        </button>
+                      )}
+                    </div>
                   </div>
                   {photo ? (
-                    <div className="flex items-center gap-2 py-2 px-3 bg-[rgba(34,197,94,0.15)] rounded-md border border-[rgba(34,197,94,0.3)]">
-                      <span className="text-white text-[13px] overflow-hidden text-ellipsis whitespace-nowrap max-w-[200px]">
+                    <div className="flex items-center gap-2 py-2 px-4 bg-blue-500/10 rounded-xl border border-blue-500/20">
+                      <FaCheckCircle className="text-blue-400 text-xs" />
+                      <span className="text-white text-sm truncate max-w-[200px]">
                         {photo.name}
                       </span>
-                      <span className="text-white/50 text-xs">
-                        ({(photo.size / 1024).toFixed(0)} KB) — New
+                      <span className="text-gray-500 text-xs">
+                        ({(photo.size / 1024).toFixed(0)} KB)
                       </span>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center gap-2">
-                      <span className="text-gray-400 text-xs">Current photo</span>
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="rounded-md bg-white/10 hover:bg-white/20 px-4 py-1.5 text-xs font-medium transition-colors"
-                      >
-                        Replace Photo
-                      </button>
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        className="hidden"
-                        accept="image/jpeg,image/png"
-                        onChange={handleFileSelect}
-                      />
-                    </div>
+                    <span className="text-gray-500 text-xs">
+                      Current photo — hover to replace
+                    </span>
                   )}
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    className="hidden"
+                    accept="image/jpeg,image/png"
+                    onChange={handleFileSelect}
+                  />
                 </div>
               )}
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Action Buttons */}
-        <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-5">
-          <button
-            onClick={onSubmit}
-            disabled={loading}
-            className="rounded-md bg-[#3b82f6] px-8 py-2.5 font-bold hover:bg-[#2563eb] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 justify-center"
-          >
-            {loading ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                Saving...
-              </>
-            ) : (
-              "Save Changes"
-            )}
-          </button>
+        {/* ── Mobile Save + Cancel ── */}
+        <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-8">
           <button
             onClick={onBack}
             disabled={loading}
-            className="rounded-md bg-gray-600 px-8 py-2.5 font-bold hover:bg-gray-500 transition-colors disabled:opacity-50"
+            className="rounded-xl bg-white/5 border border-white/10 px-8 py-2.5 text-sm font-medium text-gray-400 hover:bg-white/10 hover:text-white transition-all disabled:opacity-50"
           >
             Cancel
+          </button>
+          <button
+            onClick={onSubmit}
+            disabled={loading}
+            className="sm:hidden flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 px-8 py-2.5 font-semibold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed justify-center"
+          >
+            {loading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <FaSave className="text-xs" /> Save Changes
+              </>
+            )}
           </button>
         </div>
       </div>
