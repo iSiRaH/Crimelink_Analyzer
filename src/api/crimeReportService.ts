@@ -30,3 +30,17 @@ export async function getCrimeLocations(): Promise<crimeLocationType[]> {
     throw err;
   }
 }
+
+export async function uploadEvidence(file: File) {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await api.post("/crime-reports/upload-evidence", formData, {
+      timeout: 60000, // 60s for large evidence files
+    });
+    return res.data;
+  } catch (err) {
+    console.error("Error uploading evidence:", err);
+    throw err;
+  }
+}
