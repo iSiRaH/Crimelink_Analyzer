@@ -1,7 +1,7 @@
 import axios, {
   AxiosError,
- type  AxiosResponse,
- type InternalAxiosRequestConfig,
+  type AxiosResponse,
+  type InternalAxiosRequestConfig,
 } from "axios";
 
 // Navigation callback for unauthorized access
@@ -30,7 +30,13 @@ const refreshClient = axios.create({
 });
 
 // Public endpoints that don't require authentication
-const publicEndpoints = ["/auth/", "/health", "/test", "/database/", "/admin/health"];
+const publicEndpoints = [
+  "/auth/",
+  "/health",
+  "/test",
+  "/database/",
+  "/admin/health",
+];
 
 // -------------------- REQUEST INTERCEPTOR --------------------
 api.interceptors.request.use(
@@ -39,18 +45,17 @@ api.interceptors.request.use(
 
     // For FormData, delete Content-Type so Axios can set it with boundary
     if (config.data instanceof FormData) {
-      delete (config.headers as any)['Content-Type'];
+      delete (config.headers as any)["Content-Type"];
     }
 
     const url = config.url ?? "";
     const isPublicEndpoint = publicEndpoints.some((endpoint) =>
-      url.includes(endpoint)
+      url.includes(endpoint),
     );
 
     if (!isPublicEndpoint) {
       const token =
-        localStorage.getItem("accessToken") ||
-        localStorage.getItem("token"); // optional fallback
+        localStorage.getItem("accessToken") || localStorage.getItem("token"); // optional fallback
 
       if (token) {
         // Axios v1 uses AxiosHeaders sometimes -> cast
@@ -60,7 +65,7 @@ api.interceptors.request.use(
 
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // -------------------- REFRESH QUEUE SYSTEM --------------------
@@ -100,7 +105,8 @@ api.interceptors.response.use(
         })
           .then((newToken) => {
             originalRequest.headers = originalRequest.headers ?? {};
-            (originalRequest.headers as any).Authorization = `Bearer ${newToken}`;
+            (originalRequest.headers as any).Authorization =
+              `Bearer ${newToken}`;
             return api(originalRequest);
           })
           .catch((err) => Promise.reject(err));
@@ -126,18 +132,24 @@ api.interceptors.response.use(
 
       try {
         // IMPORTANT: refreshClient has NO interceptors/no old auth header
-        const res = await refreshClient.post<{ accessToken: string }>(
-          "/auth/refresh",
-          { refreshToken }
-        );
+        const res = await refreshClient.post<{
+          accessToken: string;
+          refreshToken: string;
+        }>("/auth/refresh", { refreshToken });
 
         const newAccessToken = res.data.accessToken;
         localStorage.setItem("accessToken", newAccessToken);
 
+        // Save the rotated refresh token (backend revokes the old one)
+        if (res.data.refreshToken) {
+          localStorage.setItem("refreshToken", res.data.refreshToken);
+        }
+
         processQueue(null, newAccessToken);
 
         originalRequest.headers = originalRequest.headers ?? {};
-        (originalRequest.headers as any).Authorization = `Bearer ${newAccessToken}`;
+        (originalRequest.headers as any).Authorization =
+          `Bearer ${newAccessToken}`;
 
         return api(originalRequest);
       } catch (refreshErr) {
@@ -158,7 +170,7 @@ api.interceptors.response.use(
 
     //  for 403 / others just reject (no refresh)
     return Promise.reject(error);
-  }
+  },
 );
 
 // -------------------- OPTIONAL API HELPERS --------------------
