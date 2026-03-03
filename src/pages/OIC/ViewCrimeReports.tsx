@@ -1,28 +1,108 @@
 import { useEffect, useState } from "react";
-import { getCrimeReports } from "../../api/crimeReportService";
+import {
+  downloadEvidence,
+  getCrimeReports,
+} from "../../api/crimeReportService";
 import type { crimeReportType } from "../../types/crime";
 import { NavLink } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 function ViewCrimeReports() {
   const [reports, setReports] = useState<crimeReportType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
+    let isActive = true;
+
     const fetchReports = async () => {
+      setLoading(true);
+      setError(null);
+
       try {
         const data = await getCrimeReports();
-        // console.log(data);
-        setReports(data);
-      } catch (error) {
+        if (!isActive) return;
+
+        if (Array.isArray(data)) {
+          setReports(data);
+          setError(null);
+        } else {
+          setReports([]);
+          setError("Invalid response received for crime reports");
+        }
+      } catch (error: unknown) {
+        if (!isActive) return;
+
         console.error(error);
+
+        if (axios.isAxiosError(error)) {
+          const status = error.response?.status;
+          const code = error.code;
+
+          if (status === 401) {
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("refreshToken");
+            localStorage.removeItem("user");
+            setError("Session expired. Please login again.");
+            navigate("/login", { replace: true });
+            return;
+          }
+
+          if (status === 403) {
+            setError("You do not have permission to view crime reports.");
+            return;
+          }
+
+          if (code === "ECONNABORTED") {
+            setError("Request timed out while loading crime reports.");
+            return;
+          }
+
+          if (code === "ERR_NETWORK") {
+            setError(
+              "Cannot reach backend server. Please check if backend is running.",
+            );
+            return;
+          }
+
+          setError(
+            `Failed to fetch crime reports (HTTP ${status ?? "unknown"})`,
+          );
+          return;
+        }
+
         setError("Failed to fetch crime reports");
       } finally {
-        setLoading(false);
+        if (isActive) {
+          setLoading(false);
+        }
       }
     };
+
     fetchReports();
-  }, []);
+
+    return () => {
+      isActive = false;
+    };
+  }, [navigate]);
+
+  const handleDownload = async (id: number) => {
+    try {
+      const evidenceUrl = await downloadEvidence(id);
+
+      if (!evidenceUrl || typeof evidenceUrl !== "string") {
+        setError("Invalid evidence download URL received.");
+        return;
+      }
+
+      window.open(evidenceUrl, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      console.error("Evidence download failed:", err);
+      setError("Failed to download evidence.");
+    }
+  };
 
   return (
     <>
@@ -39,26 +119,62 @@ function ViewCrimeReports() {
               <th className="p-3 border">Crime Time</th>
               <th className="p-3 border">Crime Location</th>
               <th className="p-3 border">Crime Description</th>
+              <th className="p-3 border">Evidence</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <p>Loading...</p>
+              <tr>
+                <td className="p-3 border" colSpan={7}>
+                  Loading...
+                </td>
+              </tr>
             ) : reports.length === 0 ? (
-              <p>No crime reports found.</p>
+              <tr>
+                <td className="p-3 border" colSpan={7}>
+                  No crime reports found.
+                </td>
+              </tr>
             ) : (
               reports.map((report) => (
-                <tr key={report.reportId}>
+                <tr
+                  key={
+                    report.reportId ??
+                    `${report.dateReported}-${report.timeReported}-${report.latitude}-${report.longitude}`
+                  }
+                >
                   <td className="p-3 border">{report.reportId}</td>
                   <td className="p-3 border">{report.crimeType}</td>
                   <td className="p-3 border">{report.dateReported}</td>
                   <td className="p-3 border">{report.timeReported}</td>
                   <td className="p-3 border">{`${report.latitude}, ${report.longitude}`}</td>
                   <td className="p-3 border">{report.description}</td>
+                  <td className="p-3 border">
+                    <a
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (report.reportId) {
+                          handleDownload(report.reportId);
+                        }
+                      }}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      href="#"
+                      className="text-blue-500 hover:underline"
+                    >
+                      Download
+                    </a>
+                  </td>
                 </tr>
               ))
             )}
-            {error && <p className="text-red-500 text-xl p-5">{error}</p>}
+            {error && (
+              <tr>
+                <td className="text-red-500 text-xl p-5 border" colSpan={7}>
+                  {error}
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
         <NavLink to={"/oic/report-crimes"}>

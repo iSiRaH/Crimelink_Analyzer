@@ -13,7 +13,9 @@ export async function saveCrimeReports(reports: crimeReportType) {
 
 export async function getCrimeReports(): Promise<crimeReportType[]> {
   try {
-    const res = await api.get<crimeReportType[]>("/crime-reports");
+    const res = await api.get<crimeReportType[]>("/crime-reports", {
+      timeout: 30000,
+    });
     return res.data;
   } catch (error) {
     console.error("Error fetching crime reports:", error);
@@ -41,6 +43,16 @@ export async function uploadEvidence(file: File) {
     return res.data;
   } catch (err) {
     console.error("Error uploading evidence:", err);
+    throw err;
+  }
+}
+
+export async function downloadEvidence(id: number): Promise<string> {
+  try {
+    const res = await api.get<string>(`/crime-reports/download/${id}`);
+    return res.data;
+  } catch (err) {
+    console.error("Error downloading evidence:", err);
     throw err;
   }
 }
