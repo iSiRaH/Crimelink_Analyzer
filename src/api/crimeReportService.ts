@@ -1,5 +1,9 @@
 import api from "../services/api";
-import type { crimeLocationType, crimeReportType } from "../types/crime";
+import type {
+  crimeLocationType,
+  crimeReportType,
+  evidenceType,
+} from "../types/crime";
 
 export async function saveCrimeReports(reports: crimeReportType) {
   try {
@@ -47,9 +51,9 @@ export async function uploadEvidence(file: File) {
   }
 }
 
-export async function downloadEvidence(id: number): Promise<string> {
+export async function downloadEvidence(id: number): Promise<evidenceType[]> {
   try {
-    const res = await api.get<string>(`/crime-reports/download/${id}`);
+    const res = await api.get<evidenceType[]>(`/crime-reports/download/${id}`);
     return res.data;
   } catch (err) {
     console.error("Error downloading evidence:", err);

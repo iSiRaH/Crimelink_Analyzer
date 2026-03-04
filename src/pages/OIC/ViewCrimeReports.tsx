@@ -88,16 +88,33 @@ function ViewCrimeReports() {
     };
   }, [navigate]);
 
-  const handleDownload = async (id: number) => {
+  const handleDownload = async (reportId: number) => {
     try {
-      const evidenceUrl = await downloadEvidence(id);
+      console.log("Initiating evidence download for report ID:", reportId);
+      const evidences = await downloadEvidence(reportId);
 
-      if (!evidenceUrl || typeof evidenceUrl !== "string") {
-        setError("Invalid evidence download URL received.");
+      if (!Array.isArray(evidences) || evidences.length === 0) {
+        setError("No evidence files found for this report.");
         return;
       }
 
-      window.open(evidenceUrl, "_blank", "noopener,noreferrer");
+      const evidenceUrls = evidences
+        .map((evidence) => evidence.downloadUrl)
+        .filter(
+          (url): url is string =>
+            typeof url === "string" && url.trim().length > 0,
+        );
+
+      if (evidenceUrls.length === 0) {
+        setError("No valid evidence download URLs received.");
+        return;
+      }
+
+      evidenceUrls.forEach((url, index) => {
+        setTimeout(() => {
+          window.open(url, "_blank", "noopener,noreferrer");
+        }, index * 150);
+      });
     } catch (err) {
       console.error("Evidence download failed:", err);
       setError("Failed to download evidence.");
@@ -110,6 +127,11 @@ function ViewCrimeReports() {
         <h1 className="font-semibold text-3xl text-white mb-5">
           View Crime Reports
         </h1>
+        <NavLink to={"/oic/report-crimes"}>
+          <button className="bg-blue-500 text-white py-2 px-5 rounded mt-5">
+            Back
+          </button>
+        </NavLink>
         <table className="table-auto w-11/12 bg-white border shadow-lg">
           <thead>
             <tr className="bg-slate-700 text-white">
@@ -162,7 +184,7 @@ function ViewCrimeReports() {
                       href="#"
                       className="text-blue-500 hover:underline"
                     >
-                      Download
+                      Download All
                     </a>
                   </td>
                 </tr>
@@ -177,11 +199,6 @@ function ViewCrimeReports() {
             )}
           </tbody>
         </table>
-        <NavLink to={"/oic/report-crimes"}>
-          <button className="bg-blue-500 text-white py-2 px-5 rounded mt-5">
-            Back
-          </button>
-        </NavLink>
       </div>
     </>
   );

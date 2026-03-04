@@ -1,5 +1,9 @@
 import { saveCrimeReports, uploadEvidence } from "../../api/crimeReportService";
-import type { crimeReportType, crimeType } from "../../types/crime";
+import type {
+  crimeReportType,
+  crimeType,
+  evidenceType,
+} from "../../types/crime";
 import { useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import MapPopup from "../../components/UI/MapPopup";
 import { NavLink } from "react-router-dom";
@@ -95,7 +99,7 @@ function ReportCrimes() {
     return true;
   };
 
-  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB (matches backend limit)
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 5MB (matches backend limit)
 
   const filterOversizedFiles = (files: File[]): File[] => {
     const valid: File[] = [];
@@ -180,6 +184,8 @@ function ReportCrimes() {
     try {
       console.log("Submit Report Clicked");
 
+      const uploadedEvidences: evidenceType[] = [];
+
       // Upload evidence files one by one with progress tracking
       for (let i = 0; i < attachedFiles.length; i++) {
         const file = attachedFiles[i];
@@ -188,7 +194,12 @@ function ReportCrimes() {
           total: attachedFiles.length,
           fileName: file.name,
         });
-        await uploadEvidence(file);
+        const uploadedFileName = await uploadEvidence(file);
+        uploadedEvidences.push({
+          fileName: String(uploadedFileName),
+          fileType: file.type,
+          fileSize: file.size,
+        });
       }
       console.log("Evidence Uploaded");
 
@@ -205,6 +216,7 @@ function ReportCrimes() {
         description: description,
         dateReported: date,
         timeReported: time,
+        evidences: uploadedEvidences,
       };
       const res = await saveCrimeReports(report);
       console.log("Crime Report Saved \n ", res);
