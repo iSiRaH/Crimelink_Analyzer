@@ -1,5 +1,9 @@
-import { saveCrimeReports } from "../../api/crimeReportService";
-import type { crimeReportType } from "../../types/crime";
+import { saveCrimeReports, uploadEvidence } from "../../api/crimeReportService";
+import type {
+  crimeReportType,
+  crimeType,
+  evidenceType,
+} from "../../types/crime";
 import { useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import MapPopup from "../../components/UI/MapPopup";
 import { NavLink } from "react-router-dom";
@@ -18,6 +22,50 @@ function ReportCrimes() {
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
 
   const [isMapOpen, setIsMapOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{
+    current: number;
+    total: number;
+    fileName: string;
+  }>({ current: 0, total: 0, fileName: "" });
+
+  const getApiErrorMessage = (error: unknown) => {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "response" in error &&
+      typeof (error as { response?: unknown }).response === "object" &&
+      (error as { response?: unknown }).response !== null
+    ) {
+      const response = (
+        error as { response: { data?: unknown; status?: number } }
+      ).response;
+      const data = response.data;
+
+      if (typeof data === "string" && data.trim().length > 0) {
+        return data;
+      }
+
+      if (
+        typeof data === "object" &&
+        data !== null &&
+        "message" in data &&
+        typeof (data as { message?: unknown }).message === "string"
+      ) {
+        return (data as { message: string }).message;
+      }
+
+      if (response.status === 401) {
+        return "Unauthorized. Please log in again.";
+      }
+
+      if (response.status === 403) {
+        return "Forbidden. Your role does not have permission for this action.";
+      }
+    }
+
+    return "Failed to save report";
+  };
 
   const validateForm = () => {
     if (crimetype === "" || !crimetype) {
@@ -51,9 +99,29 @@ function ReportCrimes() {
     return true;
   };
 
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 5MB (matches backend limit)
+
+  const filterOversizedFiles = (files: File[]): File[] => {
+    const valid: File[] = [];
+    const rejected: string[] = [];
+    for (const f of files) {
+      if (f.size > MAX_FILE_SIZE) {
+        rejected.push(f.name);
+      } else {
+        valid.push(f);
+      }
+    }
+    if (rejected.length > 0) {
+      alert(
+        `The following files exceed the 5MB limit and were not added:\n${rejected.join("\n")}`,
+      );
+    }
+    return valid;
+  };
+
   const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const newFiles = Array.from(e.target.files);
+      const newFiles = filterOversizedFiles(Array.from(e.target.files));
       setAttachedFiles((prev) => [...prev, ...newFiles]);
     }
   };
@@ -72,7 +140,7 @@ function ReportCrimes() {
     e.preventDefault();
     setIsDragActive(false);
     if (e.dataTransfer.files) {
-      const newFiles = Array.from(e.dataTransfer.files);
+      const newFiles = filterOversizedFiles(Array.from(e.dataTransfer.files));
       setAttachedFiles((prev) => [...prev, ...newFiles]);
     }
   };
@@ -89,6 +157,7 @@ function ReportCrimes() {
     setDate("");
     setTime("");
     setDescription("");
+    setAttachedFiles([]);
   };
 
   const handleClear = () => {
@@ -100,15 +169,54 @@ function ReportCrimes() {
   // on submit btn click
   const onSubmit = async () => {
     if (!validateForm()) return;
+    if (!attachedFiles || attachedFiles.length === 0) {
+      alert("Please attach at least one evidence file");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setUploadProgress({
+      current: 0,
+      total: attachedFiles.length,
+      fileName: "",
+    });
+
     try {
       console.log("Submit Report Clicked");
+
+      const uploadedEvidences: evidenceType[] = [];
+
+      // Upload evidence files one by one with progress tracking
+      for (let i = 0; i < attachedFiles.length; i++) {
+        const file = attachedFiles[i];
+        setUploadProgress({
+          current: i + 1,
+          total: attachedFiles.length,
+          fileName: file.name,
+        });
+        const uploadedFileName = await uploadEvidence(file);
+        uploadedEvidences.push({
+          fileName: String(uploadedFileName),
+          fileType: file.type,
+          fileSize: file.size,
+        });
+      }
+      console.log("Evidence Uploaded");
+
+      setUploadProgress({
+        current: attachedFiles.length,
+        total: attachedFiles.length,
+        fileName: "Saving report...",
+      });
+
       const report: crimeReportType = {
-        crimeType: crimetype,
+        crimeType: crimetype as crimeType,
         latitude: parseFloat(latitude),
         longitude: parseFloat(longitude),
         description: description,
         dateReported: date,
         timeReported: time,
+        evidences: uploadedEvidences,
       };
       const res = await saveCrimeReports(report);
       console.log("Crime Report Saved \n ", res);
@@ -116,7 +224,10 @@ function ReportCrimes() {
       resetForm();
     } catch (e) {
       console.log(e);
-      alert("Failed to save report");
+      alert(getApiErrorMessage(e));
+    } finally {
+      setIsSubmitting(false);
+      setUploadProgress({ current: 0, total: 0, fileName: "" });
     }
   };
 
@@ -138,6 +249,11 @@ function ReportCrimes() {
   const onCancel = () => {
     console.log("Cancel Clicked");
     resetForm();
+  };
+
+  const handleUploadButton = () => {
+    if (!fileInputRef.current) return;
+    // fileInputRef.current.click(); //NOTE: double file upload windows
   };
 
   return (
@@ -233,7 +349,7 @@ function ReportCrimes() {
                 </span>
                 <button
                   className="rounded-md bg-[#22c55e] px-5 py-2 text-sm font-bold hover:bg-[#16a34a] transition-colors duration-200 self-end"
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={handleUploadButton}
                 >
                   Upload Evidence
                 </button>
@@ -272,19 +388,52 @@ function ReportCrimes() {
           <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-4">
             <button
               onClick={onSubmit}
-              className="rounded-md bg-[#3b82f6] px-8 py-2.5 font-bold hover:bg-[#2563eb] transition-colors duration-200"
+              disabled={isSubmitting}
+              className="rounded-md bg-[#3b82f6] px-8 py-2.5 font-bold hover:bg-[#2563eb] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Submit Report
+              {isSubmitting ? "Submitting..." : "Submit Report"}
             </button>
             <button
               onClick={onCancel}
-              className="rounded-md bg-[#f97316] px-8 py-2.5 font-bold hover:bg-[#ea580c] transition-colors duration-200"
+              disabled={isSubmitting}
+              className="rounded-md bg-[#f97316] px-8 py-2.5 font-bold hover:bg-[#ea580c] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
           </div>
         </div>
       </div>
+
+      {/* Upload progress overlay */}
+      {isSubmitting && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-[#181d30] rounded-2xl p-8 flex flex-col items-center gap-5 shadow-2xl min-w-[320px] max-w-[420px] mx-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#22c55e]/30 border-t-[#22c55e]" />
+            <h3 className="text-white text-xl font-semibold">
+              {uploadProgress.fileName === "Saving report..."
+                ? "Saving Report"
+                : "Uploading Evidence"}
+            </h3>
+            {uploadProgress.total > 0 && (
+              <div className="w-full flex flex-col gap-2">
+                <div className="w-full bg-[#0b0c1a] rounded-full h-3 overflow-hidden">
+                  <div
+                    className="h-full bg-[#22c55e] rounded-full transition-all duration-300"
+                    style={{
+                      width: `${(uploadProgress.current / (uploadProgress.total + 1)) * 100}%`,
+                    }}
+                  />
+                </div>
+                <p className="text-white/70 text-sm text-center truncate">
+                  {uploadProgress.fileName === "Saving report..."
+                    ? "Saving report..."
+                    : `Uploading ${uploadProgress.current} of ${uploadProgress.total}: ${uploadProgress.fileName}`}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Map popup */}
       <MapPopup
