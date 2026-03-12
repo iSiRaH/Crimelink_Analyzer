@@ -13,6 +13,14 @@ type Weapon = {
   issuedMagazines?: number;
 };
 
+type Weapon = {
+  type: string;
+  serial: string;
+  issuedDate: string;
+  dueBack: string;
+  assignedTo: string;
+};
+
 type Props = {
   weapon: Weapon;
   onClose: () => void;
@@ -455,6 +463,7 @@ export default function ReturnWeaponModal({ weapon, onClose }: Props) {
             </div>
           </div>
         </div>
+
       </div>
 
       {/* Hide scrollbar for webkit browsers via inline style injection */}

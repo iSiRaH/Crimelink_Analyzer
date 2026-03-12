@@ -1,0 +1,209 @@
+import { type FunctionComponent } from "react";
+
+const WeaponManagement: FunctionComponent = () => {
+  const weaponData = [
+    {
+      weapon: "AK47",
+      serial: "A-123",
+      status: "Issued",
+      assigned: "Bosilu",
+      due: "2025-12-31",
+    },
+    {
+      weapon: "Glock17",
+      serial: "B-823",
+      status: "Issued",
+      assigned: "Name",
+      due: "2025-12-31",
+    },
+    {
+      weapon: "AK47",
+      serial: "C-524",
+      status: "Issued",
+      assigned: "Name",
+      due: "2025-12-31",
+    },
+    {
+      weapon: "M16A2",
+      serial: "A-1234",
+      status: "Issued",
+      assigned: "Name",
+      due: "2025-12-31",
+    },
+    {
+      weapon: "Uzi",
+      serial: "C-357",
+      status: "Issued",
+      assigned: "Name",
+      due: "2025-12-31",
+    },
+    {
+      weapon: "Minimi",
+      serial: "A-761",
+      status: "Issued",
+      assigned: "Name",
+      due: "2025-12-31",
+    },
+  ];
+
+  return (
+    <div className="bg-dark-primary text-white w-screen h-screen flex flex-col overflow-hidden font-['Inter',sans-serif]">
+      {/* Top Navbar */}
+      <nav className="flex justify-between items-center p-4 bg-dark-secondary mx-5 my-2.5 rounded-[40px]">
+        <div className="flex items-center gap-3">
+          <div className="w-[45px] h-[45px] rounded-full bg-gradient-to-br from-purple-primary to-[#1a1a3e] border-2 border-purple-primary flex items-center justify-center font-bold text-sm text-white">
+            CL
+          </div>
+          <b className="text-xl tracking-wider text-white font-bold">
+            CRIME LINK ANALYZER
+          </b>
+        </div>
+        <div className="flex items-center gap-4">
+          <span>Jineth Bosilu</span>
+          <b className="bg-transparent px-2 py-0.5 text-sm text-white font-bold">
+            OIC
+          </b>
+          <div className="w-10 h-10 rounded-full border-2 border-white flex items-center justify-center text-xl bg-transparent">
+            👤
+          </div>
+        </div>
+      </nav>
+
+      <div className="flex p-2.5 px-5 gap-5">
+        {/* Sidebar */}
+        <aside className="w-[250px] bg-dark-secondary rounded-[40px] p-8 px-4 flex flex-col gap-6">
+          <div className="px-5 py-2.5 cursor-pointer transition-all duration-300">
+            Dashboard
+          </div>
+          <div className="px-5 py-2.5 cursor-pointer transition-all duration-300">
+            Duty management
+          </div>
+          <div className="px-5 py-2.5 cursor-pointer transition-all duration-300 text-purple-primary font-bold">
+            Weapon handover
+          </div>
+          <div className="px-5 py-2.5 cursor-pointer transition-all duration-300">
+            Plate registry
+          </div>
+          <div className="px-5 py-2.5 cursor-pointer transition-all duration-300">
+            Report Crimes
+          </div>
+          <div className="px-5 py-2.5 cursor-pointer transition-all duration-300">
+            OIC report
+          </div>
+          <div className="px-5 py-2.5 cursor-pointer transition-all duration-300">
+            Manage Profile
+          </div>
+          <div className="mt-auto text-red-primary font-bold px-5 py-2.5">
+            Logout
+          </div>
+        </aside>
+
+        {/* Content Area */}
+        <main className="flex-1">
+          <section className="bg-dark-secondary rounded-[30px] p-5 mb-5">
+            <div className="flex justify-between items-center mb-2.5">
+              <h2 className="text-2xl font-semibold m-0">Weapon Management</h2>
+              <button className="bg-purple-primary text-white border-none px-6 py-2.5 rounded-[25px] text-base font-medium cursor-pointer transition-colors duration-300 hover:bg-purple-hover">
+                +Add Weapon
+              </button>
+            </div>
+            <div className="flex justify-around mt-5">
+              <div className="bg-dark-primary px-10 py-5 rounded-[50px] text-center">
+                <p>Total Weapons</p>
+                <b className="text-3xl font-bold block">451</b>
+              </div>
+              <div className="bg-dark-primary px-10 py-5 rounded-[50px] text-center">
+                <p>Total Weapons</p>
+                <b className="text-3xl font-bold block">2</b>
+              </div>
+              <div className="bg-dark-primary px-10 py-5 rounded-[50px] text-center">
+                <p>Total Weapons</p>
+                <b className="text-3xl font-bold block">6</b>
+              </div>
+            </div>
+          </section>
+
+          {/* Table Container */}
+          <section className="bg-dark-secondary rounded-t-[30px] p-5">
+            <div className="flex justify-between mb-5">
+              <div className="flex gap-2.5">
+                <button className="bg-transparent border border-purple-primary text-white px-5 py-1.5 rounded-[20px] cursor-pointer">
+                  All
+                </button>
+                <button className="bg-transparent border border-purple-primary text-white px-5 py-1.5 rounded-[20px] cursor-pointer">
+                  Available
+                </button>
+                <button className="bg-dark-primary border border-purple-primary text-purple-primary px-5 py-1.5 rounded-[20px] cursor-pointer">
+                  Issued
+                </button>
+              </div>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm opacity-60">
+                  🔍
+                </span>
+                <input
+                  type="text"
+                  placeholder="Search weapon or serial"
+                  className="bg-dark-primary border border-gray-border rounded-[20px] py-2 px-5 pl-10 text-white text-sm w-[220px] outline-none placeholder:text-gray-text"
+                />
+              </div>
+            </div>
+
+            <table className="w-full border-collapse">
+              <thead>
+                <tr>
+                  <th className="text-left p-4 border-b-2 border-dark-primary">
+                    Weapon
+                  </th>
+                  <th className="text-left p-4 border-b-2 border-dark-primary">
+                    Serial
+                  </th>
+                  <th className="text-left p-4 border-b-2 border-dark-primary">
+                    Status
+                  </th>
+                  <th className="text-left p-4 border-b-2 border-dark-primary">
+                    Assigned
+                  </th>
+                  <th className="text-left p-4 border-b-2 border-dark-primary">
+                    Due Back
+                  </th>
+                  <th className="text-left p-4 border-b-2 border-dark-primary">
+                    Action
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {weaponData.map((item, index) => (
+                  <tr key={index}>
+                    <td className="p-4 bg-dark-secondary border-b border-dark-primary">
+                      {item.weapon}
+                    </td>
+                    <td className="p-4 bg-dark-secondary border-b border-dark-primary">
+                      {item.serial}
+                    </td>
+                    <td className="p-4 bg-dark-secondary border-b border-dark-primary text-red-primary">
+                      {item.status}
+                    </td>
+                    <td className="p-4 bg-dark-secondary border-b border-dark-primary">
+                      {item.assigned}
+                    </td>
+                    <td className="p-4 bg-dark-secondary border-b border-dark-primary">
+                      {item.due}
+                    </td>
+                    <td className="p-4 bg-dark-secondary border-b border-dark-primary">
+                      <button className="bg-transparent border border-red-secondary text-red-secondary px-4 py-1.5 rounded-[20px] cursor-pointer">
+                        Issued
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        </main>
+      </div>
+    </div>
+  );
+};
+
+export default WeaponManagement;

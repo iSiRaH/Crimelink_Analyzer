@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { issueWeapon } from "../../api/weaponApi";
 import api from "../../services/api";
 import { getAllBulletsWithDetails } from "../../api/BulletApi";

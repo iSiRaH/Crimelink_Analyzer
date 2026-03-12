@@ -27,13 +27,13 @@ function Admin() {
 
   return (
     <>
-      <div className="flex flex-col h-screen">
+      <div className="flex flex-col h-screen bg-dark-bg">
         <Topbar
           name={user?.name ?? "Not Defined"}
           role={user?.role ?? "Not defined"}
         />
 
-        <div className="flex flex-1 overflow-hidden">
+        <div className="relative flex flex-1 overflow-hidden">
           <Sidebar items={menuItems} logoutFunc={logout} />
           <div className="flex-1 overflow-y-auto">
             <Outlet />

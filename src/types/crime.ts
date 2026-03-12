@@ -6,6 +6,15 @@ export type crimeReportType = {
   dateReported: string;
   timeReported: string;
   crimeType: crimeType;
+  evidences?: evidenceType[];
+};
+
+export type evidenceType = {
+  evidenceId?: string;
+  fileName: string;
+  fileType?: string;
+  fileSize?: number;
+  downloadUrl?: string;
 };
 
 export type crimeLocationType = {
