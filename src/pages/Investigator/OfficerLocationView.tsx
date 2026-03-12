@@ -25,7 +25,7 @@ const OfficerLocationView = () => {
       const data = await fetchFieldOfficers();
       setOfficers(data);
     } catch (err) {
-      setError(err?.message || "Failed to fetch officers");
+      setError(err instanceof Error ? err.message : "Failed to fetch officers");
     } finally {
       setLoading(false);
     }
