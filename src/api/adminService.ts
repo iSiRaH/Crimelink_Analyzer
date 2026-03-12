@@ -31,6 +31,24 @@ export interface SystemHealthResponse {
   timestamp: string;
 }
 
+export interface BackupInfo {
+  id: number;
+  filename: string;
+  sizeBytes: number;
+  createdAt: string;
+  createdBy: string;
+  status: string;
+}
+
+export interface SystemSettings {
+  jwtExpiry: string;
+  passwordMinLength: string;
+  maxLoginAttempts: string;
+  sessionTimeout: string;
+  backupRetentionDays: string;
+  [key: string]: string;
+}
+
 /**
  * Get all users
  * GET /api/admin/users
@@ -102,7 +120,7 @@ export async function getAuditLogs(
  * Trigger database backup
  * POST /api/admin/backup
  */
-export async function triggerBackup(): Promise<{ message: string; file: string }> {
+export async function triggerBackup(): Promise<{ message: string; file: string; sizeBytes: number; createdAt: string }> {
   const res = await api.post("/admin/backup");
   return res.data;
 }
@@ -117,10 +135,39 @@ export async function restoreBackup(filename: string): Promise<{ message: string
 }
 
 /**
+ * List all available backups
+ * GET /api/admin/backups
+ */
+export async function listBackups(): Promise<BackupInfo[]> {
+  const res = await api.get("/admin/backups");
+  return res.data;
+}
+
+/**
  * Get system health status
  * GET /api/admin/health
  */
 export async function getSystemHealth(): Promise<SystemHealthResponse> {
   const res = await api.get("/admin/health");
+  return res.data;
+}
+
+/**
+ * Get system settings
+ * GET /api/admin/settings
+ */
+export async function getSettings(): Promise<SystemSettings> {
+  const res = await api.get("/admin/settings");
+  return res.data;
+}
+
+/**
+ * Save system settings
+ * PUT /api/admin/settings
+ */
+export async function saveSettings(
+  settings: SystemSettings
+): Promise<{ message: string; settings: SystemSettings }> {
+  const res = await api.put("/admin/settings", settings);
   return res.data;
 }
