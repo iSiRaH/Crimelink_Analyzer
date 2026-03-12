@@ -1,8 +1,3 @@
-/**
- * Weapon Type Definitions
- * These interfaces match the backend DTOs for type safety
- */
-
 export interface OfficerDTO {
   id: number;
   name: string;
@@ -23,6 +18,9 @@ export interface WeaponResponseDTO {
   issuedDate?: string;
   dueDate?: string;
   issueNote?: string;
+  // Bullet tracking fields
+  issuedBulletType?: string;
+  issuedMagazines?: number;
 }
 
 export interface WeaponAddDTO {
@@ -42,13 +40,22 @@ export interface IssueWeaponRequest {
   issuedToId: number;
   handedOverById: number;
   dueDate: string;
-  issueNote: string;
+  issueNote?: string;
+  // Bullet fields (optional)
+  bulletType?: string;
+  numberOfMagazines?: number;
+  bulletRemarks?: string;
 }
 
 export interface ReturnWeaponRequest {
   weaponSerial: string;
   receivedByUserId: number;
-  returnNote: string;
+  returnNote?: string;
+  // Bullet return fields (optional)
+  returnedMagazines?: number;
+  usedBullets?: number;
+  bulletCondition?: string;
+  bulletRemarks?: string;
 }
 
 export type WeaponStatus = "Available" | "Issued" | "Maintenance" | "Retired";
