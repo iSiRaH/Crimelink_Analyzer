@@ -3,7 +3,7 @@ import { IoSearch } from "react-icons/io5";
 import axios from "axios";
 import type { Vehicle } from "../../types/vehicle";
 
-const API_BASE_URL = "http://localhost:8080";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 function PlateRegistry() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -33,7 +33,7 @@ function PlateRegistry() {
     setError(null);
 
     axios
-      .get(`${API_BASE_URL}/api/vehicles`)
+      .get(`${API_BASE_URL}/vehicles`)
       .then((response) => {
         console.log("Vehicles fetched:", response.data);
         setVehicles(response.data);
@@ -89,7 +89,7 @@ function PlateRegistry() {
     const token = localStorage.getItem("token");
 
     axios
-      .post(`${API_BASE_URL}/api/vehicles`, vehicleData, {
+      .post(`${API_BASE_URL}/vehicles`, vehicleData, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((response) => {
@@ -126,7 +126,7 @@ function PlateRegistry() {
 
     axios
       .put(
-        `${API_BASE_URL}/api/vehicles/${editingVehicle.id}`,
+        `${API_BASE_URL}/vehicles/${editingVehicle.id}`,
         editingVehicle,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -160,7 +160,7 @@ function PlateRegistry() {
     }
 
     axios
-      .delete(`${API_BASE_URL}/api/vehicles/${id}`)
+      .delete(`${API_BASE_URL}/vehicles/${id}`)
       .then(() => {
         console.log("Vehicle deleted:", id);
         setVehicles(vehicles.filter((v) => v.id !== id));

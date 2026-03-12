@@ -2,6 +2,7 @@ import { useMapContext } from "../contexts/useMapContext";
 
 export function useFetchSafetyLocations() {
   const { map, setMarkers } = useMapContext();
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
   interface SafetyLocation{
     latitude: number;
@@ -12,7 +13,7 @@ export function useFetchSafetyLocations() {
   const fetchSafetyLocations = async (selectedType: string) => {
     try {
       const response = await fetch(
-        `http://localhost:8080/api/safety-locations?type=${selectedType}`
+        `${API_BASE_URL}/safety-locations?type=${selectedType}`
       );
       const data = await response.json();
 

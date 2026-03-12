@@ -39,6 +39,7 @@ interface Analysis {
 }
 
 function CallAnalysisNew() {
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
   const [files, setFiles] = useState<FileList | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -74,9 +75,11 @@ function CallAnalysisNew() {
         formData.append("files", files[i]);
       }
 
-      const response = await fetch("http://localhost:5001/analyze/batch", {
+      const token = localStorage.getItem("accessToken") || localStorage.getItem("token");
+      const response = await fetch(`${API_BASE_URL}/call-analysis/analyze/batch`, {
         method: "POST",
         body: formData,
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
 
       if (!response.ok) {

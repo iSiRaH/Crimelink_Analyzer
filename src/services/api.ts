@@ -13,7 +13,7 @@ export const setUnauthorizedCallback = (callback: () => void) => {
 
 // Main axios instance
 const api = axios.create({
-  baseURL: "/api", // should be proxied to http://localhost:8080/api in dev
+  baseURL: import.meta.env.VITE_API_BASE_URL || "/api", // should be proxied to http://localhost:8080/api in dev
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
@@ -22,7 +22,7 @@ const api = axios.create({
 
 // A plain axios instance for refresh (NO interceptors)
 const refreshClient = axios.create({
-  baseURL: "/api",
+  baseURL: import.meta.env.VITE_API_BASE_URL || "/api",
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
