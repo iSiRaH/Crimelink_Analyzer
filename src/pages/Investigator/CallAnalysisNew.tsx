@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import cytoscape from "cytoscape";
 import { FaUpload, FaExclamationTriangle, FaSpinner, FaNetworkWired } from "react-icons/fa";
+import api from "../../services/api";
 
 interface GraphData {
   nodes: Array<{
@@ -74,17 +75,13 @@ function CallAnalysisNew() {
         formData.append("files", files[i]);
       }
 
-      const response = await fetch("http://localhost:5001/analyze/batch", {
-        method: "POST",
-        body: formData,
+      // Route through Spring Boot backend, not directly to Python ML service
+      const response = await api.post("/call-analysis/analyze/batch", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+        timeout: 120000, // 2 min timeout for large batch analysis
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || "Analysis failed");
-      }
-
-      const data = await response.json();
+      const data = response.data;
       setSessionId(data.session_id);
       setAnalyses(data.analyses);
       setSelectedIndex(0);

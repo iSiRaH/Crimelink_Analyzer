@@ -1,10 +1,10 @@
-import axios from "axios";
+import api from "../services/api";
 
 export const createDutySchedule = async (data: any) => {
-  return axios.post("http://localhost:8080/api/schedules", data);
+  return api.post("/schedules", data);
 };
 
 export const getDutySchedules = async () => {
-  const res = await axios.get("http://localhost:8080/api/schedules");
+  const res = await api.get("/schedules");
   return res.data;
 };
