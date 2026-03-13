@@ -4,6 +4,7 @@ import IssueWeaponModal from "./IssueWeaponModal";
 import ReturnWeaponModal from "./ReturnWeaponModal";
 import ManageWeaponSimple from "./ManageWeapon";
 import { getAllWeapons } from "../../api/weaponApi";
+import { NavLink } from "react-router-dom";
 
 /* ================= TYPES ================= */
 
@@ -90,12 +91,19 @@ export default function WeaponHandover() {
         <div className="bg-dark-panel rounded-xl p-4">
           <div className="flex justify-between items-center">
             <h1 className="text-3xl font-semibold">Weapon Management</h1>
-            <button
-              onClick={() => setShowManageWeapon(true)}
-              className="bg-purple-primary text-white border-none px-6 py-2.5 rounded-[25px] text-base font-medium cursor-pointer transition-colors duration-300 hover:bg-purple-hover"
-            >
-              Weapon Operator
-            </button>
+            <div className="flex gap-3">
+              <NavLink to={"weapon-requests"}>
+                <button className="bg-purple-primary text-white border-none px-6 py-2.5 rounded-[25px] text-base font-medium cursor-pointer transition-colors duration-300 hover:bg-purple-hover">
+                  Weapon Requests
+                </button>
+              </NavLink>
+              <button
+                onClick={() => setShowManageWeapon(true)}
+                className="bg-purple-primary text-white border-none px-6 py-2.5 rounded-[25px] text-base font-medium cursor-pointer transition-colors duration-300 hover:bg-purple-hover"
+              >
+                Weapon Operator
+              </button>
+            </div>
           </div>
 
           {/* ✅ DB-DRIVEN COUNTS (DESIGN UNCHANGED) */}

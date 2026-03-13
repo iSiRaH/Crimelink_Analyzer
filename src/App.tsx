@@ -37,6 +37,7 @@ import ReportCrimes from "./pages/OIC/ReportCrimes";
 import ViewCrimeReports from "./pages/OIC/ViewCrimeReports";
 import LeaveManagement from "./pages/OIC/LeaveManagment";
 import OfficerLocationView from "./pages/Investigator/OfficerLocationView";
+import WeaponRequests from "./pages/OIC/WeaponRequests";
 
 function AppContent() {
   const navigate = useNavigate();
@@ -89,6 +90,10 @@ function AppContent() {
         <Route path="duty-management" element={<DutyManagement />} />
         <Route path="leave-management" element={<LeaveManagement />} />
         <Route path="weapon-handover" element={<WeaponHandover />} />
+        <Route
+          path="weapon-handover/weapon-requests"
+          element={<WeaponRequests />}
+        />
         <Route path="plate-registry" element={<PlateRegistry />} />
         <Route path="report" element={<OICReport />} />
         <Route path="report-crimes" element={<ReportCrimes />} />
