@@ -194,11 +194,14 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, onImageClick }) => (
       )}
 
       {/* Crime History */}
-      {match.crime_history && (
+      {match.crime_history && match.crime_history.total_crimes > 0 && (
         <div className="border-t border-gray-700 pt-4 mt-4">
           <div className="flex items-center gap-2 mb-3">
             <FileText className="w-5 h-5 text-gray-400" />
             <span className="font-medium text-gray-200">Crime History</span>
+            <span className="ml-auto text-xs text-gray-500 bg-gray-800 px-2 py-0.5 rounded-full">
+              {match.crime_history.total_crimes} record{match.crime_history.total_crimes !== 1 ? 's' : ''}
+            </span>
           </div>
           
           <div className="bg-gray-900/50 rounded-lg p-4 space-y-3">
@@ -207,12 +210,17 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, onImageClick }) => (
                 <span className="text-gray-400">Total Crimes:</span>
                 <span className="text-white font-medium">{match.crime_history.total_crimes}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Last Crime:</span>
-                <span className="text-white font-medium">
-                  {new Date(match.crime_history.last_crime_date).toLocaleDateString()}
-                </span>
-              </div>
+              {match.crime_history.last_crime_date && (
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Last Crime:</span>
+                  <span className="text-white font-medium">
+                    {(() => {
+                      try { return new Date(match.crime_history.last_crime_date).toLocaleDateString(); }
+                      catch { return match.crime_history.last_crime_date; }
+                    })()}
+                  </span>
+                </div>
+              )}
             </div>
 
             {match.crime_history.crime_types?.length > 0 && (
@@ -222,7 +230,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, onImageClick }) => (
                   {match.crime_history.crime_types.map((type, idx) => (
                     <span 
                       key={idx} 
-                      className="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-xs text-gray-300"
+                      className="px-2.5 py-1 bg-red-500/10 border border-red-500/20 rounded-full text-xs text-red-300 font-medium"
                     >
                       {type}
                     </span>
@@ -235,14 +243,25 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, onImageClick }) => (
               <div className="mt-3">
                 <span className="text-sm font-medium text-gray-300">Recent Records:</span>
                 <div className="mt-2 space-y-2">
-                  {match.crime_history.records.slice(0, 3).map((record, idx) => (
-                    <div key={idx} className="bg-gray-800/70 p-3 rounded border border-gray-700 text-sm">
-                      <div className="font-medium text-white">{record.type}</div>
-                      <div className="text-gray-400 text-xs mt-1">
-                        {new Date(record.date).toLocaleDateString()} • {record.location}
+                  {match.crime_history.records.slice(0, 5).map((record, idx) => (
+                    <div key={idx} className="bg-gray-800/70 p-3 rounded-lg border border-gray-700/60 text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-white">{record.type || 'Unknown'}</span>
+                        {record.date && (
+                          <span className="text-gray-500 text-xs flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {(() => {
+                              try { return new Date(record.date).toLocaleDateString(); }
+                              catch { return record.date; }
+                            })()}
+                          </span>
+                        )}
                       </div>
+                      {record.location && (
+                        <div className="text-gray-400 text-xs mt-1">📍 {record.location}</div>
+                      )}
                       {record.description && (
-                        <div className="text-gray-500 text-xs mt-1">{record.description}</div>
+                        <div className="text-gray-500 text-xs mt-1 leading-relaxed">{record.description}</div>
                       )}
                     </div>
                   ))}

@@ -1,11 +1,16 @@
 import api from "../services/api";
-import type { weaponRequestType } from "../types/weapon";
+import type { 
+  WeaponAddDTO, 
+  WeaponUpdateDTO, 
+  IssueWeaponRequest, 
+  ReturnWeaponRequest,
+  WeaponResponseDTO,
+  OfficerDTO,
+  weaponRequestType
+} from "../types/weapon";
 
-export const addWeapon = (data: {
-  weaponType: string;
-  serialNumber: string;
-  remarks: string;
-}) => api.post(`/weapon/add-weapon`, data);
+export const addWeapon = (data: WeaponAddDTO) => 
+  api.post(`/weapon/add-weapon`, data);
 
 export const updateWeapon = (
   serialNumber: string,
@@ -16,15 +21,11 @@ export const updateWeapon = (
   },
 ) => api.put(`/weapon/weapon-update/${serialNumber}`, data);
 
-export const getAllWeapons = () => api.get(`/weapon/all`);
+export const getAllWeapons = () => 
+  api.get(`/weapon/all`);
 
-export const issueWeapon = (data: {
-  weaponSerial: string;
-  issuedToId: number;
-  handedOverById: number;
-  dueDate: string;
-  issueNote: string;
-}) => api.post("/weapon/issue", data);
+export const getAllWeaponsWithDetails = () => 
+  api.get<WeaponResponseDTO[]>(`/weapon/all-with-details`);
 
 export const returnWeapon = (data: {
   weaponSerial: string;
@@ -63,3 +64,11 @@ export const rejectWeaponRequest = (requestId: number) => {
     throw err;
   }
 };
+export const getAllOfficers = () => 
+  api.get<OfficerDTO[]>("/weapon/officers");
+
+export const issueWeapon = (data: IssueWeaponRequest) => 
+  api.post("/weapon/issue", data);
+
+export const returnWeapon = (data: ReturnWeaponRequest) => 
+  api.post("/weapon/return", data);

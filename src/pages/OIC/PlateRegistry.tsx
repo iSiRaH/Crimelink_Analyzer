@@ -86,14 +86,15 @@ function PlateRegistry() {
     setLoading(true);
     setError(null);
 
+    const token = localStorage.getItem("token");
+
     axios
       .post(`${API_BASE_URL}/api/vehicles`, vehicleData, {
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { Authorization: `Bearer ${token}` },
       })
       .then((response) => {
         console.log("Vehicle added:", response.data);
+        
         setVehicles([...vehicles, response.data]);
         setShowModal(false);
         setVehicleData({
@@ -121,14 +122,14 @@ function PlateRegistry() {
     setLoading(true);
     setError(null);
 
+    const token = localStorage.getItem("token");
+
     axios
       .put(
         `${API_BASE_URL}/api/vehicles/${editingVehicle.id}`,
         editingVehicle,
         {
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { Authorization: `Bearer ${token}` },
         },
       )
       .then((response) => {
@@ -389,7 +390,7 @@ function PlateRegistry() {
                     })
                   }
                   placeholder="e.g., ABC-1234"
-                  className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
                   disabled={loading}
                   required
                 />
@@ -409,7 +410,7 @@ function PlateRegistry() {
                     })
                   }
                   placeholder="e.g., John Doe"
-                  className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="text-black w-full p-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 />
               </div>
@@ -426,7 +427,7 @@ function PlateRegistry() {
                       vehicleType: e.target.value,
                     })
                   }
-                  className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="text-black w-full p-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 >
                   <option value="">Select Vehicle Type</option>
@@ -447,7 +448,7 @@ function PlateRegistry() {
                   onChange={(e) =>
                     setVehicleData({ ...vehicleData, status: e.target.value })
                   }
-                  className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="text-black w-full p-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   disabled={loading}
                 >
                   <option value="">Select Status</option>
@@ -466,7 +467,7 @@ function PlateRegistry() {
                   onChange={(e) =>
                     setVehicleData({ ...vehicleData, lostDate: e.target.value })
                   }
-                  className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="text-black w-full p-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
             </div>
@@ -528,7 +529,7 @@ function PlateRegistry() {
                       numberPlate: e.target.value,
                     })
                   }
-                  className="w-full p-2.5 border border-gray-300 rounded-md"
+                  className="text-black w-full p-2.5 border border-gray-300 rounded-md"
                   disabled={loading}
                 />
               </div>
@@ -546,7 +547,7 @@ function PlateRegistry() {
                       ownerName: e.target.value,
                     })
                   }
-                  className="w-full p-2.5 border border-gray-300 rounded-md"
+                  className="text-black w-full p-2.5 border border-gray-300 rounded-md"
                   disabled={loading}
                 />
               </div>
@@ -563,7 +564,7 @@ function PlateRegistry() {
                       vehicleType: e.target.value,
                     })
                   }
-                  className="w-full p-2.5 border border-gray-300 rounded-md"
+                  className="text-black w-full p-2.5 border border-gray-300 rounded-md"
                   disabled={loading}
                 >
                   <option value="">Select Type</option>
@@ -587,7 +588,7 @@ function PlateRegistry() {
                       status: e.target.value,
                     })
                   }
-                  className="w-full p-2.5 border border-gray-300 rounded-md"
+                  className="text-black w-full p-2.5 border border-gray-300 rounded-md"
                   disabled={loading}
                 >
                   <option value="">Select Status</option>
@@ -609,7 +610,7 @@ function PlateRegistry() {
                       lostDate: e.target.value,
                     })
                   }
-                  className="w-full p-2.5 border border-gray-300 rounded-md"
+                  className="text-black w-full p-2.5 border border-gray-300 rounded-md"
                   disabled={loading}
                 />
               </div>
