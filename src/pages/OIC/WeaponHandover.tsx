@@ -4,7 +4,7 @@ import IssueWeaponModal from "./IssueWeaponModal";
 import ReturnWeaponModal from "./ReturnWeaponModal";
 import ManageWeaponSimple from "./ManageWeapon";
 import { NavLink } from "react-router-dom";
-import { getAllWeaponsWithDetails, getAllWeapons } from "../../api/weaponApi";
+import { getAllWeaponsWithDetails } from "../../api/weaponApi";
 import type { WeaponResponseDTO } from "../../types/weapon";
 import { formatWeaponDate, isWeaponOverdue } from "../../utils/weaponUtils";
 
