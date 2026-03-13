@@ -5,14 +5,21 @@ import type {
   IssueWeaponRequest, 
   ReturnWeaponRequest,
   WeaponResponseDTO,
-  OfficerDTO
+  OfficerDTO,
+  weaponRequestType
 } from "../types/weapon";
 
 export const addWeapon = (data: WeaponAddDTO) => 
   api.post(`/weapon/add-weapon`, data);
 
-export const updateWeapon = (serialNumber: string, data: WeaponUpdateDTO) => 
-  api.put(`/weapon/weapon-update/${serialNumber}`, data);
+export const updateWeapon = (
+  serialNumber: string,
+  data: {
+    weaponType: string;
+    status: string;
+    remarks: string;
+  },
+) => api.put(`/weapon/weapon-update/${serialNumber}`, data);
 
 export const getAllWeapons = () => 
   api.get(`/weapon/all`);
@@ -20,6 +27,43 @@ export const getAllWeapons = () =>
 export const getAllWeaponsWithDetails = () => 
   api.get<WeaponResponseDTO[]>(`/weapon/all-with-details`);
 
+export const returnWeapon = (data: {
+  weaponSerial: string;
+  receivedByUserId: number;
+  returnNote: string;
+}) => api.post("/weapon/return", data);
+
+export const getWeaponRequests: () => Promise<
+  weaponRequestType[]
+> = async () => {
+  try {
+    const response = await api.get<weaponRequestType[]>("/weapon/requests");
+    return response.data;
+  } catch (err) {
+    console.error("Failed to load weapon requests:", err);
+    throw err;
+  }
+};
+
+export const approveWeaponRequest = async (requestId: number) => {
+  try {
+    const response = await api.put(`/weapon/requests/${requestId}/approve`);
+    return response;
+  } catch (err) {
+    console.error("Failed to approve weapon request:", err);
+    throw err;
+  }
+};
+
+export const rejectWeaponRequest = async (requestId: number) => {
+  try {
+    const response = await api.put(`/weapon/requests/${requestId}/reject`);
+    return response;
+  } catch (err) {
+    console.error("Failed to reject weapon request:", err);
+    throw err;
+  }
+};
 export const getAllOfficers = () => 
   api.get<OfficerDTO[]>("/weapon/officers");
 
