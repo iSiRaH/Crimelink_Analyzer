@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { 
   Upload, AlertCircle, CheckCircle, User, Calendar, FileText, 
-  TrendingUp, X, ZoomIn, Shield, Clock, Camera
+  X, ZoomIn, Shield, Clock, Camera
 } from 'lucide-react';
 
 // ============================================================================

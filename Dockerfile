@@ -8,6 +8,10 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Build args for environment variables (must be declared before first use)
+ARG VITE_API_BASE_URL=""
+ARG VITE_GOOGLE_MAPS_API_KEY=""
+
 # Copy dependency files first (better caching)
 COPY package.json package-lock.json ./
 
@@ -16,10 +20,6 @@ RUN npm ci --legacy-peer-deps
 
 # Copy source code
 COPY . .
-
-# Build args for environment variables (set at build time)
-ARG VITE_API_BASE_URL=""
-ARG VITE_GOOGLE_MAPS_API_KEY=""
 
 # Build the production bundle
 RUN npm run build

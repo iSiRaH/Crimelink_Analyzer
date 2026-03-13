@@ -1,0 +1,33 @@
+﻿src/api/BulletApi.ts(1,1): error TS6133: 'axios' is declared but its value is never read.
+src/api/BulletApi.ts(4,3): error TS6196: 'BulletAddDTO' is declared but never used.
+src/api/BulletApi.ts(5,3): error TS6196: 'BulletUpdateDTO' is declared but never used.
+src/components/UI/AddVehiclePopup.tsx(7,10): error TS2552: Cannot find name 'error'. Did you mean 'Error'?
+src/components/UI/AddVehiclePopup.tsx(9,14): error TS2552: Cannot find name 'error'. Did you mean 'Error'?
+src/components/UI/AddVehiclePopup.tsx(20,22): error TS2304: Cannot find name 'vehicleData'.
+src/components/UI/AddVehiclePopup.tsx(22,17): error TS2304: Cannot find name 'setVehicleData'.
+src/components/UI/AddVehiclePopup.tsx(23,22): error TS2304: Cannot find name 'vehicleData'.
+src/components/UI/AddVehiclePopup.tsx(29,25): error TS2304: Cannot find name 'loading'.
+src/components/UI/AddVehiclePopup.tsx(40,22): error TS2304: Cannot find name 'vehicleData'.
+src/components/UI/AddVehiclePopup.tsx(42,17): error TS2304: Cannot find name 'setVehicleData'.
+src/components/UI/AddVehiclePopup.tsx(43,22): error TS2304: Cannot find name 'vehicleData'.
+src/components/UI/AddVehiclePopup.tsx(58,22): error TS2304: Cannot find name 'vehicleData'.
+src/components/UI/AddVehiclePopup.tsx(60,17): error TS2304: Cannot find name 'setVehicleData'.
+src/components/UI/AddVehiclePopup.tsx(61,22): error TS2304: Cannot find name 'vehicleData'.
+src/components/UI/AddVehiclePopup.tsx(82,22): error TS2304: Cannot find name 'vehicleData'.
+src/components/UI/AddVehiclePopup.tsx(84,17): error TS2304: Cannot find name 'setVehicleData'.
+src/components/UI/AddVehiclePopup.tsx(84,37): error TS2304: Cannot find name 'vehicleData'.
+src/components/UI/AddVehiclePopup.tsx(87,25): error TS2304: Cannot find name 'loading'.
+src/components/UI/AddVehiclePopup.tsx(101,22): error TS2304: Cannot find name 'vehicleData'.
+src/components/UI/AddVehiclePopup.tsx(103,17): error TS2304: Cannot find name 'setVehicleData'.
+src/components/UI/AddVehiclePopup.tsx(103,37): error TS2304: Cannot find name 'vehicleData'.
+src/components/UI/AddVehiclePopup.tsx(113,22): error TS2304: Cannot find name 'handleAddVehicle'.
+src/components/UI/AddVehiclePopup.tsx(114,23): error TS2304: Cannot find name 'loading'.
+src/components/UI/AddVehiclePopup.tsx(116,14): error TS2304: Cannot find name 'loading'.
+src/components/UI/AddVehiclePopup.tsx(122,15): error TS2304: Cannot find name 'setShowModal'.
+src/components/UI/AddVehiclePopup.tsx(123,15): error TS2304: Cannot find name 'setError'.
+src/components/UI/AddVehiclePopup.tsx(124,15): error TS2304: Cannot find name 'setVehicleData'.
+src/components/UI/AddVehiclePopup.tsx(132,23): error TS2304: Cannot find name 'loading'.
+src/pages/Investigator/CallAnalysisNew.tsx(3,10): error TS6133: 'FaUpload' is declared but its value is never read.
+src/pages/Investigator/CallAnalysisNew.tsx(47,10): error TS6133: 'sessionId' is declared but its value is never read.
+src/pages/Investigator/FacialRecognition.tsx(4,3): error TS6133: 'TrendingUp' is declared but its value is never read.
+src/pages/Investigator/OfficerLocationView.tsx(48,9): error TS6133: 'getStatus' is declared but its value is never read.
