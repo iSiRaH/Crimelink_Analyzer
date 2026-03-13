@@ -45,9 +45,9 @@ export const getWeaponRequests: () => Promise<
   }
 };
 
-export const approveWeaponRequest = (requestId: number) => {
+export const approveWeaponRequest = async (requestId: number) => {
   try {
-    const response = api.put(`/weapon/requests/${requestId}/approve`);
+    const response = await api.put(`/weapon/requests/${requestId}/approve`);
     return response;
   } catch (err) {
     console.error("Failed to approve weapon request:", err);
@@ -55,9 +55,9 @@ export const approveWeaponRequest = (requestId: number) => {
   }
 };
 
-export const rejectWeaponRequest = (requestId: number) => {
+export const rejectWeaponRequest = async (requestId: number) => {
   try {
-    const response = api.put(`/weapon/requests/${requestId}/reject`);
+    const response = await api.put(`/weapon/requests/${requestId}/reject`);
     return response;
   } catch (err) {
     console.error("Failed to reject weapon request:", err);
