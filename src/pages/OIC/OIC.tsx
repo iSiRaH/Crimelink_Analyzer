@@ -6,7 +6,6 @@ import {
   FaFileAlt,
   FaUsers,
 } from "react-icons/fa";
-import { FaUserGear } from "react-icons/fa6";
 import Sidebar from "../../components/Sidebar";
 import Topbar from "../../components/Topbar";
 import { useAuth } from "../../contexts/useAuth";
@@ -31,7 +30,6 @@ function OIC() {
     { name: "Plate Registry", icon: FaStickyNote, path: "plate-registry" },
     { name: "Report", icon: FaFileAlt, path: "report" },
     { name: "Report Crimes", icon: MdOutlineBugReport, path: "report-crimes" },
-    { name: "Manage Profiles", icon: FaUserGear, path: "manage-profiles" },
     { name: "Manage Criminals", icon: FaUsers, path: "manage-criminals" },
   ];
 

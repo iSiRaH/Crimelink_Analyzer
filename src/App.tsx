@@ -19,7 +19,6 @@ import WeaponHandover from "./pages/OIC/WeaponHandover";
 import PlateRegistry from "./pages/OIC/PlateRegistry";
 import OICReport from "./pages/OIC/OICReport";
 import OICDashboard from "./pages/OIC/OICDashboard";
-import ManageProfiles from "./pages/OIC/ManageProfiles";
 import InvestigatorDashboard from "./pages/Investigator/InvestigatorDashboard";
 import CallAnalysis from "./pages/Investigator/CallAnalysis";
 import FacialRecognition from "./pages/Investigator/FacialRecognition";
@@ -99,7 +98,6 @@ function AppContent() {
         <Route path="report" element={<OICReport />} />
         <Route path="report-crimes" element={<ReportCrimes />} />
         <Route path="report-crimes/reports" element={<ViewCrimeReports />} />
-        <Route path="manage-profiles" element={<ManageProfiles />} />
         <Route path="manage-criminals" element={<ManageCriminals />} />
       </Route>
 

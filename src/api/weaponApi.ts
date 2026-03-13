@@ -1,9 +1,7 @@
 import api from "../services/api";
 import type { 
   WeaponAddDTO, 
-  WeaponUpdateDTO, 
   IssueWeaponRequest, 
-  ReturnWeaponRequest,
   WeaponResponseDTO,
   OfficerDTO,
   weaponRequestType
@@ -69,6 +67,3 @@ export const getAllOfficers = () =>
 
 export const issueWeapon = (data: IssueWeaponRequest) => 
   api.post("/weapon/issue", data);
-
-export const returnWeapon = (data: ReturnWeaponRequest) => 
-  api.post("/weapon/return", data);
