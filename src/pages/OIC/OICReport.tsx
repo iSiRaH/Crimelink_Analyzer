@@ -65,11 +65,11 @@ function OICReport(){
         <div className="p-6 bg-dark-bg h-full">
             <h1 className="text-3xl text-white font-bold mb-6">OIC Reports</h1>
 
-            <div className="bg-slate-300 border rounded-lg p-6 shadow">
-                <h2 className="text-xl font-semibold mb-4">Generate OIC Report</h2>
+            <div className="bg-slate-800 border rounded-lg p-6 shadow">
+                <h2 className="text-xl text-white font-semibold mb-4">Generate OIC Report</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     <div>
-                        <label className="block text-sm font-medium mb-2">Report Type</label>
+                        <label className="block text-sm font-medium mb-2 text-white">Report Type</label>
                         <select
                             className="w-full border rounded px-3 py-2"
                             value={reportType}
@@ -81,7 +81,7 @@ function OICReport(){
                         </select>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium mb-2">From Date</label>
+                        <label className="block text-sm font-medium mb-2 text-white">From Date</label>
                         <input
                             type="date"
                             className="w-full border rounded px-3 py-2"
@@ -90,7 +90,7 @@ function OICReport(){
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium mb-2">To Date</label>
+                        <label className="block text-sm font-medium mb-2 text-white">To Date</label>
                         <input
                             type="date"
                             className="w-full border rounded px-3 py-2"
@@ -109,18 +109,18 @@ function OICReport(){
 
             </div>
 
-            <div className="mt-6 bg-slate-300 border rounded-lg p-6 shadow">
-                <h2 className="text-xl font-semibold mb-4">Available Reports</h2>
+            <div className="mt-6 bg-slate-800 border rounded-lg p-6 shadow">
+                <h2 className="text-xl text-white font-semibold mb-4">Available Reports</h2>
                 <ul className="space-y-2">
-                    <li className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                    <li className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
                         <span>Duty Schedule Report</span>
                         <span className="text-sm text-gray-600">Track the Police officers duties</span>
                     </li>
-                    <li className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                    <li className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
                         <span>Weapon Handover Report</span>
                         <span className="text-sm text-gray-600">Details of weapon handovers</span>
                     </li>
-                    <li className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                    <li className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
                         <span>Plate Registry Report</span>
                         <span className="text-sm text-gray-600">Information on registered plates</span>
                     </li>
