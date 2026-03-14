@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import * as leaveService from "../../api/leaveService";
 import type { LeaveRequest, LeaveStatus } from "../../types/leave";
 
@@ -16,6 +17,8 @@ function safeTime(value?: string): number {
 }
 
 export default function LeaveManagement() {
+  const navigate = useNavigate();
+
   const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<number | null>(null);
@@ -43,13 +46,7 @@ export default function LeaveManagement() {
     }
   };
 
-  /**
-   *  SORT RULE:
-   * 1) PENDING first (top)
-   * 2) PENDING rows sorted by requestedDate DESC (newest request on top)
-   * 3) APPROVED/DENIED rows sorted by LEAVE DATE (leave.date) DESC
-   * 4) If same leave date -> requestedDate DESC
-   */
+  
   const sortedLeaves = useMemo(() => {
     const copy = [...leaves];
 
@@ -68,18 +65,18 @@ export default function LeaveManagement() {
         return safeTime(b.requestedDate) - safeTime(a.requestedDate);
       }
 
-      // 3) both NOT pending -> sort by leave date descending
+    
       const byLeaveDate = safeTime(b.date) - safeTime(a.date);
       if (byLeaveDate !== 0) return byLeaveDate;
 
-      // 4) tie-breaker: newest requestedDate first
+    
       return safeTime(b.requestedDate) - safeTime(a.requestedDate);
     });
 
     return copy;
   }, [leaves]);
 
-  //  Optional: NEW badge for pending requests (within last 60 mins)
+  
   const NEW_MINUTES = 60;
   const isNew = (leave: LeaveRequest) => {
     if (String(leave.status).toUpperCase() !== "PENDING") return false;
@@ -104,7 +101,7 @@ export default function LeaveManagement() {
         responseReason,
       });
 
-      // Update UI using backend response
+    
       setLeaves((prev) => prev.map((l) => (l.id === leaveId ? updated : l)));
     } catch (err) {
       console.error("Failed to update leave status", err);
@@ -118,6 +115,24 @@ export default function LeaveManagement() {
     <div className="p-6 bg-slate-100 min-h-screen">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
         <div>
+        
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-1 text-md font-bold text-slate-600 hover:text-slate-900 mb-2 group"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4 transition-transform group-hover:-translate-x-0.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            Back
+          </button>
+
           <h1 className="text-2xl font-bold">Leave Management</h1>
           <p className="text-sm text-slate-600">
             Pending requests: <span className="font-semibold">{pendingCount}</span>
