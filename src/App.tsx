@@ -19,7 +19,6 @@ import WeaponHandover from "./pages/OIC/WeaponHandover";
 import PlateRegistry from "./pages/OIC/PlateRegistry";
 import OICReport from "./pages/OIC/OICReport";
 import OICDashboard from "./pages/OIC/OICDashboard";
-import ManageProfiles from "./pages/OIC/ManageProfiles";
 import InvestigatorDashboard from "./pages/Investigator/InvestigatorDashboard";
 import CallAnalysis from "./pages/Investigator/CallAnalysis";
 import FacialRecognition from "./pages/Investigator/FacialRecognition";
@@ -38,6 +37,7 @@ import ViewCrimeReports from "./pages/OIC/ViewCrimeReports";
 import LeaveManagement from "./pages/OIC/LeaveManagment";
 import ManageCriminals from "./pages/OIC/ManageCriminals";
 import OfficerLocationView from "./pages/Investigator/OfficerLocationView";
+import WeaponRequests from "./pages/OIC/WeaponRequests";
 
 function AppContent() {
   const navigate = useNavigate();
@@ -90,11 +90,14 @@ function AppContent() {
         <Route path="duty-management" element={<DutyManagement />} />
         <Route path="leave-management" element={<LeaveManagement />} />
         <Route path="weapon-handover" element={<WeaponHandover />} />
+        <Route
+          path="weapon-handover/weapon-requests"
+          element={<WeaponRequests />}
+        />
         <Route path="plate-registry" element={<PlateRegistry />} />
         <Route path="report" element={<OICReport />} />
         <Route path="report-crimes" element={<ReportCrimes />} />
         <Route path="report-crimes/reports" element={<ViewCrimeReports />} />
-        <Route path="manage-profiles" element={<ManageProfiles />} />
         <Route path="manage-criminals" element={<ManageCriminals />} />
       </Route>
 

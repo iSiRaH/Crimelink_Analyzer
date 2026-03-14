@@ -3,6 +3,7 @@ import { Search } from "lucide-react";
 import IssueWeaponModal from "./IssueWeaponModal";
 import ReturnWeaponModal from "./ReturnWeaponModal";
 import ManageWeaponSimple from "./ManageWeapon";
+import { NavLink } from "react-router-dom";
 import { getAllWeaponsWithDetails } from "../../api/weaponApi";
 import type { WeaponResponseDTO } from "../../types/weapon";
 import { formatWeaponDate, isWeaponOverdue } from "../../utils/weaponUtils";
@@ -121,15 +122,22 @@ export default function WeaponHandover() {
     <div className="min-h-screen bg-[#0d1117] text-white p-8">
 
       {!showManageWeapon && (
-        <div className="bg-[#1c2333]  pl-8 pr-8 pt-3 pb-3 shadow-2xl rounded-3xl">
-          <div className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-semibold text-white">Weapon Management</h1>
-            <button
-              onClick={() => setShowManageWeapon(true)}
-              className="bg-[#4c7ce5] hover:bg-[#5a8aef] px-6 py-2.5 rounded-lg font-medium transition-all duration-200 text-md text-white"
-            >
-              Weapon operator
-            </button>
+        <div className="bg-dark-panel rounded-xl p-4">
+          <div className="flex justify-between items-center">
+            <h1 className="text-3xl font-semibold">Weapon Management</h1>
+            <div className="flex gap-3">
+              <NavLink to={"weapon-requests"}>
+                <button className="bg-purple-primary text-white border-none px-6 py-2.5 rounded-[25px] text-base font-medium cursor-pointer transition-colors duration-300 hover:bg-purple-hover">
+                  Weapon Requests
+                </button>
+              </NavLink>
+              <button
+                onClick={() => setShowManageWeapon(true)}
+                className="bg-purple-primary text-white border-none px-6 py-2.5 rounded-[25px] text-base font-medium cursor-pointer transition-colors duration-300 hover:bg-purple-hover"
+              >
+                Weapon Operator
+              </button>
+            </div>
           </div>
 
           {/* ✅ DB-DRIVEN COUNTS */}

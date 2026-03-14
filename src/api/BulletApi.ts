@@ -1,8 +1,5 @@
-import axios from "axios";
 import api from "../services/api";
 import type {
-  BulletAddDTO,
-  BulletUpdateDTO,
   BulletResponseDTO
 } from "../types/Bullet";
 
