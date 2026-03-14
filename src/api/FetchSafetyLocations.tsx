@@ -1,4 +1,5 @@
 import { useMapContext } from "../contexts/useMapContext";
+import api from "../services/api";
 
 export function useFetchSafetyLocations() {
   const { map, setMarkers } = useMapContext();
@@ -11,10 +12,10 @@ export function useFetchSafetyLocations() {
 
   const fetchSafetyLocations = async (selectedType: string) => {
     try {
-      const response = await fetch(
-        `http://localhost:8080/api/safety-locations?type=${selectedType}`
-      );
-      const data = await response.json();
+      const response = await api.get(`/safety-locations`, {
+        params: { type: selectedType },
+      });
+      const data = response.data;
 
       setMarkers(
         data.map((loc: SafetyLocation) => ({

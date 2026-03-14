@@ -7,6 +7,8 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
+      // Local development server proxy
+      // In production (CloudFront), requests to /api are automatically routed to the ALB
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,

@@ -1,5 +1,35 @@
-// IMPLEMENT component
-const AddVehiclePopup = () => {
+import { useState } from "react";
+import api from "../../services/api";
+
+interface AddVehiclePopupProps {
+  onClose: () => void;
+  onSuccess?: () => void;
+}
+
+const AddVehiclePopup = ({ onClose, onSuccess }: AddVehiclePopupProps) => {
+  const [vehicleData, setVehicleData] = useState({
+    numberPlate: "",
+    ownerName: "",
+    vehicleType: "",
+    status: "",
+    lostDate: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleAddVehicle = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      await api.post('/vehicle', vehicleData);
+      if (onSuccess) onSuccess();
+      onClose();
+    } catch (err: any) {
+      setError(err.response?.data?.message || err.message || "Failed to add vehicle");
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
       <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
@@ -119,15 +149,7 @@ const AddVehiclePopup = () => {
           <button
             className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 flex-1 transition-colors font-medium"
             onClick={() => {
-              setShowModal(false);
-              setError(null);
-              setVehicleData({
-                numberPlate: "",
-                ownerName: "",
-                vehicleType: "",
-                status: "",
-                lostDate: "",
-              });
+              onClose();
             }}
             disabled={loading}
           >

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import type { OfficerInfo } from "../../types/officers";
 import { fetchFieldOfficers } from "../../services/officerLocation";
 import OfficerLocationPopup from "../../components/UI/OfficerLocationPopup";
-import { getOfficerRowsByDate } from "../../api/dutyService";
+// import { getOfficerRowsByDate } from "../../api/dutyService";
 
 // const TODAY = new Date().toISOString().split("T")[0]; //IMPLEMENT: use current date to get duty status of the day
 
@@ -45,14 +45,14 @@ const OfficerLocationView = () => {
   //   console.log("Searching for:", searchTerm);
   // }; //REMOVE: serach button removed
 
-  const getStatus = async (date: string) => {
-    try {
-      const data = await getOfficerRowsByDate(date);
-      return data;
-    } catch (e) {
-      console.error("Error fetching duty status: ", e);
-    }
-  }; //IMPLEMENT: Show duty status in the card and filter by duty status
+  // const getStatus = async (date: string) => {
+  //   try {
+  //     const data = await getOfficerRowsByDate(date);
+  //     return data;
+  //   } catch (e) {
+  //     console.error("Error fetching duty status: ", e);
+  //   }
+  // }; //IMPLEMENT: Show duty status in the card and filter by duty status
 
   const filteredOfficers = officers
     .filter((officer) => {
