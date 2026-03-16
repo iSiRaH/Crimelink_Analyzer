@@ -123,7 +123,7 @@ export default function WeaponHandover() {
 
       {!showManageWeapon && (
         <div className="bg-dark-panel rounded-xl p-4">
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center mb-2">
             <h1 className="text-3xl font-semibold">Weapon Management</h1>
             <div className="flex gap-3">
               <NavLink to={"weapon-requests"}>
