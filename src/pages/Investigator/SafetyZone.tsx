@@ -74,7 +74,7 @@ function SafetyZone() {
       lat: 5.948202,
       lng: 80.548086,
     }),
-    []
+    [],
   );
 
   const { map, setMap, markers, setMarkers } = useMapContext();
@@ -97,7 +97,7 @@ function SafetyZone() {
     if (isLoaded && searchInputRef.current && map) {
       const autocompleteInstance = new google.maps.places.Autocomplete(
         searchInputRef.current,
-        { types: ["geocode"] }
+        { types: ["geocode"] },
       );
 
       autocompleteInstance.bindTo("bounds", map);
@@ -151,7 +151,7 @@ function SafetyZone() {
       searchPlacesInViewport(
         mapRef.current,
         `${searchQuery} ${type.replace("_", " ")}`,
-        setMarkers
+        setMarkers,
       );
     }
   };
@@ -199,7 +199,7 @@ function SafetyZone() {
   // if map still loading
   if (!isLoaded) {
     return (
-      <div className="flex justify-center items-center gap-3 font-semibold text-lg h-full">
+      <div className="flex min-h-screen items-center justify-center gap-3 bg-dark-bg text-lg font-semibold text-white">
         <Box>
           <CircularProgress />
         </Box>
@@ -210,33 +210,36 @@ function SafetyZone() {
 
   return (
     <>
-      <div className="bg-slate-500 w-full h-full p-5">
-        <p className="font-semibold text-3xl text-white mb-5">Safety Zone</p>
-        <div className="flex flex-row w-full justify-around">
-          <div className="flex flex-col aspect-auto w-1/5 gap-4 items-center bg-[#131e38] py-5 rounded-lg">
+      <div className="min-h-screen w-full bg-dark-bg p-3 text-white">
+        <div className="mb-6 rounded-xl bg-dark-panel p-4">
+          <p className="text-3xl font-semibold">Safety Zone</p>
+        </div>
+
+        <div className="flex w-full flex-col gap-6 xl:flex-row">
+          <div className="flex w-full flex-col gap-5 rounded-xl bg-dark-panel p-5 xl:w-1/4">
             <form
               onSubmit={handleSearchSubmit}
-              className="flex flex-col gap-4 items-center"
+              className="flex w-full flex-col gap-4"
             >
-              <div>
+              <div className="w-full">
                 <input
                   type="text"
                   placeholder="🔎 Search....."
                   value={searchQuery}
                   onChange={handleSearchChange}
                   ref={searchInputRef}
-                  className="h-8 rounded-lg w-full pl-3"
+                  className="h-10 w-full rounded-xl border-none bg-white px-4 text-sm text-dark-bg outline-none"
                 />
               </div>
               <div>
                 <button
                   type="submit"
-                  className="bg-blue-600 text-white font-semibold hover:bg-blue-800 hover:text-black px-7 py-2 rounded-xl"
+                  className="h-10 rounded-lg bg-green-500 px-7 text-sm font-semibold text-white transition-opacity hover:opacity-90"
                 >
                   Search
                 </button>
               </div>
-              <div>
+              <div className="w-full">
                 <DropDownMenu
                   dropdownLabelName={currentDropdownLabel}
                   items={dropdownItems}
@@ -244,86 +247,89 @@ function SafetyZone() {
               </div>
             </form>
             <div className="flex flex-col gap-2">
-              <p className="text-white font-semibold text-lg ">Color Guide</p>
+              <p className="text-lg font-semibold text-white">Color Guide</p>
               <div className="flex flex-col gap-1 pl-3">
                 <div className="flex flex-row gap-2 items-center">
                   <div
                     className={"h-3 w-3 rounded-full"}
                     style={{ backgroundColor: `${CRIME_COLORS.THEFT}` }}
                   ></div>
-                  <p className="text-white font-medium">Theft</p>
+                  <p className="font-medium text-gray-200">Theft</p>
                 </div>
                 <div className="flex flex-row gap-2 items-center">
                   <div
                     className={"h-3 w-3 rounded-full"}
                     style={{ backgroundColor: `${CRIME_COLORS.ASSAULT}` }}
                   ></div>
-                  <p className="text-white font-medium">Assault</p>
+                  <p className="font-medium text-gray-200">Assault</p>
                 </div>
                 <div className="flex flex-row gap-2 items-center">
                   <div
                     className={"h-3 w-3 rounded-full"}
                     style={{ backgroundColor: `${CRIME_COLORS.BURGLARY}` }}
                   ></div>
-                  <p className="text-white font-medium">Burglary</p>
+                  <p className="font-medium text-gray-200">Burglary</p>
                 </div>
                 <div className="flex flex-row gap-2 items-center">
                   <div
                     className={"h-3 w-3 rounded-full"}
                     style={{ backgroundColor: `${CRIME_COLORS.ROBBERY}` }}
                   ></div>
-                  <p className="text-white font-medium">Robbery</p>
+                  <p className="font-medium text-gray-200">Robbery</p>
                 </div>
                 <div className="flex flex-row gap-2 items-center">
                   <div
                     className={"h-3 w-3 rounded-full"}
                     style={{ backgroundColor: `${CRIME_COLORS.VANDALISM}` }}
                   ></div>
-                  <p className="text-white font-medium">Vandalism</p>
+                  <p className="font-medium text-gray-200">Vandalism</p>
                 </div>
                 <div className="flex flex-row gap-2 items-center">
                   <div
                     className={"h-3 w-3 rounded-full"}
                     style={{ backgroundColor: `${CRIME_COLORS.DRUG_OFFENSE}` }}
                   ></div>
-                  <p className="text-white font-medium">Drug Offense</p>
+                  <p className="font-medium text-gray-200">Drug Offense</p>
                 </div>
                 <div className="flex flex-row gap-2 items-center">
                   <div
                     className={"h-3 w-3 rounded-full"}
-                    style={{ backgroundColor: `${CRIME_COLORS.TRAFFIC_VIOLATION}` }}
+                    style={{
+                      backgroundColor: `${CRIME_COLORS.TRAFFIC_VIOLATION}`,
+                    }}
                   ></div>
-                  <p className="text-white font-medium">Traffic Violation</p>
+                  <p className="font-medium text-gray-200">Traffic Violation</p>
                 </div>
                 <div className="flex flex-row gap-2 items-center">
                   <div
                     className={"h-3 w-3 rounded-full"}
                     style={{ backgroundColor: `${CRIME_COLORS.HOMICIDE}` }}
                   ></div>
-                  <p className="text-white font-medium">Homicide</p>
+                  <p className="font-medium text-gray-200">Homicide</p>
                 </div>
                 <div className="flex flex-row gap-2 items-center">
                   <div
                     className={"h-3 w-3 rounded-full"}
                     style={{ backgroundColor: `${CRIME_COLORS.FRAUD}` }}
                   ></div>
-                  <p className="text-white font-medium">Fraud</p>
+                  <p className="font-medium text-gray-200">Fraud</p>
                 </div>
                 <div className="flex flex-row gap-2 items-center">
                   <div
                     className={"h-3 w-3 rounded-full"}
                     style={{ backgroundColor: `${CRIME_COLORS.ARSON}` }}
                   ></div>
-                  <p className="text-white font-medium">Arson</p>
+                  <p className="font-medium text-gray-200">Arson</p>
                 </div>
               </div>
             </div>
           </div>
-          <div className="w-3/5">
+
+          <div className="w-full rounded-xl bg-dark-panel p-4 xl:w-3/4">
             {isLoaded && (
               <GoogleMap
                 center={center}
-                mapContainerClassName="w-full h-[500px] rounded-lg"
+                mapContainerClassName="h-[500px] w-full rounded-xl"
                 zoom={14}
                 onLoad={handleLoad}
               >

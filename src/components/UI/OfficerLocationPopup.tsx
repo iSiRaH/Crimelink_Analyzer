@@ -134,36 +134,62 @@ const OfficerLocationPopup: React.FC<OfficerLocationPopupProps> = ({
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex justify-center items-center z-50"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
       onClick={onClose}
     >
       <div
-        className="bg-white p-5 rounded-lg w-[700px]"
+        className="w-full max-w-5xl max-h-[95vh] overflow-y-auto rounded-xl border border-dark-border bg-dark-panel p-6 text-white"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-2xl font-bold mb-4">
-          {officer?.name} Location Details
-        </h2>
+        <div className="mb-5 flex flex-col gap-2">
+          <h2 className="text-3xl font-semibold">
+            {officer?.name} Location Details
+          </h2>
+          <p className="text-sm text-gray-400">
+            Track latest position and route history by date range.
+          </p>
+        </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-100 border border-red-400 rounded text-red-700 text-sm">
-            <p className="font-semibold">⚠️ Error:</p>
+          <div className="mb-5 rounded-xl border border-red-500/60 bg-red-950/50 p-3 text-sm text-red-200">
+            <p className="font-semibold">Error:</p>
             <p>{error}</p>
           </div>
         )}
-        <p>ID: {officer?.userId}</p>
-        <p>Badge No: {officer?.badgeNo}</p>
-        <p>
-          Date of Birth:{" "}
-          {officer?.dob ? new Date(officer.dob).toDateString() : "N/A"}
-        </p>
-        <p>Gender: {officer?.gender}</p>
-        <p>Address: {officer?.address}</p>
-        <p>Email: {officer?.email}</p>
-        <p>Status: {officer?.status}</p>
-        <p className="font-semibold mt-4">Location History:</p>
-        <div className="flex gap-4 mb-4">
-          <div className="flex flex-col">
+        <div className="mb-5 grid grid-cols-1 gap-3 rounded-xl bg-dark-bg p-4 text-sm text-gray-300 md:grid-cols-2">
+          <p>
+            <span className="font-semibold text-white">ID:</span>{" "}
+            {officer?.userId}
+          </p>
+          <p>
+            <span className="font-semibold text-white">Badge No:</span>{" "}
+            {officer?.badgeNo}
+          </p>
+          <p>
+            <span className="font-semibold text-white">Date of Birth:</span>{" "}
+            {officer?.dob ? new Date(officer.dob).toDateString() : "N/A"}
+          </p>
+          <p>
+            <span className="font-semibold text-white">Gender:</span>{" "}
+            {officer?.gender}
+          </p>
+          <p className="md:col-span-2">
+            <span className="font-semibold text-white">Address:</span>{" "}
+            {officer?.address}
+          </p>
+          <p>
+            <span className="font-semibold text-white">Email:</span>{" "}
+            {officer?.email}
+          </p>
+          <p>
+            <span className="font-semibold text-white">Status:</span>{" "}
+            {officer?.status}
+          </p>
+        </div>
+
+        <p className="mb-3 text-lg font-semibold">Location History</p>
+        <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-end">
+          <div className="flex flex-col gap-1">
             <label htmlFor="from" className="text-sm font-semibold">
               From:
             </label>
@@ -172,10 +198,10 @@ const OfficerLocationPopup: React.FC<OfficerLocationPopupProps> = ({
               type="date"
               value={fromDate}
               onChange={(e) => setFromDate(e.target.value)}
-              className="border rounded px-2 py-1 text-sm"
+              className="h-10 rounded-xl border-none bg-white px-3 text-sm text-dark-bg outline-none"
             />
           </div>
-          <div className="flex flex-col">
+          <div className="flex flex-col gap-1">
             <label htmlFor="to" className="text-sm font-semibold">
               To:
             </label>
@@ -184,28 +210,25 @@ const OfficerLocationPopup: React.FC<OfficerLocationPopupProps> = ({
               type="date"
               value={toDate}
               onChange={(e) => setToDate(e.target.value)}
-              className="border rounded px-2 py-1 text-sm"
+              className="h-10 rounded-xl border-none bg-white px-3 text-sm text-dark-bg outline-none"
             />
           </div>
+          <button
+            onClick={() => fetchLocations()}
+            disabled={loading}
+            className="h-10 rounded-lg bg-green-500 px-6 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {loading ? "Loading..." : "Find"}
+          </button>
         </div>
-        <button
-          onClick={() => fetchLocations()}
-          disabled={loading}
-          className={`px-4 py-2 rounded font-semibold transition ${
-            loading
-              ? "bg-gray-400 text-gray-600 cursor-not-allowed"
-              : "bg-blue-500 text-white hover:bg-blue-600 cursor-pointer"
-          }`}
-        >
-          {loading ? "Loading..." : "Find"}
-        </button>
+
         <div>
           {isLoaded ? (
-            <div className="h-[450px] w-full rounded-md overflow-hidden border">
+            <div className="h-[450px] w-full overflow-hidden rounded-xl border border-dark-border bg-dark-bg">
               <GoogleMap
                 center={center}
                 zoom={15}
-                mapContainerClassName="w-full h-[500px] rounded-lg"
+                mapContainerClassName="h-[500px] w-full"
                 onLoad={onLoad}
                 // onClick={onMapClick}
                 options={{
@@ -234,9 +257,9 @@ const OfficerLocationPopup: React.FC<OfficerLocationPopupProps> = ({
               </GoogleMap>
             </div>
           ) : (
-            <div>
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white" />{" "}
-              <p>loading ...</p>
+            <div className="flex h-40 flex-col items-center justify-center gap-3 rounded-xl bg-dark-bg">
+              <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-white" />
+              <p className="text-gray-400">Loading ...</p>
             </div>
           )}
         </div>
