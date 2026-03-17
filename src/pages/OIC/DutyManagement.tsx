@@ -180,7 +180,7 @@ function DutyManagement() {
         }
         return {
           officerId: r.officerId,
-          date: finalDateTime,
+          date: dateKey,
           duration: r.duration ?? 240,
           taskType: r.taskType ?? "General",
           status: r.status ?? ("" as DutyStatus),
