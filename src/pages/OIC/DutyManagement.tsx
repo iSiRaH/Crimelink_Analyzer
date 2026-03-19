@@ -118,6 +118,7 @@ function DutyManagement() {
       active = false;
     };
   }, []);
+  
   useEffect(() => {
     if (!open || !selectedDate) return;
 
