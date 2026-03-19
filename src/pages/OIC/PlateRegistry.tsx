@@ -88,7 +88,7 @@ function PlateRegistry() {
       .post(`/vehicles`, vehicleData)
       .then((response) => {
         console.log("Vehicle added:", response.data);
-        
+
         setVehicles([...vehicles, response.data]);
         setShowModal(false);
         setVehicleData({
@@ -117,10 +117,7 @@ function PlateRegistry() {
     setError(null);
 
     api
-      .put(
-        `/vehicles/${editingVehicle.id}`,
-        editingVehicle,
-      )
+      .put(`/vehicles/${editingVehicle.id}`, editingVehicle)
       .then((response) => {
         console.log("Vehicle updated:", response.data);
         setVehicles(
@@ -259,7 +256,7 @@ function PlateRegistry() {
 
       <div className="w-full flex justify-center mt-4 sm:mt-5">
         {loading ? (
-          <div className="text-white text-base sm:text-xl bg-slate-800 p-6 sm:p-8 rounded-lg">
+          <div className="rounded-xl border border-dark-border bg-dark-panel p-6 text-base text-white sm:p-8 sm:text-xl">
             <div className="flex items-center gap-3">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
               <span>Loading vehicles...</span>
@@ -267,87 +264,93 @@ function PlateRegistry() {
           </div>
         ) : (
           <div className="w-full overflow-x-auto px-3 sm:px-5 pb-2">
-            <table className="w-full bg-white border border-collapse rounded-lg shadow-lg text-sm sm:text-base">
-              <thead>
-                <tr className="bg-slate-700 text-white border-b-2 border-dark-border">
-                  <th className="text-left px-3 sm:px-4 py-3 sm:py-4 text-sm font-semibold whitespace-nowrap">
-                    Plate Number
-                  </th>
-                  <th className="text-left px-3 sm:px-4 py-3 sm:py-4 text-sm font-semibold whitespace-nowrap">
-                    Owner Name
-                  </th>
-                  <th className="text-left px-3 sm:px-4 py-3 sm:py-4 text-sm font-semibold whitespace-nowrap">
-                    Vehicle Type
-                  </th>
-                  <th className="text-left px-3 sm:px-4 py-3 sm:py-4 text-sm font-semibold whitespace-nowrap">
-                    Status
-                  </th>
-                  <th className="text-left px-3 sm:px-4 py-3 sm:py-4 text-sm font-semibold whitespace-nowrap">
-                    Lost Date
-                  </th>
-                  <th className="text-left px-3 sm:px-4 py-3 sm:py-4 text-sm font-semibold whitespace-nowrap">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="text-black">
-                {filteredAndSortedVehicles.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="p-6 sm:p-8 text-center text-gray-500"
-                    >
-                      No vehicles found. Click "Add Vehicle" to get started.
-                    </td>
+            <div className="w-full overflow-auto rounded-xl border border-dark-border bg-dark-bg">
+              <table className="min-w-[860px] w-full border-separate border-spacing-0 text-sm text-gray-200">
+                <thead className="sticky top-0 z-10">
+                  <tr className="bg-[#222a40]">
+                    <th className="border-b border-dark-border px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-300 whitespace-nowrap">
+                      Plate Number
+                    </th>
+                    <th className="border-b border-dark-border px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-300 whitespace-nowrap">
+                      Owner Name
+                    </th>
+                    <th className="border-b border-dark-border px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-300 whitespace-nowrap">
+                      Vehicle Type
+                    </th>
+                    <th className="border-b border-dark-border px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-300 whitespace-nowrap">
+                      Status
+                    </th>
+                    <th className="border-b border-dark-border px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-300 whitespace-nowrap">
+                      Lost Date
+                    </th>
+                    <th className="flex border-b border-dark-border px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-300 whitespace-nowrap justify-center">
+                      Actions
+                    </th>
                   </tr>
-                ) : (
-                  filteredAndSortedVehicles.map((vehicle) => (
-                    <tr
-                      key={vehicle.id}
-                      className="border-b border-dark-border transition-colors hover:bg-white/[0.02]"
-                    >
-                      <td className="p-3 sm:p-4 border font-semibold text-blue-600">
-                        {vehicle.numberPlate}
-                      </td>
-                      <td className="p-3 sm:p-4 border">{vehicle.ownerName}</td>
-                      <td className="p-3 sm:p-4 border">
-                        {vehicle.vehicleType}
-                      </td>
-                      <td className="p-3 sm:p-4 border">
-                        <span
-                          className={`px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-semibold ${
-                            vehicle.status === "Found"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-gray-800"
-                          }`}
-                        >
-                          {vehicle.status}
-                        </span>
-                      </td>
-                      <td className="p-3 sm:p-4 border">{vehicle.lostDate}</td>
-                      <td className="p-3 sm:p-4 border text-center">
-                        <div className="flex gap-2 justify-center">
-                          <button
-                            onClick={() => handleEditClick(vehicle)}
-                            className="px-3 sm:px-4 py-1.5 bg-blue-500 text-white border-none rounded-md text-[12px] sm:text-[13px] font-medium cursor-pointer transition-colors hover:bg-blue-600"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() =>
-                              vehicle.id && handleDeleteVehicle(vehicle.id)
-                            }
-                            className="px-3 sm:px-4 py-1.5 bg-red-500 text-white border-none rounded-md text-[12px] sm:text-[13px] font-medium cursor-pointer transition-colors hover:bg-red-600"
-                          >
-                            Delete
-                          </button>
-                        </div>
+                </thead>
+                <tbody>
+                  {filteredAndSortedVehicles.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        className="px-3 py-6 text-center text-sm text-gray-400"
+                      >
+                        No vehicles found. Click "Add Vehicle" to get started.
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    filteredAndSortedVehicles.map((vehicle) => (
+                      <tr
+                        key={vehicle.id}
+                        className="transition-colors even:bg-white/[0.02] hover:bg-white/[0.06]"
+                      >
+                        <td className="border-b border-dark-border px-3 py-2.5 font-semibold text-white">
+                          {vehicle.numberPlate}
+                        </td>
+                        <td className="border-b border-dark-border px-3 py-2.5 text-gray-200">
+                          {vehicle.ownerName}
+                        </td>
+                        <td className="border-b border-dark-border px-3 py-2.5 text-gray-200">
+                          {vehicle.vehicleType}
+                        </td>
+                        <td className="border-b border-dark-border px-3 py-2.5">
+                          <span
+                            className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold sm:text-xs ${
+                              vehicle.status === "Found"
+                                ? "border-green-400/30 bg-green-500/20 text-green-300"
+                                : "border-red-400/30 bg-red-500/20 text-red-300"
+                            }`}
+                          >
+                            {vehicle.status}
+                          </span>
+                        </td>
+                        <td className="border-b border-dark-border px-3 py-2.5 text-gray-300">
+                          {vehicle.lostDate}
+                        </td>
+                        <td className="border-b border-dark-border px-3 py-2.5 text-center">
+                          <div className="flex justify-center gap-2">
+                            <button
+                              onClick={() => handleEditClick(vehicle)}
+                              className="rounded-md bg-blue-500 px-3 py-1.5 text-[12px] font-medium text-white transition-colors hover:bg-blue-600 sm:px-4 sm:text-[13px]"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() =>
+                                vehicle.id && handleDeleteVehicle(vehicle.id)
+                              }
+                              className="rounded-md bg-red-500 px-3 py-1.5 text-[12px] font-medium text-white transition-colors hover:bg-red-600 sm:px-4 sm:text-[13px]"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

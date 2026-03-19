@@ -181,7 +181,7 @@ function DutyManagement() {
         }
         return {
           officerId: r.officerId,
-          date: finalDateTime,
+          date: dateKey,
           duration: r.duration ?? 240,
           taskType: r.taskType ?? "General",
           status: r.status ?? ("" as DutyStatus),
@@ -319,27 +319,42 @@ function DutyManagement() {
 
         {loadingRows && <p className="mb-3">Loading officers...</p>}
 
-        <div className="max-h-96 overflow-y-auto block bg-slate-50 w-full">
-          <table className="w-full border mb-5 text-sm">
-            <thead>
-              <tr className="bg-gray-200">
-                <th className="p-2 border">Name</th>
-                <th className="p-2 border">Location</th>
-                <th className="p-2 border">Time</th>
-                <th className="p-2 border">Status</th>
-                <th className="p-2 border">Description</th>
+        <div className="mb-5 block max-h-96 w-full overflow-y-auto rounded-xl border border-dark-border bg-dark-bg">
+          <table className="w-full border-separate border-spacing-0 text-sm text-gray-200">
+            <thead className="sticky top-0 z-10">
+              <tr className="bg-[#222a40]">
+                <th className="border-b border-dark-border px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-300">
+                  Name
+                </th>
+                <th className="border-b border-dark-border px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-300">
+                  Location
+                </th>
+                <th className="border-b border-dark-border px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-300">
+                  Time
+                </th>
+                <th className="border-b border-dark-border px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-300">
+                  Status
+                </th>
+                <th className="border-b border-dark-border px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-300">
+                  Description
+                </th>
               </tr>
             </thead>
 
             <tbody>
               {rows.map((r, i) => (
-                <tr key={`${r.officerId}-${i}`}>
-                  <td className="p-2 border font-medium">{r.officerName}</td>
+                <tr
+                  key={`${r.officerId}-${i}`}
+                  className="transition-colors even:bg-white/[0.02] hover:bg-white/[0.06]"
+                >
+                  <td className="border-b border-dark-border px-3 py-2.5 font-medium text-white">
+                    {r.officerName}
+                  </td>
 
-                  <td className="p-2 border">
+                  <td className="border-b border-dark-border px-3 py-2.5">
                     <select
                       title="Select Location"
-                      className="w-full border rounded px-2 py-1"
+                      className="h-9 w-full rounded-lg border border-dark-border bg-white px-3 text-sm text-dark-bg outline-none focus:ring-2 focus:ring-green-500/40"
                       disabled={loadingLocations}
                       value={r.location || ""}
                       onChange={(e) => updateRow(i, "location", e.target.value)}
@@ -357,10 +372,10 @@ function DutyManagement() {
                     </select>
                   </td>
 
-                  <td className="p-2 border">
+                  <td className="border-b border-dark-border px-3 py-2.5">
                     <select
                       title="Time Range"
-                      className="w-full border rounded px-2 py-1"
+                      className="h-9 w-full rounded-lg border border-dark-border bg-white px-3 text-sm text-dark-bg outline-none focus:ring-2 focus:ring-green-500/40"
                       value={r.timeRange || ""}
                       onChange={(e) => {
                         const selected = timeRanges.find(
@@ -384,10 +399,10 @@ function DutyManagement() {
                     </select>
                   </td>
 
-                  <td className="p-2 border">
+                  <td className="border-b border-dark-border px-3 py-2.5">
                     <select
                       title="Status"
-                      className="w-full border rounded px-2 py-1"
+                      className="h-9 w-full rounded-lg border border-dark-border bg-white px-3 text-sm text-dark-bg outline-none focus:ring-2 focus:ring-green-500/40"
                       value={r.status || ""}
                       onChange={(e) =>
                         updateRow(i, "status", e.target.value as DutyStatus)
@@ -402,9 +417,9 @@ function DutyManagement() {
                     </select>
                   </td>
 
-                  <td className="p-2 border">
+                  <td className="border-b border-dark-border px-3 py-2.5">
                     <input
-                      className="w-full border rounded px-2 py-1"
+                      className="h-9 w-full rounded-lg border border-dark-border bg-white px-3 text-sm text-dark-bg outline-none focus:ring-2 focus:ring-green-500/40"
                       placeholder="Description"
                       value={r.description || ""}
                       onChange={(e) =>
@@ -417,7 +432,10 @@ function DutyManagement() {
 
               {rows.length === 0 && !loadingRows && (
                 <tr>
-                  <td colSpan={5} className="p-3 text-center">
+                  <td
+                    colSpan={5}
+                    className="px-3 py-6 text-center text-sm text-gray-400"
+                  >
                     No active Field Officers found.
                   </td>
                 </tr>
@@ -475,23 +493,36 @@ function DutyManagement() {
         )}
 
         {recommendations.length > 0 && (
-          <div className="max-h-80 text-white w-full overflow-y-auto">
-            <table className="w-full border text-sm">
-              <thead className="bg-gray-200 text-dark-primary">
+          <div className="max-h-80 w-full overflow-y-auto rounded-xl border border-dark-border bg-dark-bg text-white">
+            <table className="w-full border-separate border-spacing-0 text-sm text-gray-200">
+              <thead className="sticky top-0 z-10 bg-[#222a40]">
                 <tr>
-                  <th className="p-2 border">Name</th>
-                  <th className="p-2 border">Score</th>
-                  <th className="p-2 border">Reason</th>
+                  <th className="border-b border-dark-border px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-300">
+                    Name
+                  </th>
+                  <th className="border-b border-dark-border px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-300">
+                    Score
+                  </th>
+                  <th className="border-b border-dark-border px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-300">
+                    Reason
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {recommendations.map((r) => (
-                  <tr key={r.officerId}>
-                    <td className="p-2 border font-medium">{r.name}</td>
-                    <td className="p-2 border">
+                  <tr
+                    key={r.officerId}
+                    className="transition-colors even:bg-white/[0.02] hover:bg-white/[0.06]"
+                  >
+                    <td className="border-b border-dark-border px-3 py-2.5 font-medium text-white">
+                      {r.name}
+                    </td>
+                    <td className="border-b border-dark-border px-3 py-2.5">
                       {r.recommendationScore.toFixed(1)}
                     </td>
-                    <td className="p-2 border text-xs">{r.reason}</td>
+                    <td className="border-b border-dark-border px-3 py-2.5 text-xs text-gray-300">
+                      {r.reason}
+                    </td>
                   </tr>
                 ))}
               </tbody>

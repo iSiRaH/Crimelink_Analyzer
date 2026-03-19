@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   downloadEvidence,
   getCrimeReports,
@@ -7,12 +7,95 @@ import type { crimeReportType } from "../../types/crime";
 import { NavLink } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { ArrowLeft } from "lucide-react";
 
 function ViewCrimeReports() {
+  type SortKey =
+    | "reportId"
+    | "crimeType"
+    | "dateReported"
+    | "timeReported"
+    | "crimeLocation"
+    | "description";
+
   const [reports, setReports] = useState<crimeReportType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sortConfig, setSortConfig] = useState<{
+    key: SortKey;
+    direction: "asc" | "desc";
+  } | null>(null);
   const navigate = useNavigate();
+
+  const requestSort = (key: SortKey) => {
+    setSortConfig((prev) => {
+      if (prev && prev.key === key) {
+        return {
+          key,
+          direction: prev.direction === "asc" ? "desc" : "asc",
+        };
+      }
+      return { key, direction: "asc" };
+    });
+  };
+
+  const getSortValue = (report: crimeReportType, key: SortKey) => {
+    switch (key) {
+      case "reportId":
+        return report.reportId ?? -1;
+      case "crimeType":
+        return report.crimeType ?? "";
+      case "dateReported": {
+        const ts = Date.parse(report.dateReported ?? "");
+        return Number.isNaN(ts) ? (report.dateReported ?? "") : ts;
+      }
+      case "timeReported": {
+        const [h, m, s] = (report.timeReported ?? "").split(":").map(Number);
+        if ([h, m].every((n) => Number.isFinite(n))) {
+          return h * 3600 + m * 60 + (Number.isFinite(s) ? s : 0);
+        }
+        return report.timeReported ?? "";
+      }
+      case "crimeLocation":
+        return `${report.latitude ?? ""}, ${report.longitude ?? ""}`;
+      case "description":
+        return report.description ?? "";
+      default:
+        return "";
+    }
+  };
+
+  const sortedReports = useMemo(() => {
+    if (!sortConfig) return reports;
+
+    const sorted = [...reports].sort((a, b) => {
+      const aValue = getSortValue(a, sortConfig.key);
+      const bValue = getSortValue(b, sortConfig.key);
+
+      let compareResult = 0;
+      if (typeof aValue === "number" && typeof bValue === "number") {
+        compareResult = aValue - bValue;
+      } else {
+        compareResult = String(aValue).localeCompare(
+          String(bValue),
+          undefined,
+          {
+            numeric: true,
+            sensitivity: "base",
+          },
+        );
+      }
+
+      return sortConfig.direction === "asc" ? compareResult : -compareResult;
+    });
+
+    return sorted;
+  }, [reports, sortConfig]);
+
+  const getSortIndicator = (key: SortKey) => {
+    if (!sortConfig || sortConfig.key !== key) return "";
+    return sortConfig.direction === "asc" ? " ^" : " v";
+  };
 
   useEffect(() => {
     let isActive = true;
@@ -123,82 +206,162 @@ function ViewCrimeReports() {
 
   return (
     <>
-      <div className="bg-slate-500 w-full h-full p-5">
-        <h1 className="font-semibold text-3xl text-white mb-5">
-          View Crime Reports
-        </h1>
-        <NavLink to={"/oic/report-crimes"}>
-          <button className="bg-blue-500 text-white py-2 px-5 rounded mt-5">
-            Back
-          </button>
-        </NavLink>
-        <table className="table-auto w-11/12 bg-white border shadow-lg">
-          <thead>
-            <tr className="bg-slate-700 text-white">
-              <th className="p-3 border">Crime ID</th>
-              <th className="p-3 border">Crime Type</th>
-              <th className="p-3 border">Crime Date</th>
-              <th className="p-3 border">Crime Time</th>
-              <th className="p-3 border">Crime Location</th>
-              <th className="p-3 border">Crime Description</th>
-              <th className="p-3 border">Evidence</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td className="p-3 border" colSpan={7}>
-                  Loading...
-                </td>
-              </tr>
-            ) : reports.length === 0 ? (
-              <tr>
-                <td className="p-3 border" colSpan={7}>
-                  No crime reports found.
-                </td>
-              </tr>
-            ) : (
-              reports.map((report) => (
-                <tr
-                  key={
-                    report.reportId ??
-                    `${report.dateReported}-${report.timeReported}-${report.latitude}-${report.longitude}`
-                  }
-                >
-                  <td className="p-3 border">{report.reportId}</td>
-                  <td className="p-3 border">{report.crimeType}</td>
-                  <td className="p-3 border">{report.dateReported}</td>
-                  <td className="p-3 border">{report.timeReported}</td>
-                  <td className="p-3 border">{`${report.latitude}, ${report.longitude}`}</td>
-                  <td className="p-3 border">{report.description}</td>
-                  <td className="p-3 border">
-                    <a
-                      onClick={(e) => {
-                        e.preventDefault();
-                        if (report.reportId) {
-                          handleDownload(report.reportId);
-                        }
-                      }}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      href="#"
-                      className="text-blue-500 hover:underline"
+      <div className="min-h-screen bg-dark-bg p-3 text-white">
+        <div className="mb-4">
+          <NavLink to="/oic/report-crimes">
+            <button className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition text-sm font-medium">
+              <ArrowLeft size={16} />
+              Back
+            </button>
+          </NavLink>
+        </div>
+        <div className="mb-6 flex w-full flex-col justify-between gap-4 rounded-xl bg-dark-panel p-4 sm:flex-row sm:items-center">
+          <h1 className="text-3xl font-semibold">View Crime Reports</h1>
+        </div>
+
+        <div className="w-full rounded-xl bg-dark-panel p-6 sm:px-5">
+          <div className="w-full overflow-auto rounded-xl border border-dark-border bg-dark-bg">
+            <table className="min-w-[980px] w-full border-separate border-spacing-0 text-sm text-gray-200">
+              <thead className="sticky top-0 z-10 bg-[#222a40]">
+                <tr>
+                  <th className="border-b border-dark-border px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-300">
+                    <button
+                      type="button"
+                      onClick={() => requestSort("reportId")}
+                      className="cursor-pointer select-none"
                     >
-                      Download All
-                    </a>
-                  </td>
+                      Crime ID{getSortIndicator("reportId")}
+                    </button>
+                  </th>
+                  <th className="border-b border-dark-border px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-300">
+                    <button
+                      type="button"
+                      onClick={() => requestSort("crimeType")}
+                      className="cursor-pointer select-none"
+                    >
+                      Crime Type{getSortIndicator("crimeType")}
+                    </button>
+                  </th>
+                  <th className="border-b border-dark-border px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-300">
+                    <button
+                      type="button"
+                      onClick={() => requestSort("dateReported")}
+                      className="cursor-pointer select-none"
+                    >
+                      Crime Date{getSortIndicator("dateReported")}
+                    </button>
+                  </th>
+                  <th className="border-b border-dark-border px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-300">
+                    <button
+                      type="button"
+                      onClick={() => requestSort("timeReported")}
+                      className="cursor-pointer select-none"
+                    >
+                      Crime Time{getSortIndicator("timeReported")}
+                    </button>
+                  </th>
+                  <th className="border-b border-dark-border px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-300">
+                    <button
+                      type="button"
+                      onClick={() => requestSort("crimeLocation")}
+                      className="cursor-pointer select-none"
+                    >
+                      Crime Location{getSortIndicator("crimeLocation")}
+                    </button>
+                  </th>
+                  <th className="border-b border-dark-border px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-300">
+                    <button
+                      type="button"
+                      onClick={() => requestSort("description")}
+                      className="cursor-pointer select-none"
+                    >
+                      Crime Description{getSortIndicator("description")}
+                    </button>
+                  </th>
+                  <th className="border-b border-dark-border px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-300">
+                    Evidence
+                  </th>
                 </tr>
-              ))
-            )}
-            {error && (
-              <tr>
-                <td className="text-red-500 text-xl p-5 border" colSpan={7}>
-                  {error}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td
+                      className="px-3 py-6 text-center text-gray-400"
+                      colSpan={7}
+                    >
+                      Loading...
+                    </td>
+                  </tr>
+                ) : reports.length === 0 ? (
+                  <tr>
+                    <td
+                      className="px-3 py-6 text-center text-gray-400"
+                      colSpan={7}
+                    >
+                      No crime reports found.
+                    </td>
+                  </tr>
+                ) : (
+                  sortedReports.map((report) => (
+                    <tr
+                      key={
+                        report.reportId ??
+                        `${report.dateReported}-${report.timeReported}-${report.latitude}-${report.longitude}`
+                      }
+                      className="transition-colors even:bg-white/[0.02] hover:bg-white/[0.06]"
+                    >
+                      <td className="border-b border-dark-border px-3 py-2.5 text-white">
+                        {report.reportId}
+                      </td>
+                      <td className="border-b border-dark-border px-3 py-2.5">
+                        {report.crimeType}
+                      </td>
+                      <td className="border-b border-dark-border px-3 py-2.5">
+                        {report.dateReported}
+                      </td>
+                      <td className="border-b border-dark-border px-3 py-2.5">
+                        {report.timeReported}
+                      </td>
+                      <td className="border-b border-dark-border px-3 py-2.5 text-gray-300">
+                        {`${report.latitude}, ${report.longitude}`}
+                      </td>
+                      <td className="border-b border-dark-border px-3 py-2.5 text-gray-300">
+                        {report.description}
+                      </td>
+                      <td className="border-b border-dark-border px-3 py-2.5">
+                        <a
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (report.reportId) {
+                              handleDownload(report.reportId);
+                            }
+                          }}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          href="#"
+                          className="font-medium text-green-400 transition-colors hover:text-green-300 hover:underline"
+                        >
+                          Download All
+                        </a>
+                      </td>
+                    </tr>
+                  ))
+                )}
+                {error && (
+                  <tr>
+                    <td
+                      className="border-b border-dark-border bg-red-950/50 px-3 py-4 text-center text-sm text-red-300"
+                      colSpan={7}
+                    >
+                      {error}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </>
   );
