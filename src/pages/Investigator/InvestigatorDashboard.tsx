@@ -7,7 +7,6 @@ import {
   FaNetworkWired,
   FaRegClock,
   FaSearch,
-  FaShieldAlt,
   FaUserShield,
   FaUsers,
   FaUserCheck,

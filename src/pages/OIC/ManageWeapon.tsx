@@ -1,21 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   addWeapon,
   updateWeapon,
   getAllWeapons,
+  uploadWeaponPhoto,
 } from "../../api/weaponApi";
-import {
-  addBullet,
-  updateBullet,
-  getAllBullets,
-} from "../../api/BulletApi";
-import {
-  ArrowLeft,
-  PlusCircle,
-  RefreshCcw,
-  CheckCircle,
-} from "lucide-react";
+import { addBullet, updateBullet, getAllBullets } from "../../api/BulletApi";
+import { ArrowLeft, PlusCircle, RefreshCcw, CheckCircle } from "lucide-react";
 
 /* ================= TYPES ================= */
 
@@ -28,6 +20,7 @@ type Weapon = {
   weaponType: string;
   remarks?: string;
   status: string;
+  imageUrl?: string;
 };
 
 type Bullet = {
@@ -51,8 +44,10 @@ export default function ManageWeapon({ onBack }: Props) {
   const [serialNumber, setSerialNumber] = useState("");
   const [remarks, setRemarks] = useState("");
   const [status, setStatus] = useState("AVAILABLE");
+  const [weaponPhoto, setWeaponPhoto] = useState<File | null>(null);
+  const weaponPhotoInputRef = useRef<HTMLInputElement | null>(null);
   const [weaponRegisterDate, setWeaponRegisterDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
+    new Date().toISOString().split("T")[0],
   );
 
   // Bullet states
@@ -62,11 +57,18 @@ export default function ManageWeapon({ onBack }: Props) {
   const [numberOfMagazines, setNumberOfMagazines] = useState("");
   const [bulletRemarks, setBulletRemarks] = useState("");
   const [bulletRegisterDate, setBulletRegisterDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
+    new Date().toISOString().split("T")[0],
   );
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formMessage, setFormMessage] = useState("");
+
+  const clearWeaponPhotoSelection = () => {
+    setWeaponPhoto(null);
+    if (weaponPhotoInputRef.current) {
+      weaponPhotoInputRef.current.value = "";
+    }
+  };
 
   /* ================= LOAD DATA ================= */
 
@@ -101,6 +103,7 @@ export default function ManageWeapon({ onBack }: Props) {
     setSerialNumber(weapon.serialNumber);
     setRemarks(weapon.remarks || "");
     setStatus(weapon.status);
+    clearWeaponPhotoSelection();
     setErrors({});
     setFormMessage("");
   };
@@ -121,8 +124,12 @@ export default function ManageWeapon({ onBack }: Props) {
   const handleAddBullet = async () => {
     const newErrors: Record<string, string> = {};
     if (!bulletType.trim()) newErrors.bulletType = "Bullet type is required";
-    if (!numberOfMagazines.toString().trim() || isNaN(Number(numberOfMagazines)))
-      newErrors.numberOfMagazines = "Number of magazines is required and must be a number";
+    if (
+      !numberOfMagazines.toString().trim() ||
+      isNaN(Number(numberOfMagazines))
+    )
+      newErrors.numberOfMagazines =
+        "Number of magazines is required and must be a number";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -134,13 +141,13 @@ export default function ManageWeapon({ onBack }: Props) {
     setFormMessage("");
 
     try {
-      await addBullet({ 
-        bulletType, 
-        numberOfMagazines: Number(numberOfMagazines), 
-        remarks: bulletRemarks 
+      await addBullet({
+        bulletType,
+        numberOfMagazines: Number(numberOfMagazines),
+        remarks: bulletRemarks,
       });
       alert("Bullets added successfully");
-      
+
       setBulletType("");
       setNumberOfMagazines("");
       setBulletRemarks("");
@@ -159,8 +166,12 @@ export default function ManageWeapon({ onBack }: Props) {
 
     const newErrors: Record<string, string> = {};
     if (!bulletType.trim()) newErrors.bulletType = "Bullet type is required";
-    if (!numberOfMagazines.toString().trim() || isNaN(Number(numberOfMagazines)))
-      newErrors.numberOfMagazines = "Number of magazines is required and must be a number";
+    if (
+      !numberOfMagazines.toString().trim() ||
+      isNaN(Number(numberOfMagazines))
+    )
+      newErrors.numberOfMagazines =
+        "Number of magazines is required and must be a number";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -175,7 +186,7 @@ export default function ManageWeapon({ onBack }: Props) {
       await updateBullet(selectedBullet.bulletId, {
         bulletType,
         numberOfMagazines: Number(numberOfMagazines),
-        remarks: bulletRemarks
+        remarks: bulletRemarks,
       });
 
       alert("Bullets updated successfully");
@@ -194,8 +205,7 @@ export default function ManageWeapon({ onBack }: Props) {
   const handleAdd = async () => {
     const newErrors: Record<string, string> = {};
 
-    if (!weaponType.trim())
-      newErrors.weaponType = "Weapon type is required";
+    if (!weaponType.trim()) newErrors.weaponType = "Weapon type is required";
     if (!serialNumber.trim())
       newErrors.serialNumber = "Serial number is required";
 
@@ -210,11 +220,22 @@ export default function ManageWeapon({ onBack }: Props) {
 
     try {
       await addWeapon({ weaponType, serialNumber, remarks });
-      alert("Weapon added successfully");
+
+      let uploadWarning = "";
+      if (weaponPhoto) {
+        try {
+          await uploadWeaponPhoto(serialNumber, weaponPhoto);
+        } catch (uploadError: any) {
+          uploadWarning = `\nWeapon saved, but photo upload failed: ${uploadError?.response?.data?.error || "Unknown error"}`;
+        }
+      }
+
+      alert(`Weapon added successfully${uploadWarning}`);
 
       setWeaponType("");
       setSerialNumber("");
       setRemarks("");
+      clearWeaponPhotoSelection();
       await loadWeapons();
     } catch (err: any) {
       alert(err?.response?.data?.message || "Failed to add weapon");
@@ -231,10 +252,8 @@ export default function ManageWeapon({ onBack }: Props) {
 
     const newErrors: Record<string, string> = {};
 
-    if (!weaponType.trim())
-      newErrors.weaponType = "Weapon type is required";
-    if (!status)
-      newErrors.status = "Status is required";
+    if (!weaponType.trim()) newErrors.weaponType = "Weapon type is required";
+    if (!status) newErrors.status = "Status is required";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -252,8 +271,18 @@ export default function ManageWeapon({ onBack }: Props) {
         remarks,
       });
 
-      alert("Weapon updated successfully");
+      let uploadWarning = "";
+      if (weaponPhoto) {
+        try {
+          await uploadWeaponPhoto(selectedWeapon.serialNumber, weaponPhoto);
+        } catch (uploadError: any) {
+          uploadWarning = `\nWeapon details updated, but photo upload failed: ${uploadError?.response?.data?.error || "Unknown error"}`;
+        }
+      }
+
+      alert(`Weapon updated successfully${uploadWarning}`);
       setSelectedWeapon(null);
+      clearWeaponPhotoSelection();
       await loadWeapons();
     } catch {
       alert("Failed to update weapon");
@@ -263,9 +292,17 @@ export default function ManageWeapon({ onBack }: Props) {
   /* ================= BACK CONFIRM ================= */
 
   const handleBack = () => {
-    if (weaponType || serialNumber || remarks || bulletType || numberOfMagazines || bulletRemarks) {
+    if (
+      weaponType ||
+      serialNumber ||
+      remarks ||
+      weaponPhoto ||
+      bulletType ||
+      numberOfMagazines ||
+      bulletRemarks
+    ) {
       const confirmBack = window.confirm(
-        "You have unsaved changes. Are you sure you want to go back?"
+        "You have unsaved changes. Are you sure you want to go back?",
       );
       if (!confirmBack) return;
     }
@@ -281,7 +318,7 @@ export default function ManageWeapon({ onBack }: Props) {
         <button
           onClick={() => {
             handleBack();
-            navigate('/oic/weapon-handover');
+            navigate("/oic/weapon-handover");
           }}
           className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition text-sm font-medium"
         >
@@ -294,7 +331,9 @@ export default function ManageWeapon({ onBack }: Props) {
       <div className="bg-slate-800/80 rounded-2xl p-8 mb-8 border border-slate-700/50">
         <div className="mb-6">
           <h2 className="text-2xl font-bold mb-2">Weapon Management</h2>
-          <p className="text-slate-400 text-sm">Add new weapons or update existing records</p>
+          <p className="text-slate-400 text-sm">
+            Add new weapons or update existing records
+          </p>
         </div>
 
         {/* MODE SWITCH BUTTONS */}
@@ -337,7 +376,9 @@ export default function ManageWeapon({ onBack }: Props) {
         {weaponMode === "add" && (
           <div className="bg-slate-700/40 rounded-xl p-6 border border-slate-600/30">
             {formMessage && (
-              <p className="mb-4 text-red-400 font-medium text-sm">{formMessage}</p>
+              <p className="mb-4 text-red-400 font-medium text-sm">
+                {formMessage}
+              </p>
             )}
 
             <p className="text-white font-semibold mb-6">Add New Weapon</p>
@@ -358,7 +399,9 @@ export default function ManageWeapon({ onBack }: Props) {
               />
 
               <div>
-                <label className="text-sm font-medium text-slate-300 block mb-2">Register date</label>
+                <label className="text-sm font-medium text-slate-300 block mb-2">
+                  Register date
+                </label>
                 <div className="relative">
                   <input
                     type="date"
@@ -366,8 +409,28 @@ export default function ManageWeapon({ onBack }: Props) {
                     value={weaponRegisterDate}
                     onChange={(e) => setWeaponRegisterDate(e.target.value)}
                   />
-                  <span className="absolute right-3 top-3 text-slate-900">📅</span>
+                  <span className="absolute right-3 top-3 text-slate-900">
+                    📅
+                  </span>
                 </div>
+              </div>
+
+              <div className="md:col-span-3">
+                <label className="text-sm font-medium text-slate-300 block mb-2">
+                  Weapon Photo
+                </label>
+                <input
+                  ref={weaponPhotoInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setWeaponPhoto(e.target.files?.[0] ?? null)}
+                  className="w-full bg-white text-slate-900 border border-slate-400 rounded-lg px-4 py-2.5 font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                />
+                {weaponPhoto && (
+                  <p className="text-slate-300 text-xs mt-1.5">
+                    Selected: {weaponPhoto.name}
+                  </p>
+                )}
               </div>
             </div>
             <div className="flex justify-start mt-6">
@@ -385,16 +448,20 @@ export default function ManageWeapon({ onBack }: Props) {
         {weaponMode === "update" && (
           <div className="bg-slate-700/40 rounded-xl p-6 border border-slate-600/30">
             {formMessage && (
-              <p className="mb-4 text-red-400 font-medium text-sm">{formMessage}</p>
+              <p className="mb-4 text-red-400 font-medium text-sm">
+                {formMessage}
+              </p>
             )}
 
             <div className="mb-6">
-              <label className="text-sm font-medium text-slate-300 block mb-2">Select Weapon</label>
+              <label className="text-sm font-medium text-slate-300 block mb-2">
+                Select Weapon
+              </label>
               <select
                 className="w-full bg-white text-slate-900 border border-slate-400 rounded-lg px-4 py-2.5 font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                 onChange={(e) => {
                   const weapon = weapons.find(
-                    (w) => w.serialNumber === e.target.value
+                    (w) => w.serialNumber === e.target.value,
                   );
                   if (weapon) selectWeapon(weapon);
                 }}
@@ -426,7 +493,9 @@ export default function ManageWeapon({ onBack }: Props) {
                   />
 
                   <div>
-                    <label className="text-sm font-medium text-slate-300 block mb-2">Register date</label>
+                    <label className="text-sm font-medium text-slate-300 block mb-2">
+                      Register date
+                    </label>
                     <input
                       type="date"
                       disabled
@@ -437,10 +506,16 @@ export default function ManageWeapon({ onBack }: Props) {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                  <Input label="Remarks" value={remarks} onChange={setRemarks} />
+                  <Input
+                    label="Remarks"
+                    value={remarks}
+                    onChange={setRemarks}
+                  />
 
                   <div>
-                    <label className="text-sm font-medium text-slate-300 block mb-2">Status</label>
+                    <label className="text-sm font-medium text-slate-300 block mb-2">
+                      Status
+                    </label>
                     <select
                       value={status}
                       onChange={(e) => setStatus(e.target.value)}
@@ -453,9 +528,41 @@ export default function ManageWeapon({ onBack }: Props) {
                       <option value="LOST">LOST</option>
                     </select>
                     {errors.status && (
-                      <p className="text-red-400 text-xs mt-1.5">{errors.status}</p>
+                      <p className="text-red-400 text-xs mt-1.5">
+                        {errors.status}
+                      </p>
                     )}
                   </div>
+                </div>
+
+                <div className="mb-6">
+                  <label className="text-sm font-medium text-slate-300 block mb-2">
+                    Update Weapon Photo
+                  </label>
+                  <input
+                    ref={weaponPhotoInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) =>
+                      setWeaponPhoto(e.target.files?.[0] ?? null)
+                    }
+                    className="w-full bg-white text-slate-900 border border-slate-400 rounded-lg px-4 py-2.5 font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                  />
+                  {weaponPhoto && (
+                    <p className="text-slate-300 text-xs mt-1.5">
+                      Selected: {weaponPhoto.name}
+                    </p>
+                  )}
+                  {selectedWeapon.imageUrl && (
+                    <a
+                      href={selectedWeapon.imageUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-blue-300 text-xs mt-2 inline-block hover:text-blue-200"
+                    >
+                      View current image
+                    </a>
+                  )}
                 </div>
 
                 <div className="flex justify-start">
@@ -476,8 +583,12 @@ export default function ManageWeapon({ onBack }: Props) {
       {/* BULLETS MANAGEMENT SECTION */}
       <div className="bg-slate-800/80 rounded-2xl p-8 border border-slate-700/50">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold mb-2">Bullets Inventory Management</h2>
-          <p className="text-slate-400 text-sm">Add new bullet inventory or update existing records</p>
+          <h2 className="text-2xl font-bold mb-2">
+            Bullets Inventory Management
+          </h2>
+          <p className="text-slate-400 text-sm">
+            Add new bullet inventory or update existing records
+          </p>
         </div>
 
         {/* MODE SWITCH BUTTONS */}
@@ -493,10 +604,10 @@ export default function ManageWeapon({ onBack }: Props) {
               setErrors({});
             }}
             className={`flex items-center gap-2 px-7 py-2.5 rounded-full font-semibold transition ${
-                bulletMode === "add"
-                  ? "bg-[#0b0f16] text-blue-400 ring-1 ring-blue-700/30"
-                  : "bg-[#1c2333] text-white border border-blue-600/40 hover:border-blue-500"
-              }`}
+              bulletMode === "add"
+                ? "bg-[#0b0f16] text-blue-400 ring-1 ring-blue-700/30"
+                : "bg-[#1c2333] text-white border border-blue-600/40 hover:border-blue-500"
+            }`}
           >
             <PlusCircle size={18} />
             Add Bullets
@@ -523,10 +634,14 @@ export default function ManageWeapon({ onBack }: Props) {
         {bulletMode === "add" && (
           <div className="bg-slate-700/40 rounded-xl p-6 border border-slate-600/30">
             {formMessage && (
-              <p className="mb-4 text-red-400 font-medium text-sm">{formMessage}</p>
+              <p className="mb-4 text-red-400 font-medium text-sm">
+                {formMessage}
+              </p>
             )}
 
-            <p className="text-white font-semibold mb-6">Add New Bullet Inventory</p>
+            <p className="text-white font-semibold mb-6">
+              Add New Bullet Inventory
+            </p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Input
@@ -544,7 +659,9 @@ export default function ManageWeapon({ onBack }: Props) {
               />
 
               <div>
-                <label className="text-sm font-medium text-slate-300 block mb-2">Register date</label>
+                <label className="text-sm font-medium text-slate-300 block mb-2">
+                  Register date
+                </label>
                 <div className="relative">
                   <input
                     type="date"
@@ -552,16 +669,18 @@ export default function ManageWeapon({ onBack }: Props) {
                     value={bulletRegisterDate}
                     onChange={(e) => setBulletRegisterDate(e.target.value)}
                   />
-                  <span className="absolute right-3 top-3 text-slate-900">📅</span>
+                  <span className="absolute right-3 top-3 text-slate-900">
+                    📅
+                  </span>
                 </div>
               </div>
             </div>
 
             <div className="mt-6">
-              <Input 
-                label="Remarks" 
-                value={bulletRemarks} 
-                onChange={setBulletRemarks} 
+              <Input
+                label="Remarks"
+                value={bulletRemarks}
+                onChange={setBulletRemarks}
               />
             </div>
 
@@ -580,15 +699,21 @@ export default function ManageWeapon({ onBack }: Props) {
         {bulletMode === "update" && (
           <div className="bg-slate-700/40 rounded-xl p-6 border border-slate-600/30">
             {formMessage && (
-              <p className="mb-4 text-red-400 font-medium text-sm">{formMessage}</p>
+              <p className="mb-4 text-red-400 font-medium text-sm">
+                {formMessage}
+              </p>
             )}
 
             <div className="mb-6">
-              <label className="text-sm font-medium text-slate-300 block mb-2">Select Bullets</label>
+              <label className="text-sm font-medium text-slate-300 block mb-2">
+                Select Bullets
+              </label>
               <select
                 className="w-full bg-white text-slate-900 border border-slate-400 rounded-lg px-4 py-2.5 font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                 onChange={(e) => {
-                  const bullet = bullets.find((b) => b.bulletId === Number(e.target.value));
+                  const bullet = bullets.find(
+                    (b) => b.bulletId === Number(e.target.value),
+                  );
                   if (bullet) selectBullet(bullet);
                 }}
               >
@@ -619,7 +744,9 @@ export default function ManageWeapon({ onBack }: Props) {
                   />
 
                   <div>
-                    <label className="text-sm font-medium text-slate-300 block mb-2">Register date</label>
+                    <label className="text-sm font-medium text-slate-300 block mb-2">
+                      Register date
+                    </label>
                     <input
                       type="date"
                       disabled
@@ -630,10 +757,10 @@ export default function ManageWeapon({ onBack }: Props) {
                 </div>
 
                 <div className="mb-6">
-                  <Input 
-                    label="Remarks" 
-                    value={bulletRemarks} 
-                    onChange={setBulletRemarks} 
+                  <Input
+                    label="Remarks"
+                    value={bulletRemarks}
+                    onChange={setBulletRemarks}
                   />
                 </div>
 
@@ -672,7 +799,9 @@ function Input({
 }) {
   return (
     <div>
-      <label className="text-sm font-medium text-slate-300 block mb-2">{label}</label>
+      <label className="text-sm font-medium text-slate-300 block mb-2">
+        {label}
+      </label>
       <input
         value={value}
         disabled={disabled}
