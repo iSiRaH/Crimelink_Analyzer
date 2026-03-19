@@ -23,7 +23,7 @@ function DutyManagement() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   // const [selectedDateKey, setSelectedDateKey] = useState("");//REMOVE
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-  const [currentMonth, setCurrentMonth] = useState(0);
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [rows, setRows] = useState<OfficerDutyRow[]>([]);
   const [loadingRows, setLoadingRows] = useState(false);
   const [saving, setSaving] = useState(false);
