@@ -1,13 +1,13 @@
 import api from "../services/api";
-import type { 
-  WeaponAddDTO, 
-  IssueWeaponRequest, 
+import type {
+  WeaponAddDTO,
+  IssueWeaponRequest,
   WeaponResponseDTO,
   OfficerDTO,
-  weaponRequestType
+  weaponRequestType,
 } from "../types/weapon";
 
-export const addWeapon = (data: WeaponAddDTO) => 
+export const addWeapon = (data: WeaponAddDTO) =>
   api.post(`/weapon/add-weapon`, data);
 
 export const updateWeapon = (
@@ -16,13 +16,28 @@ export const updateWeapon = (
     weaponType: string;
     status: string;
     remarks: string;
+    imageUrl?: string;
   },
 ) => api.put(`/weapon/weapon-update/${serialNumber}`, data);
 
-export const getAllWeapons = () => 
-  api.get(`/weapon/all`);
+export const uploadWeaponPhoto = (serialNumber: string, photo: File) => {
+  const formData = new FormData();
+  formData.append("photo", photo);
 
-export const getAllWeaponsWithDetails = () => 
+  return api.post<{ serialNumber: string; imageUrl: string }>(
+    `/weapon/${serialNumber}/upload-photo`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    },
+  );
+};
+
+export const getAllWeapons = () => api.get(`/weapon/all`);
+
+export const getAllWeaponsWithDetails = () =>
   api.get<WeaponResponseDTO[]>(`/weapon/all-with-details`);
 
 export const returnWeapon = (data: {
@@ -62,8 +77,7 @@ export const rejectWeaponRequest = async (requestId: number) => {
     throw err;
   }
 };
-export const getAllOfficers = () => 
-  api.get<OfficerDTO[]>("/weapon/officers");
+export const getAllOfficers = () => api.get<OfficerDTO[]>("/weapon/officers");
 
-export const issueWeapon = (data: IssueWeaponRequest) => 
+export const issueWeapon = (data: IssueWeaponRequest) =>
   api.post("/weapon/issue", data);

@@ -24,6 +24,7 @@ export interface WeaponResponseDTO {
   weaponType: string;
   status: string;
   remarks?: string;
+  imageUrl?: string;
   issuedTo?: OfficerDTO;
   handedOverBy?: OfficerDTO;
   issuedDate?: string;
@@ -38,12 +39,14 @@ export interface WeaponAddDTO {
   weaponType: string;
   serialNumber: string;
   remarks?: string;
+  imageUrl?: string;
 }
 
 export interface WeaponUpdateDTO {
   weaponType: string;
   status: string;
   remarks?: string;
+  imageUrl?: string;
 }
 
 export interface IssueWeaponRequest {
