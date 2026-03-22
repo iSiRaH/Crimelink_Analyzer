@@ -66,7 +66,7 @@ const DropDownMenu: React.FC<DropdownMenuProps> = ({
       </div>
 
       {isOpen && (
-        <div className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-[#1e2a3d] ring-1 ring-black ring-opacity-5 z-50">
+        <div className="origin-top-left absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-[#1e2a3d] ring-1 ring-black ring-opacity-5 z-50">
           <div
             className="py-1"
             role="menu"
