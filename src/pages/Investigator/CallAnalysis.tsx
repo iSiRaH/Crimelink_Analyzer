@@ -1335,12 +1335,12 @@ function LocationTimePeriods({ results }: { results: AnalysisResult[] }) {
     <div className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 p-6">
       <h2 className="text-lg font-bold text-gray-100 mb-2">Location Time Periods</h2>
       
-      <p className="text-sm text-gray-400 mb-4">
+      {/* <p className="text-sm text-gray-400 mb-4">
         Sessions are split when there is a gap greater than{" "}
         <span className="font-semibold text-gray-200">
           {results[0]?.location_analysis?.gap_minutes ?? 180} minutes
-        </span>.
-      </p>
+        </span>
+      </p> */}
 
       <div className="overflow-x-auto">
         <table className="min-w-full border border-gray-600 rounded-lg overflow-hidden">

@@ -227,10 +227,7 @@ const WeaponRequests = () => {
                     </th>
                   ))}
                   <th className="px-4 py-3 text-center whitespace-nowrap">
-                    Approve
-                  </th>
-                  <th className="px-4 py-3 text-center whitespace-nowrap">
-                    Reject
+                    Action
                   </th>
                 </tr>
               </thead>
@@ -280,26 +277,33 @@ const WeaponRequests = () => {
                         {formatDate(request.resolvedAt)}
                       </td>
                       <td className="px-4 py-3 text-center whitespace-nowrap">
-                        <button
-                          className="bg-green-600 text-white px-3 py-1.5 rounded-md text-xs md:text-sm hover:bg-green-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                          onClick={() => approveRequest(request.requestId)}
-                          disabled={isProcessing}
-                        >
-                          {isProcessing && processingAction === "approve"
-                            ? "Approving..."
-                            : "Approve"}
-                        </button>
-                      </td>
-                      <td className="px-4 py-3 text-center whitespace-nowrap">
-                        <button
-                          className="bg-red-600 text-white px-3 py-1.5 rounded-md text-xs md:text-sm hover:bg-red-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                          onClick={() => rejectRequest(request.requestId)}
-                          disabled={isProcessing}
-                        >
-                          {isProcessing && processingAction === "reject"
-                            ? "Rejecting..."
-                            : "Reject"}
-                        </button>
+                        {request.status === "PENDING" ? (
+                          <div className="gap-2 flex justify-center">
+                            <button
+                              className="bg-green-600 text-white px-3 py-1.5 rounded-md text-xs md:text-sm hover:bg-green-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                              onClick={() => approveRequest(request.requestId)}
+                              disabled={isProcessing}
+                            >
+                              {isProcessing && processingAction === "approve"
+                                ? "Approving..."
+                                : "Approve"}
+                            </button>
+
+                            <button
+                              className="bg-red-600 text-white px-3 py-1.5 rounded-md text-xs md:text-sm hover:bg-red-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                              onClick={() => rejectRequest(request.requestId)}
+                              disabled={isProcessing}
+                            >
+                              {isProcessing && processingAction === "reject"
+                                ? "Rejecting..."
+                                : "Reject"}
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-gray-500 text-xs italic">
+                            Completed
+                          </span>
+                        )}
                       </td>
                     </tr>
                   );
